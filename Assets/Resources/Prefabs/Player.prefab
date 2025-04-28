@@ -291,8 +291,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97a84d8fb0377384b9294126cb66fc8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lineRendererPrefab: {fileID: 0}
+  pickupVFX: {fileID: 0}
+  shrinkSpeed: 3
   collectRadius: 1
-  collectAngle: 90
+  collectAngle: 100
   attractionSpeed: 3
   collectibleLayer:
     serializedVersion: 2

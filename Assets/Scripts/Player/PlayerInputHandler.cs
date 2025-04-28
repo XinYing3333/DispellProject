@@ -68,8 +68,10 @@ namespace Player
 
         private void OnEnable()
         {
-            _collect.started += OnCollectStarted;
-            _collect.canceled += OnCollectCanceled;
+            /*_collect.started += OnCollectStarted;
+            _collect.canceled += OnCollectCanceled;*/
+            
+            _collect.performed += OnCollectPerformed;
 
             _aim.started += OnAimStarted;
             _aim.canceled += OnAimCanceled;
@@ -82,8 +84,10 @@ namespace Player
 
         private void OnDisable()
         {
-            _collect.started -= OnCollectStarted;
-            _collect.canceled -= OnCollectCanceled;
+            /*_collect.started -= OnCollectStarted;
+            _collect.canceled -= OnCollectCanceled;*/
+            
+            _collect.performed -= OnCollectPerformed;
 
             _aim.started -= OnAimStarted;
             _aim.canceled -= OnAimCanceled;
@@ -92,6 +96,9 @@ namespace Player
             _dash.performed -= OnDashPerformed;
             _shoot.performed -= OnShootPerformed;
             _switch.performed -= OnSwitchPerformed;
+            
+            _collect.performed += OnCollectPerformed;
+
         }
 
         void Update()
@@ -103,8 +110,8 @@ namespace Player
                 ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
                 : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
 
-            if (IsCollecting)
-                _playerCollector.OnCollectCollectibles();
+            /*if (IsCollecting)
+                _playerCollector.OnCollectCollectibles();*/
         }
 
         public void ResetJump() => JumpPressed = false;
@@ -117,6 +124,12 @@ namespace Player
         private void OnAimStarted(InputAction.CallbackContext ctx) => IsAiming = true;
         private void OnAimCanceled(InputAction.CallbackContext ctx) => IsAiming = false;
 
+        private void OnCollectPerformed(InputAction.CallbackContext ctx)
+        {
+            _playerCollector.OnCollectCollectibles();
+        }
+
+        
         private void OnJumpPerformed(InputAction.CallbackContext ctx)
         {
             JumpPressed = true;

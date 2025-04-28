@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,11 +8,11 @@ public class PlayerCollector : MonoBehaviour
 {
     public static SpawnType CurrentSpawnType { get; private set; } // 記錄當前收集的物品類型
     public static Quaternion CurrentSpawnRotation { get; private set; } // 記錄當前收集的物品類型
-    
-    [Header("Visual Feedback")]
-    [SerializeField] private LineRenderer lineRendererPrefab;
-    private Dictionary<Rigidbody, LineRenderer> activeLines = new();
 
+    [Header("吸收效果")]
+    public GameObject pickupVFX; // 吸收特效（Prefab）
+    public float shrinkSpeed = 3f;
+    
     
     private void Start()
     {
@@ -31,22 +32,13 @@ public class PlayerCollector : MonoBehaviour
         }
     }
     
-    private void OnDisable()
-    {
-        foreach (var line in activeLines.Values)
-        {
-            if (line != null)
-                Destroy(line.gameObject);
-        }
-        activeLines.Clear();
-    }
-
     public void OnCollectCollectibles()
     {
         if (CollectionSystem.GetDictionaryCount() == 0) // 背包空間
         {
             FindCollectibles();
-            MoveCollectibles();
+            StartCoroutine(AbsorbCollectiblesCoroutine());
+            //MoveCollectibles();
         }
     }
     
@@ -56,8 +48,8 @@ public class PlayerCollector : MonoBehaviour
     }
     
     public float collectRadius = 1f; 
-    public float collectAngle = 90f; 
-    public float attractionSpeed = 3f; 
+    public float collectAngle = 100f; 
+    public float attractionSpeed = 5f; 
     public LayerMask collectibleLayer;
     public Transform collectPoint;
 
@@ -80,18 +72,49 @@ public class PlayerCollector : MonoBehaviour
                         rb.useGravity = false;
                         rb.linearDamping = 2f; 
                         attractedObjects.Add(rb);
-                        
-                        LineRenderer line = Instantiate(lineRendererPrefab);
-                        line.positionCount = 2;
-                        activeLines[rb] = line;
                     }
                 }
             }
         }
     }
 
+    
+    private IEnumerator AbsorbCollectiblesCoroutine()
+    {
+        while (attractedObjects.Count > 0)
+        {
+            for (int i = attractedObjects.Count - 1; i >= 0; i--)
+            {
+                Rigidbody rb = attractedObjects[i];
+                if (rb == null) continue;
 
-    private void MoveCollectibles()
+                Vector3 direction = (collectPoint.position - rb.position).normalized;
+                rb.linearVelocity = direction * attractionSpeed;
+
+                rb.transform.localScale = Vector3.Lerp(rb.transform.localScale, Vector3.zero, Time.deltaTime * shrinkSpeed);
+
+                if (Vector3.Distance(rb.position, collectPoint.position) < 0.5f)
+                {
+                    SpawnType collectedType = rb.GetComponent<SpawnObject>().spawnType;
+                    CollectionSystem.CollectItem(collectedType, rb.transform.rotation);
+                    CurrentSpawnRotation = rb.transform.rotation;
+                    CurrentSpawnType = collectedType;
+
+                    if (pickupVFX)
+                        Instantiate(pickupVFX, rb.position, Quaternion.identity);
+
+                    Destroy(rb.gameObject);
+
+                    attractedObjects.RemoveAt(i);
+                }
+            }
+
+            yield return null;
+        }
+    }
+
+
+    /*private void MoveCollectibles()
     {
         for (int i = attractedObjects.Count - 1; i >= 0; i--)
         {
@@ -100,6 +123,9 @@ public class PlayerCollector : MonoBehaviour
 
             Vector3 direction = (collectPoint.position - rb.position).normalized;
             rb.linearVelocity = direction * attractionSpeed;
+            
+            // ✨ 漸縮放
+            rb.transform.localScale = Vector3.Lerp(rb.transform.localScale, Vector3.zero, Time.deltaTime * shrinkSpeed);
 
             if (activeLines.ContainsKey(rb))
             {
@@ -116,6 +142,9 @@ public class PlayerCollector : MonoBehaviour
                 CurrentSpawnType = collectedType; // 記錄當前收集的 SpawnType
                 Debug.Log($"收集了 {CurrentSpawnType}");
                 
+                if (pickupVFX)
+                    Instantiate(pickupVFX, rb.position, Quaternion.identity);
+                
                 Destroy(rb.gameObject);
                 
                 if (activeLines.ContainsKey(rb))
@@ -127,7 +156,7 @@ public class PlayerCollector : MonoBehaviour
                 attractedObjects.RemoveAt(i);
             }
         }
-    }
+    }*/
 
     private bool IsInFront(Transform target)
     {
