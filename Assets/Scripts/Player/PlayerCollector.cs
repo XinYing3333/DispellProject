@@ -17,19 +17,6 @@ public class PlayerCollector : MonoBehaviour
     {
         CollectionSystem.LoadCollection(); // 遊戲開始時讀取收集數據
     }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F2)) //Restart
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-            ClearCollection();
-        }
-        if (Input.GetKeyDown(KeyCode.Escape)) //Close
-        {
-            Application.Quit();
-        }
-    }
     
     private void OnDisable()
     {
@@ -48,11 +35,6 @@ public class PlayerCollector : MonoBehaviour
             FindCollectibles();
             MoveCollectibles();
         }
-    }
-    
-    public void ClearCollection()
-    {
-        CollectionSystem.ClearCollection();
     }
     
     public float collectRadius = 1f; 

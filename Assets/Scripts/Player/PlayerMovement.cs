@@ -26,6 +26,17 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 0.6f;
     
+    [Header("Grab Settings")]
+    [SerializeField] private LayerMask ledgeLayer;
+    [SerializeField] private float grabOffset = 0.5f; // 微調吸到邊的偏移
+    [SerializeField] private float grabDetectionHeight = 1.2f; // 玩家高於這個點才能抓
+    [SerializeField] private float ledgeCheckDistance = 0.5f; // 檢測前方距離
+    [SerializeField] private float climbSpeed = 2f; // 抓牆時左右移動速度
+    private bool isGrabbing;
+    private bool isFinishClimb;
+    private Collider currentCollider;
+
+    
     private bool canDash = true;
     private bool isDashing = false;
     
@@ -52,18 +63,35 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        OnMovement();
-        if (input.JumpPressed)
+        if (!isGrabbing)
         {
-            OnJump();
-            input.ResetJump();
+            OnMovement();
+            if (input.JumpPressed)
+            {
+                OnJump();
+                input.ResetJump();
+            }
+            if (input.DashPressed)
+            {
+                StartCoroutine(DashCoroutine());
+                input.ResetDash();
+            }
         }
         
-        if (input.DashPressed)
+        if (isGrabbing)
         {
-            StartCoroutine(DashCoroutine());
-            input.ResetDash();
+            HandleLedgeMovement();
+
+            if (input.JumpPressed)
+            {
+                StartCoroutine(ReleaseLedge());
+            }
         }
+        else
+        {
+            CheckForLedgeGrab();
+        }
+        
         UpdateFootstepAudio();
     }
 
@@ -203,6 +231,47 @@ public class PlayerMovement : MonoBehaviour
         canDash = true;
     }
 
+    private void CheckForLedgeGrab()
+    {
+        Vector3 rayStart = transform.position + Vector3.up * grabDetectionHeight;
+        Ray ray = new Ray(rayStart, transform.forward);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, ledgeCheckDistance, ledgeLayer))
+        {
+            StartLedgeGrab(hit.point);
+        }
+    }
+
+    private void StartLedgeGrab(Vector3 ledgePoint)
+    {
+        isGrabbing = true;
+        _rb.linearVelocity = Vector3.zero;
+        _rb.useGravity = false;
+        transform.position = ledgePoint + Vector3.down * grabOffset;
+        anim.SetBool("IsLedgeGrabbing", true);
+    }
+
+    private void HandleLedgeMovement()
+    {
+        /*Vector2 moveInput = input.MoveInput;
+        Vector3 move = transform.right * moveInput.x * climbSpeed * Time.deltaTime;
+        transform.position += move;*/
+    }
+
+    private IEnumerator ReleaseLedge()
+    {
+        anim.SetBool("IsLedgeGrabbing", false);
+
+        yield return new WaitForSeconds(3.27f / 2);
+        if (isGrabbing)
+        {
+            transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y * 0.5f + 0.03f, transform.position.z);
+            transform.position += transform.forward;
+            _rb.useGravity = true;
+        }
+        input.ResetJump();
+        isGrabbing = false;
+    }
 
 
     private void OnCollisionEnter(Collision other)
@@ -215,6 +284,10 @@ public class PlayerMovement : MonoBehaviour
             anim.SetBool("IsDoubleJump", false);
 
             currentJumpCount = 0;
+        }
+        if (other.gameObject.layer == LayerMask.NameToLayer("Ledge"))
+        {
+            currentCollider = other.collider;
         }
     }
     
