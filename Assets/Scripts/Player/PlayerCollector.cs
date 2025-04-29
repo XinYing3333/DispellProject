@@ -9,7 +9,6 @@ public class PlayerCollector : MonoBehaviour
     public static Quaternion CurrentSpawnRotation { get; private set; } // 記錄當前收集的物品類型
     
     [Header("Visual Feedback")]
-    [SerializeField] private LineRenderer lineRendererPrefab;
     private Dictionary<Rigidbody, LineRenderer> activeLines = new();
 
     
@@ -62,10 +61,6 @@ public class PlayerCollector : MonoBehaviour
                         rb.useGravity = false;
                         rb.linearDamping = 2f; 
                         attractedObjects.Add(rb);
-                        
-                        LineRenderer line = Instantiate(lineRendererPrefab);
-                        line.positionCount = 2;
-                        activeLines[rb] = line;
                     }
                 }
             }
