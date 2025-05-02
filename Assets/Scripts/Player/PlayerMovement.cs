@@ -265,7 +265,8 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSeconds(3.6f / 2);
         if (isGrabbing)
         {
-            transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y * 0.5f + 0.03f, transform.position.z);
+            transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y 
+                * 0.5f + 0.03f, transform.position.z);
             transform.position += transform.forward;
             _rb.useGravity = true;
         }

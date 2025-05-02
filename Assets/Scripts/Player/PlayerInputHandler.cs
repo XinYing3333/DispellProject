@@ -104,7 +104,13 @@ namespace Player
                 : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
 
             if (IsCollecting)
+            {
                 _playerCollector.OnCollectCollectibles();
+            }
+            else
+            {
+                _playerCollector.OnCancelCollect();   
+            }
         }
 
         public void ResetJump() => JumpPressed = false;

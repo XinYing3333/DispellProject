@@ -1,48 +1,68 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
+using Random = UnityEngine.Random;
 
 public class PlayerCollector : MonoBehaviour
 {
     public static SpawnType CurrentSpawnType { get; private set; } // 記錄當前收集的物品類型
     public static Quaternion CurrentSpawnRotation { get; private set; } // 記錄當前收集的物品類型
-    
-    [Header("Visual Feedback")]
-    private Dictionary<Rigidbody, LineRenderer> activeLines = new();
 
+    public float collectRadius = 1f;
+    public float collectAngle = 90f;
+    public LayerMask collectibleLayer;
+    public Transform collectPoint;
+
+    private Rigidbody _currentRb;
     
+    private bool canCollect;
+
+    private bool isDetectCollect;
+    private bool isCollecting;
+    [SerializeField] private ParticleSystem captureParticle;
+    [SerializeField] private ParticleSystem captureParticle2;
+    [SerializeField] private ParticleSystem collectParticle;
+
+    private List<Rigidbody> attractedObjects = new List<Rigidbody>();
+
     private void Start()
     {
         CollectionSystem.LoadCollection(); // 遊戲開始時讀取收集數據
     }
-    
-    private void OnDisable()
+
+    private void Update()
     {
-        foreach (var line in activeLines.Values)
+        if (isCollecting && !isDetectCollect)
         {
-            if (line != null)
-                Destroy(line.gameObject);
+            isDetectCollect = true;
+            captureParticle.Play();
+            captureParticle2.Play();
         }
-        activeLines.Clear();
+        else if (!isCollecting && isDetectCollect)
+        {
+            isDetectCollect = false;
+            captureParticle.Stop();
+            captureParticle2.Stop();
+        }
     }
 
     public void OnCollectCollectibles()
     {
-        if (CollectionSystem.GetDictionaryCount() == 0) // 背包空間
+        isCollecting = true;
+        FindCollectibles();
+        MoveCollectibles();
+    }
+
+    public void OnCancelCollect()
+    {
+        isCollecting = false;
+
+        if (_currentRb != null)
         {
-            FindCollectibles();
-            MoveCollectibles();
+            _currentRb.useGravity = true;
+            _currentRb = null;
         }
     }
-    
-    public float collectRadius = 1f; 
-    public float collectAngle = 90f; 
-    public float attractionSpeed = 3f; 
-    public LayerMask collectibleLayer;
-    public Transform collectPoint;
-
-    private List<Rigidbody> attractedObjects = new List<Rigidbody>();
 
     private void FindCollectibles()
     {
@@ -50,17 +70,17 @@ public class PlayerCollector : MonoBehaviour
 
         foreach (Collider collectible in collectibles)
         {
-            if (IsInFront(collectible.transform)) 
+            if (IsInFront(collectible.transform))
             {
                 SpawnObject spawnObj = collectible.GetComponent<SpawnObject>();
                 if (spawnObj != null && spawnObj.isCollectable) // 檢查是否可被收集
                 {
-                    Rigidbody rb = collectible.GetComponent<Rigidbody>();
-                    if (rb != null && !attractedObjects.Contains(rb))
+                    _currentRb = collectible.GetComponent<Rigidbody>();
+                    if (_currentRb != null && !attractedObjects.Contains(_currentRb))
                     {
-                        rb.useGravity = false;
-                        rb.linearDamping = 2f; 
-                        attractedObjects.Add(rb);
+                        _currentRb.useGravity = false;
+                        //rb.linearDamping = 2f;
+                        attractedObjects.Add(_currentRb);
                     }
                 }
             }
@@ -76,40 +96,82 @@ public class PlayerCollector : MonoBehaviour
             if (rb == null) continue;
 
             Vector3 direction = (collectPoint.position - rb.position).normalized;
-            rb.linearVelocity = direction * attractionSpeed;
+            float distance = Vector3.Distance(rb.position, collectPoint.position);
 
-            if (activeLines.ContainsKey(rb))
+            // 根據距離計算吸力，距離越近吸得越快
+            float forceMagnitude = Mathf.Lerp(30f, 100f, 1f - distance / collectRadius);
+
+            rb.AddForce(direction * forceMagnitude);
+            rb.AddTorque(Random.insideUnitSphere * 2f, ForceMode.Acceleration);
+
+            // 如果很靠近就收集
+            if (canCollect)
             {
-                var line = activeLines[rb];
-                line.SetPosition(0, rb.position);
-                line.SetPosition(1, collectPoint.position);
-            }
-            
-            if (Vector3.Distance(rb.position, collectPoint.position) < 0.5f)
-            {
+                collectParticle.Play();
                 SpawnType collectedType = rb.GetComponent<SpawnObject>().spawnType;
-                CollectionSystem.CollectItem(collectedType,rb.transform.rotation);
+                CollectionSystem.CollectItem(collectedType, rb.transform.rotation);
+
                 CurrentSpawnRotation = rb.transform.rotation;
-                CurrentSpawnType = collectedType; // 記錄當前收集的 SpawnType
+                CurrentSpawnType = collectedType;
+
                 Debug.Log($"收集了 {CurrentSpawnType}");
-                
                 Destroy(rb.gameObject);
-                
-                if (activeLines.ContainsKey(rb))
-                {
-                    Destroy(activeLines[rb].gameObject);
-                    activeLines.Remove(rb);
-                }
-                
                 attractedObjects.RemoveAt(i);
             }
         }
     }
 
+
+    //判斷吸取範圍
     private bool IsInFront(Transform target)
     {
         Vector3 directionToTarget = (target.position - collectPoint.position).normalized;
         float angle = Vector3.Angle(transform.forward, directionToTarget);
-        return angle < collectAngle * 0.8f; 
+        return angle < collectAngle * 0.8f;
     }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.CompareTag("Collectible"))
+        {
+            canCollect = true;
+        }
+        else
+        {
+            canCollect = false;
+        }
+    }
+
+#if UNITY_EDITOR
+
+    private void OnDrawGizmosSelected()
+    {
+        if (collectPoint == null) return;
+
+        // 畫出中心線
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(collectPoint.position, collectPoint.position + collectPoint.forward * 2f);
+
+        // 畫出扇形範圍
+        Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f); // 橘色半透明
+        DrawViewCone(collectPoint.position, collectPoint.forward, collectAngle * 0.8f, 2f);
+    }
+
+// 幫助方法：畫一個視野範圍（扇形）
+    private void DrawViewCone(Vector3 origin, Vector3 forward, float angle, float distance)
+    {
+        int segments = 20;
+        float step = angle * 2f / segments;
+
+        Vector3 prevPoint = origin + Quaternion.Euler(0, -angle, 0) * forward * distance;
+        for (int i = 1; i <= segments; i++)
+        {
+            float currentAngle = -angle + step * i;
+            Vector3 nextPoint = origin + Quaternion.Euler(0, currentAngle, 0) * forward * distance;
+            Gizmos.DrawLine(origin, nextPoint);
+            Gizmos.DrawLine(prevPoint, nextPoint);
+            prevPoint = nextPoint;
+        }
+    }
+#endif
 }
