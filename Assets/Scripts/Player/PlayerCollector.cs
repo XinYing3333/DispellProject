@@ -5,8 +5,8 @@ using Random = UnityEngine.Random;
 
 public class PlayerCollector : MonoBehaviour
 {
-    public static SpawnType CurrentSpawnType { get; private set; } // 記錄當前收集的物品類型
-    public static Quaternion CurrentSpawnRotation { get; private set; } // 記錄當前收集的物品類型
+    /*public static SpawnType CurrentSpawnType { get; private set; } // 記錄當前收集的物品類型
+    public static Quaternion CurrentSpawnRotation { get; private set; } // 記錄當前收集的物品類型*/
 
     public float collectRadius = 1f;
     public float collectAngle = 90f;
@@ -15,8 +15,6 @@ public class PlayerCollector : MonoBehaviour
 
     private Rigidbody _currentRb;
     
-    private bool canCollect;
-
     private bool isDetectCollect;
     private bool isCollecting;
     [SerializeField] private ParticleSystem captureParticle;
@@ -72,8 +70,8 @@ public class PlayerCollector : MonoBehaviour
         {
             if (IsInFront(collectible.transform))
             {
-                SpawnObject spawnObj = collectible.GetComponent<SpawnObject>();
-                if (spawnObj != null && spawnObj.isCollectable) // 檢查是否可被收集
+                ThoughtObject thoughtObj = collectible.GetComponent<ThoughtObject>();
+                if (thoughtObj != null && thoughtObj.isCollectable) // 檢查是否可被收集
                 {
                     _currentRb = collectible.GetComponent<Rigidbody>();
                     if (_currentRb != null && !attractedObjects.Contains(_currentRb))
@@ -103,21 +101,6 @@ public class PlayerCollector : MonoBehaviour
 
             rb.AddForce(direction * forceMagnitude);
             rb.AddTorque(Random.insideUnitSphere * 2f, ForceMode.Acceleration);
-
-            // 如果很靠近就收集
-            if (canCollect)
-            {
-                collectParticle.Play();
-                SpawnType collectedType = rb.GetComponent<SpawnObject>().spawnType;
-                CollectionSystem.CollectItem(collectedType, rb.transform.rotation);
-
-                CurrentSpawnRotation = rb.transform.rotation;
-                CurrentSpawnType = collectedType;
-
-                Debug.Log($"收集了 {CurrentSpawnType}");
-                Destroy(rb.gameObject);
-                attractedObjects.RemoveAt(i);
-            }
         }
     }
 
@@ -134,11 +117,12 @@ public class PlayerCollector : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Collectible"))
         {
-            canCollect = true;
-        }
-        else
-        {
-            canCollect = false;
+            collectParticle.Play();
+            CollectionSystem.CollectedType collectedType = other.transform.GetComponent<ThoughtObject>().collectedType;
+            CollectionSystem.CollectItem(collectedType);
+                
+            Debug.Log($"收集了 {collectedType}");
+            Destroy(other.gameObject);
         }
     }
 

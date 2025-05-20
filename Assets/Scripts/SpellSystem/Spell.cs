@@ -41,7 +41,7 @@ public class Spell : MonoBehaviour
     
     private void OnTriggerEnter(Collider collision)
     {
-        if (collision.gameObject.TryGetComponent<SpawnObject>(out SpawnObject spawnObject))
+        if (collision.gameObject.TryGetComponent<ThoughtObject>(out ThoughtObject spawnObject))
         {
             spawnObject.ApplyEffect(spellType);
             SpawnTotem();

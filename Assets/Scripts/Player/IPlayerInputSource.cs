@@ -8,7 +8,6 @@ public interface IPlayerInputSource
     bool IsCollecting { get; }
     bool IsAiming { get; }
     bool InteractPressed { get; }
-    ThrowType CurrentThrowType { get; }
 
     bool JumpPressed { get; }
     bool DashPressed { get; }

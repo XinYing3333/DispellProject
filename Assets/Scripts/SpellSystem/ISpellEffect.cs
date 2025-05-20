@@ -1,5 +1,5 @@
 
 public interface ISpellEffect 
 {
-    void ApplyEffect(SpawnObject target);
+    void ApplyEffect(ThoughtObject target);
 }

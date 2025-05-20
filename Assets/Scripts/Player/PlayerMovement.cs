@@ -300,12 +300,12 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private Vector3 GetCameraRelativeMovement(Vector2 input)
+    private Vector3 GetCameraRelativeMovement(Vector2 cameraInput)
     {
         Vector3 cameraForward = cameraTransform.forward;
         Vector3 cameraRight = cameraTransform.right;
         cameraForward.y = 0f;
         cameraRight.y = 0f;
-        return (cameraForward.normalized * input.y + cameraRight.normalized * input.x).normalized;
+        return (cameraForward.normalized * cameraInput.y + cameraRight.normalized * cameraInput.x).normalized;
     }
 }

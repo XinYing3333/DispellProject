@@ -15,7 +15,6 @@ namespace Player
         public bool IsCollecting { get; private set; }
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
-        public ThrowType CurrentThrowType { get; private set; } = ThrowType.Spells;
 
 
         // === Events ===
@@ -77,7 +76,7 @@ namespace Player
             _jump.performed += OnJumpPerformed;
             _dash.performed += OnDashPerformed;
             _shoot.performed += OnShootPerformed;
-            _switch.performed += OnSwitchPerformed;
+           // _switch.performed += OnSwitchPerformed;
         }
 
         private void OnDisable()
@@ -91,7 +90,7 @@ namespace Player
             _jump.performed -= OnJumpPerformed;
             _dash.performed -= OnDashPerformed;
             _shoot.performed -= OnShootPerformed;
-            _switch.performed -= OnSwitchPerformed;
+            //_switch.performed -= OnSwitchPerformed;
         }
 
         void Update()
@@ -141,41 +140,19 @@ namespace Player
             HandleShoot();
         }
 
-        private void OnSwitchPerformed(InputAction.CallbackContext ctx)
+        /*private void OnSwitchPerformed(InputAction.CallbackContext ctx)
         {
             HandleThrowSwitch();
             OnSwitchThrow?.Invoke();
-        }
+        }*/
 
         // ==== Internal Logic ====
-        private void HandleThrowSwitch()
-        {
-            CurrentThrowType = (CurrentThrowType == ThrowType.Spells) ? ThrowType.ThrowableObjects : ThrowType.Spells;
-
-            if (switchImage != null)
-                switchImage.color = (CurrentThrowType == ThrowType.ThrowableObjects) ? Color.white : Color.black;
-        }
 
         private void HandleShoot()
         {
             AudioManager.Instance.PlaySFX(SFXType.Shoot);
-
-            if (CurrentThrowType == ThrowType.ThrowableObjects)
-            {
-                if (CollectionSystem.GetDictionaryCount() > 0)
-                {
-                    _throwingSystem.ThrowObject(CurrentThrowType, _playerCamera);
-                    CollectionSystem.UseItem();
-                }
-                else
-                {
-                    Debug.Log("沒有可用的投擲物");
-                }
-            }
-            else if (CurrentThrowType == ThrowType.Spells)
-            {
-                _throwingSystem.ThrowObject(CurrentThrowType, _playerCamera);
-            }
+            
+            _throwingSystem.ThrowObject(_playerCamera);
         }
 
         public void SetSpellType(SpellType newSpellType)

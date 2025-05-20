@@ -5,12 +5,12 @@ public class AnimatorEffect : InteractionEffect
     public Animator objectAnimator;
     public InteractionTriggerType triggerType = InteractionTriggerType.OnEnter; //觸發條件
 
-    public SpawnType requiredSpawnType; 
+    //public SpawnType requiredSpawnType; 
 
     
-    public override void ExecuteEffect(InteractionPoint interactionPoint, SpawnObject spawnObject, InteractionTriggerType triggerType)
+    public override void ExecuteEffect(InteractionPoint interactionPoint, ThoughtObject thoughtObject, InteractionTriggerType triggerType)
     {
-        if (spawnObject.spawnType != requiredSpawnType) return;
+        //if (thoughObject.spawnType != requiredSpawnType) return;
 
         
         if (objectAnimator != null )//&& this.triggerType == triggerType)
@@ -19,7 +19,7 @@ public class AnimatorEffect : InteractionEffect
             {
                 Debug.Log("Animation triggered");
                 objectAnimator.SetBool("isTrue", true);
-                spawnObject.gameObject.SetActive(false);  // 停止生成或執行特殊邏輯
+                thoughtObject.gameObject.SetActive(false);  // 停止生成或執行特殊邏輯
 
             }
             else
