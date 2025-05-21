@@ -16,6 +16,8 @@ namespace Player
         public bool SkillPressed { get; private set; }
         public bool DashPressed { get; private set; }
         public bool IsCollecting { get; private set; }
+        public bool IsSkillUIOpen { get; private set; }
+
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
 
@@ -38,6 +40,7 @@ namespace Player
         // === Private ===
         private PlayerInput _playerInput;
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim ,_skill;
+        private InputAction _skillUI, _setting;
         private Camera _playerCamera;
         private PlayerCollector _playerCollector;
         private ThrowingSystem _throwingSystem;
@@ -73,6 +76,7 @@ namespace Player
             _interact = _playerInput.actions["Interact"];
             _aim = _playerInput.actions["Aim"];
             _skill = _playerInput.actions["Skill"];
+            _skillUI = _playerInput.actions["SkillUI"];
 
         }
 
@@ -88,6 +92,8 @@ namespace Player
             _dash.performed += OnDashPerformed;
             _shoot.performed += OnShootPerformed;
             _skill.performed += OnSkillPerformed;
+            _skillUI.performed += OnSkillUIPerformed;
+            
            // _switch.performed += OnSwitchPerformed;
         }
 
@@ -103,7 +109,8 @@ namespace Player
             _dash.performed -= OnDashPerformed;
             _shoot.performed -= OnShootPerformed;
             _skill.performed -= OnSkillPerformed;
-
+            _skillUI.performed -= OnSkillUIPerformed;
+            
             //_switch.performed -= OnSwitchPerformed;
         }
 
@@ -146,6 +153,11 @@ namespace Player
         {
             OnSkill?.Invoke();
         }
+        
+        private void OnSkillUIPerformed(InputAction.CallbackContext ctx)
+        {
+            IsSkillUIOpen = !IsSkillUIOpen;
+        }
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
         {
@@ -158,7 +170,8 @@ namespace Player
             OnShoot?.Invoke();
             HandleShoot();
         }
-
+        
+        
         /*private void OnSwitchPerformed(InputAction.CallbackContext ctx)
         {
             HandleThrowSwitch();
@@ -171,7 +184,7 @@ namespace Player
         {
             AudioManager.Instance.PlaySFX(SFXType.Shoot);
             
-            _throwingSystem.ThrowObject(_playerCamera);
+            _throwingSystem.ThrowObject(transform);
         }
 
         public void SetSpellType(SpellType newSpellType)

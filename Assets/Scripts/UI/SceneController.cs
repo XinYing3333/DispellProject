@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 
 public class SceneController : MonoBehaviour
 {
+    [SerializeField]private GameObject settingPanel;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -18,7 +19,7 @@ public class SceneController : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.Escape)) //Close
         {
-            Application.Quit();
+            QuitGame();
         }
     }
     public static void LoadScene(string sceneName)
@@ -29,5 +30,15 @@ public class SceneController : MonoBehaviour
     public static void LoadSceneAsync(string sceneName)
     {
         SceneManager.LoadSceneAsync(sceneName);
+    }
+    
+    public static void QuitGame()
+    {
+        Application.Quit();
+    }
+    
+    public void SetSettingPanel()
+    {
+        settingPanel.SetActive(true);
     }
 }

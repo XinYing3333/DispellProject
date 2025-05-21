@@ -15,7 +15,7 @@ public class ThrowingSystem
         this.throwForce = throwForce;
     }
 
-    public void ThrowObject(Camera camera)
+    public void ThrowObject(Transform player)
     {
         GameObject selectedPrefab = spellPrefab;
 
@@ -25,7 +25,8 @@ public class ThrowingSystem
         if (rb != null)
         {
             // 使用螢幕中心點做射線
-            Ray ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+            //Ray ray = camera.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+            Ray ray = new Ray(player.position, player.forward);
             Vector3 throwDirection = ray.direction;
 
             rb.AddForce(throwDirection * throwForce, ForceMode.Impulse);

@@ -41,10 +41,9 @@ namespace AbilitySystem
             currentAbilityType = type;
             currentAbility.Activate();
         }
-
+        
         public void UseCurrentAbility()
         {
-            Debug.Log(currentAbility);
             currentAbility?.Use();
         }
         
