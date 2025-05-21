@@ -9,8 +9,7 @@ namespace AbilitySystem
         public Animator anim;
         public Transform cameraTransform;
 
-        [SerializeField] private MonoBehaviour inputSourceRef;
-        private IPlayerInputSource input;
+        private PlayerInputHandler input;
 
         private Rigidbody _rb;
 
@@ -18,20 +17,7 @@ namespace AbilitySystem
         [SerializeField] private float movementSpeed = 2f;
         [SerializeField] private float runSpeed = 4f;
         [SerializeField] private float turnSpeed = 10f;
-
-        [Header("Jump Settings")] 
-        [SerializeField] private float jumpForce = 8f;
-        [SerializeField] private int maxJumpCount = 2;
-        private int currentJumpCount = 0;
-
-        [Header("Dash Settings")] 
-        [SerializeField] private float dashSpeed = 12f;
-        [SerializeField] private float dashDuration = 0.2f;
-        [SerializeField] private float dashCooldown = 0.6f;
-
-        private bool canDash = true;
-        private bool isDashing = false;
-
+        
         private Vector3 _rawInputMovement;
         private float _currentSpeed;
 
@@ -40,34 +26,18 @@ namespace AbilitySystem
             _rb = GetComponent<Rigidbody>();
             anim = GetComponent<Animator>();
 
-            input = inputSourceRef as IPlayerInputSource;
-            if (input == null)
-                Debug.LogError("Input source 不符合 IPlayerInputSource");
+            input = PlayerInputHandler.Instance;
+            cameraTransform = Camera.main.transform;
         }
 
         void FixedUpdate()
         {
-            ReadInputState();
             HandleMovement();
         }
-
-        private void ReadInputState()
-        {
-            if (input.JumpPressed && currentJumpCount < maxJumpCount)
-            {
-                HandleJump();
-            }
-
-            if (input.DashPressed && canDash && !isDashing)
-            {
-                StartCoroutine(HandleDash());
-            }
-        }
+        
 
         private void HandleMovement()
         {
-            if (isDashing) return;
-        
             Vector2 inputMovement = input.MoveInput;
             _rawInputMovement = GetCameraRelativeMovement(inputMovement);
             float targetSpeed = Mathf.Lerp(movementSpeed, runSpeed, input.MoveSpeedMultiplier);
@@ -106,58 +76,6 @@ namespace AbilitySystem
             cameraForward.y = 0f;
             cameraRight.y = 0f;
             return (cameraForward.normalized * cameraInput.y + cameraRight.normalized * cameraInput.x).normalized;
-        }
-
-        private void HandleJump()
-        {
-            currentJumpCount++;
-
-            if (currentJumpCount == 1)
-            {
-                anim.SetBool("Jump", true);
-                anim.SetBool("IsDoubleJump", false);
-            }
-            else if (currentJumpCount == 2)
-            {
-                anim.SetBool("IsDoubleJump", true);
-                anim.SetBool("Jump", false);
-            }
-
-            _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, jumpForce, _rb.linearVelocity.z);
-        }
-
-        private IEnumerator HandleDash()
-        {
-            isDashing = true;
-            canDash = false;
-            anim.SetBool("Dash", true);
-
-            Vector3 dashDir = (_rawInputMovement.magnitude > 0.1f) ? _rawInputMovement.normalized : transform.forward;
-
-            float timer = 0f;
-            while (timer < dashDuration)
-            {
-                _rb.linearVelocity = dashDir * dashSpeed;
-                timer += Time.deltaTime;
-                yield return null;
-            }
-
-            _rb.linearVelocity = Vector3.zero;
-            anim.SetBool("Dash", false);
-            isDashing = false;
-
-            yield return new WaitForSeconds(dashCooldown);
-            canDash = true;
-        }
-
-        private void OnCollisionEnter(Collision collision)
-        {
-            if (collision.contacts[0].normal.y > 0.5f)
-            {
-                currentJumpCount = 0;
-                anim.SetBool("Jump", false);
-                anim.SetBool("IsDoubleJump", false);
-            }
         }
     }
 }

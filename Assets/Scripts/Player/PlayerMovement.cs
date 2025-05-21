@@ -1,4 +1,5 @@
 using System.Collections;
+using Player;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -6,8 +7,7 @@ public class PlayerMovement : MonoBehaviour
     public Animator anim;
     public Transform cameraTransform;
     
-    [SerializeField] private MonoBehaviour inputSourceRef;
-    private IPlayerInputSource input;
+    private PlayerInputHandler input;
     
     private Rigidbody _rb;
 
@@ -52,9 +52,9 @@ public class PlayerMovement : MonoBehaviour
         _rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
 
-        input = inputSourceRef as IPlayerInputSource;
+        input = PlayerInputHandler.Instance;
         if (input == null)
-            Debug.LogError("Input source 不符合 IPlayerInputSource");
+            Debug.LogError("沒有獲取input");
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;

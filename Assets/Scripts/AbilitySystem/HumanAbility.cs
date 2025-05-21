@@ -4,17 +4,18 @@ namespace AbilitySystem
 {
     public class HumanAbility : IAbility
     {
-        public enum SyncAbilityState
+        private enum SyncAbilityState
         {
-            Idle,
-            CloneSpawned,
-            Syncing
+            Clone,
+            Moving,
+            Remove
         }
 
-        private SyncAbilityState currentState = SyncAbilityState.Idle;
+        private SyncAbilityState currentState = SyncAbilityState.Clone;
+
         private GameObject cloneInstance;
-        private GameObject clonePrefab; // 指定複製體 prefab
-        private Transform playerTransform;
+        private readonly GameObject clonePrefab;
+        private readonly Transform playerTransform;
 
         public HumanAbility(GameObject clonePrefab, Transform playerTransform)
         {
@@ -24,72 +25,70 @@ namespace AbilitySystem
 
         public void Activate()
         {
-            Debug.Log("同步能力已啟用");
-            currentState = SyncAbilityState.Idle;
+            Debug.Log("同步能力啟用");
+            currentState = SyncAbilityState.Clone;
         }
 
         public void Deactivate()
         {
-            Debug.Log("同步能力已停用");
+            Debug.Log("同步能力停用");
             if (cloneInstance != null)
             {
                 GameObject.Destroy(cloneInstance);
                 cloneInstance = null;
             }
-
-            currentState = SyncAbilityState.Idle;
+            currentState = SyncAbilityState.Clone;
         }
 
         public void Use()
         {
             switch (currentState)
             {
-                case SyncAbilityState.Idle:
-                    SpawnClone();
+                case SyncAbilityState.Clone:
+                    HandleClone();
+                    currentState = SyncAbilityState.Moving;
                     break;
 
-                case SyncAbilityState.CloneSpawned:
-                    StartSync();
+                case SyncAbilityState.Moving:
+                    HandleStartSync();
+                    currentState = SyncAbilityState.Remove;
                     break;
 
-                case SyncAbilityState.Syncing:
-                    DestroyClone();
+                case SyncAbilityState.Remove:
+                    HandleDestroyClone();
+                    currentState = SyncAbilityState.Clone;
                     break;
             }
         }
 
-        private void SpawnClone()
+        private void HandleClone()
         {
+            if (cloneInstance != null) return;
+
             cloneInstance = GameObject.Instantiate(clonePrefab, playerTransform.position, playerTransform.rotation);
             Debug.Log("已生成複製體");
-            currentState = SyncAbilityState.CloneSpawned;
         }
 
-        private void StartSync()
+        private void HandleStartSync()
         {
-            if (cloneInstance != null)
-            {
-                /*var syncController = cloneInstance.GetComponent<CloneSyncController>();
-                if (syncController != null)
-                {
-                    syncController.StartSyncing(playerTransform);
-                    Debug.Log("複製體開始同步動作");
-                }*/
+            if (cloneInstance == null) return;
 
-                currentState = SyncAbilityState.Syncing;
+            // Clone 開始同步邏輯
+            var sync = cloneInstance.GetComponent<CloneMovement>();
+            if (sync != null)
+            {
+                sync.enabled = true;
+                Debug.Log("複製體開始同步");
             }
         }
 
-        private void DestroyClone()
+        private void HandleDestroyClone()
         {
-            if (cloneInstance != null)
-            {
-                GameObject.Destroy(cloneInstance);
-                Debug.Log("複製體已消失");
-                cloneInstance = null;
-            }
+            if (cloneInstance == null) return;
 
-            currentState = SyncAbilityState.Idle;
+            GameObject.Destroy(cloneInstance);
+            Debug.Log("複製體已銷毀");
+            cloneInstance = null;
         }
     }
 }

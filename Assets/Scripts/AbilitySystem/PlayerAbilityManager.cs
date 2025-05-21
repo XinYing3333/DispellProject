@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
+using Player;
 
 namespace AbilitySystem
 {
@@ -8,6 +10,21 @@ namespace AbilitySystem
         private Dictionary<AbilityType, IAbility> abilities = new Dictionary<AbilityType, IAbility>();
         private IAbility currentAbility;
         private AbilityType? currentAbilityType = null;
+
+        void Start()
+        {
+            if (PlayerInputHandler.Instance != null)
+                PlayerInputHandler.Instance.OnSkill += UseCurrentAbility;
+            
+            AddAbility(AbilityType.HumanThought , new HumanAbility(Resources.Load<GameObject>("Prefabs/Ability/ClonePrefab"),transform));
+            SwitchAbility(AbilityType.HumanThought);
+        }
+
+        void OnDisable()
+        {
+            if (PlayerInputHandler.Instance != null)
+                PlayerInputHandler.Instance.OnSkill -= UseCurrentAbility;
+        }
 
         public void AddAbility(AbilityType type, IAbility ability)
         {
@@ -27,6 +44,7 @@ namespace AbilitySystem
 
         public void UseCurrentAbility()
         {
+            Debug.Log(currentAbility);
             currentAbility?.Use();
         }
         

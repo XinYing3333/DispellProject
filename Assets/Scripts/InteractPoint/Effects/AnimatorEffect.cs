@@ -8,18 +8,18 @@ public class AnimatorEffect : InteractionEffect
     //public SpawnType requiredSpawnType; 
 
     
-    public override void ExecuteEffect(InteractionPoint interactionPoint, ThoughtObject thoughtObject, InteractionTriggerType triggerType)
+    public override void ExecuteEffect(InteractionPoint interactionPoint, Spell spell, InteractionTriggerType triggerType)
     {
         //if (thoughObject.spawnType != requiredSpawnType) return;
-
+        Debug.Log("Animation triggered");
         
-        if (objectAnimator != null )//&& this.triggerType == triggerType)
+        /*if (objectAnimator != null )//&& this.triggerType == triggerType)
         {
             if (this.triggerType == triggerType)
             {
                 Debug.Log("Animation triggered");
                 objectAnimator.SetBool("isTrue", true);
-                thoughtObject.gameObject.SetActive(false);  // 停止生成或執行特殊邏輯
+                spell.gameObject.SetActive(false);  // 停止生成或執行特殊邏輯
 
             }
             else
@@ -28,6 +28,6 @@ public class AnimatorEffect : InteractionEffect
 
             }
             
-        }
+        }*/
     }
 }

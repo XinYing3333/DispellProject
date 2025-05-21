@@ -7,10 +7,13 @@ namespace Player
 {
     public class PlayerInputHandler : MonoBehaviour, IPlayerInputSource
     {
+        public static PlayerInputHandler Instance { get; private set; }
+        
         // === Input Properties ===
         public Vector2 MoveInput { get; private set; }
         public float MoveSpeedMultiplier { get; private set; } = 1f;
         public bool JumpPressed { get; private set; }
+        public bool SkillPressed { get; private set; }
         public bool DashPressed { get; private set; }
         public bool IsCollecting { get; private set; }
         public bool IsAiming { get; private set; }
@@ -19,6 +22,7 @@ namespace Player
 
         // === Events ===
         public event Action OnJump;
+        public event Action OnSkill;
         public event Action OnDash;
         public event Action OnShoot;
         public event Action OnSwitchThrow;
@@ -30,17 +34,23 @@ namespace Player
         public Transform throwPoint;
         public float throwForce = 10f;
         public Transform checkPoint;
-        public Image switchImage;
 
         // === Private ===
         private PlayerInput _playerInput;
-        private InputAction _movement, _run, _dash, _jump, _switch, _shoot, _collect, _interact, _aim;
+        private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim ,_skill;
         private Camera _playerCamera;
         private PlayerCollector _playerCollector;
         private ThrowingSystem _throwingSystem;
 
         void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+            
             checkPoint = GameObject.FindGameObjectWithTag("CheckPoint").transform;
             _playerInput = GetComponent<PlayerInput>();
             _playerCollector = GetComponent<PlayerCollector>();
@@ -57,12 +67,13 @@ namespace Player
             _movement = _playerInput.actions["Move"];
             _run = _playerInput.actions["Run"];
             _jump = _playerInput.actions["Jump"];
-            _switch = _playerInput.actions["Switch"];
             _shoot = _playerInput.actions["Shoot"];
             _collect = _playerInput.actions["Collect"];
             _dash = _playerInput.actions["Dash"];
             _interact = _playerInput.actions["Interact"];
             _aim = _playerInput.actions["Aim"];
+            _skill = _playerInput.actions["Skill"];
+
         }
 
         private void OnEnable()
@@ -76,6 +87,7 @@ namespace Player
             _jump.performed += OnJumpPerformed;
             _dash.performed += OnDashPerformed;
             _shoot.performed += OnShootPerformed;
+            _skill.performed += OnSkillPerformed;
            // _switch.performed += OnSwitchPerformed;
         }
 
@@ -90,6 +102,8 @@ namespace Player
             _jump.performed -= OnJumpPerformed;
             _dash.performed -= OnDashPerformed;
             _shoot.performed -= OnShootPerformed;
+            _skill.performed -= OnSkillPerformed;
+
             //_switch.performed -= OnSwitchPerformed;
         }
 
@@ -126,6 +140,11 @@ namespace Player
         {
             JumpPressed = true;
             OnJump?.Invoke();
+        }
+        
+        private void OnSkillPerformed(InputAction.CallbackContext ctx)
+        {
+            OnSkill?.Invoke();
         }
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
