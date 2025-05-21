@@ -1,11 +1,11 @@
 using UnityEngine;
 
-public class SpawnObject : MonoBehaviour
+public class ThoughtObject : MonoBehaviour
 {
     public bool isCollectable;
-    public SpawnType spawnType;
+    public CollectionSystem.CollectedType collectedType;
     
-    private void OnTriggerEnter(Collider other)
+    /*private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
         {
@@ -27,7 +27,7 @@ public class SpawnObject : MonoBehaviour
         {
             interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnExit);  
         }
-    }
+    }*/
     
     public void ApplyEffect(SpellType spellType)
     {

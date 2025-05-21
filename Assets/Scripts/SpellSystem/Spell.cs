@@ -39,14 +39,38 @@ public class Spell : MonoBehaviour
         }
     }
     
-    private void OnTriggerEnter(Collider collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.gameObject.TryGetComponent<SpawnObject>(out SpawnObject spawnObject))
+        if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
+        {
+            interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnEnter);
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
+        {
+            interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnStay);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
+        {
+            interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnExit);
+        }
+    }
+    
+    /*private void OnTriggerEnter(Collider collision)
+    {
+        if (collision.gameObject.TryGetComponent<ThoughtObject>(out ThoughtObject spawnObject))
         {
             spawnObject.ApplyEffect(spellType);
             SpawnTotem();
         }
-    }
+    }*/
 
     private void SpawnTotem()
     {

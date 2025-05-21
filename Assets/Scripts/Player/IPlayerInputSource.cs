@@ -8,9 +8,10 @@ public interface IPlayerInputSource
     bool IsCollecting { get; }
     bool IsAiming { get; }
     bool InteractPressed { get; }
-    ThrowType CurrentThrowType { get; }
 
-    bool JumpPressed { get; }
+    bool JumpPressed { get; }  
+    bool SkillPressed { get; }
+
     bool DashPressed { get; }
 
     void ResetJump();
@@ -20,6 +21,7 @@ public interface IPlayerInputSource
 
 
     event Action OnJump;
+    event Action OnSkill;
     event Action OnDash;
     event Action OnShoot;
     event Action OnSwitchThrow;

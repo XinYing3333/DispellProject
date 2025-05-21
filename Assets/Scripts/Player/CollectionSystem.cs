@@ -5,45 +5,41 @@ using UnityEngine;
 
 public static class CollectionSystem
 {
-    private static Dictionary<string, CollectedItemData> collectedItems = new Dictionary<string, CollectedItemData>();
+    private static Dictionary<string, int> collectedItems = new Dictionary<string, int>();
+
+    public enum CollectedType
+    {
+        Regular,
+        Special
+    }
 
     // 收集物品
-    public static void CollectItem(SpawnType itemName, Quaternion rotation)
+    public static void CollectItem(CollectedType itemName)
     {
         string key = itemName.ToString();
-        Vector3 eulerRotation = rotation.eulerAngles;
 
         if (collectedItems.ContainsKey(key))
         {
-            collectedItems[key].count++;
-            collectedItems[key].rotationEuler = eulerRotation; // 更新為最新的旋轉
+            collectedItems[key]++;
         }
         else
         {
-            collectedItems[key] = new CollectedItemData(1, eulerRotation);
+            collectedItems[key] = 1;
         }
 
-        Debug.Log($"收集到 {key}，數量：{collectedItems[key].count}，朝向：{collectedItems[key].rotationEuler}");
+        Debug.Log($"收集到 {key}，數量：{collectedItems[key]}");
     }
 
-    /*public static Vector3 GetItemRotation(SpawnType itemName)
-    {
-        string key = itemName.ToString();
-        Vector3 eulerRotation = collectedItems[key].rotationEuler;
-        return eulerRotation;
-    }*/
-
-    public static void UseItem()
+    /*public static void UseItem()
     {
         string itemToUse = GetFirstUsableItem();
 
         if (itemToUse != null)
         {
-            CollectedItemData data = collectedItems[itemToUse];
-            data.count--;
-            Debug.Log($"使用 {itemToUse}，剩餘數量：{data.count}");
+            collectedItems[itemToUse]--;
+            Debug.Log($"使用 {itemToUse}，剩餘數量：{collectedItems[itemToUse]}");
 
-            if (data.count == 0)
+            if (collectedItems[itemToUse] == 0)
             {
                 collectedItems.Remove(itemToUse);
                 Debug.Log($"{itemToUse} 已用完，從背包移除！");
@@ -57,17 +53,17 @@ public static class CollectionSystem
 
     public static string GetFirstUsableItem()
     {
-        return collectedItems.FirstOrDefault(item => item.Value.count > 0).Key;
-    }
+        return collectedItems.FirstOrDefault(item => item.Value > 0).Key;
+    }*/
 
-    public static bool HasCollected(SpawnType itemName)
+    public static bool HasCollected(CollectedType itemName)
     {
         return collectedItems.ContainsKey(itemName.ToString());
     }
 
-    public static int GetItemCount(SpawnType itemName)
+    public static int GetItemCount(CollectedType itemName)
     {
-        return collectedItems.TryGetValue(itemName.ToString(), out var data) ? data.count : 0;
+        return collectedItems.TryGetValue(itemName.ToString(), out int count) ? count : 0;
     }
 
     public static int GetDictionaryCount()
@@ -75,9 +71,9 @@ public static class CollectionSystem
         return collectedItems.Count;
     }
 
-    public static Dictionary<string, CollectedItemData> GetAllCollectedItems()
+    public static Dictionary<string, int> GetAllCollectedItems()
     {
-        return new Dictionary<string, CollectedItemData>(collectedItems);
+        return new Dictionary<string, int>(collectedItems);
     }
 
     public static void ClearCollection()
@@ -90,7 +86,7 @@ public static class CollectionSystem
     public static void SaveCollection()
     {
         string savePath = Application.persistentDataPath + "/collectionData.json";
-        string json = JsonUtility.ToJson(new Serialization<string, CollectedItemData>(collectedItems));
+        string json = JsonUtility.ToJson(new Serialization<string, int>(collectedItems));
         File.WriteAllText(savePath, json);
         Debug.Log("收集數據已保存：" + savePath);
     }
@@ -101,7 +97,7 @@ public static class CollectionSystem
         if (File.Exists(savePath))
         {
             string json = File.ReadAllText(savePath);
-            collectedItems = JsonUtility.FromJson<Serialization<string, CollectedItemData>>(json).ToDictionary();
+            collectedItems = JsonUtility.FromJson<Serialization<string, int>>(json).ToDictionary();
             Debug.Log("收集數據已加載");
         }
         else
@@ -111,19 +107,7 @@ public static class CollectionSystem
     }
 }
 
-[System.Serializable]
-public class CollectedItemData
-{
-    public int count;
-    public Vector3 rotationEuler;
-
-    public CollectedItemData(int count, Vector3 rotation)
-    {
-        this.count = count;
-        this.rotationEuler = rotation;
-    }
-}
-
+// ==== 只保留序列化輔助類 ====
 [System.Serializable]
 public class Serialization<TKey, TValue>
 {

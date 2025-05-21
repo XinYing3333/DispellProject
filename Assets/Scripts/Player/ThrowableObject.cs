@@ -7,7 +7,6 @@ public class ThrowableObject : MonoBehaviour
     public GameObject fxPrefab;        // FX 特效的 Prefab
     private bool fxSpawned = false;    // 控制 FX 只生成一次
 
-    private SpawnType spawnType;
     private float lifeTime = 1f; 
     private float counter;
     private bool hasSpawned = false;
@@ -22,7 +21,7 @@ public class ThrowableObject : MonoBehaviour
         counter -= Time.deltaTime;  // 減少計時器
         if (counter <= 0)
         {
-            SpawnItem();  // 時間到後生成物件與特效
+            //SpawnItem();  // 時間到後生成物件與特效
         }
     }
 
@@ -30,12 +29,12 @@ public class ThrowableObject : MonoBehaviour
     {
         if (collision.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
         {
-            SpawnItem();  // 生成物件
+            //SpawnItem();  // 生成物件
             Destroy(gameObject);  // 移除自身
         }
     }
 
-    void SpawnItem()
+    /*void SpawnItem()
     {
         if (hasSpawned) return;  // 確保只執行一次
         hasSpawned = true;
@@ -56,5 +55,6 @@ public class ThrowableObject : MonoBehaviour
 
         Destroy(gameObject, 1.5f);  // 投擲物消失
     }
+    */
 
 }

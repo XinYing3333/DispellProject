@@ -1,4 +1,5 @@
 using System.Collections;
+using Player;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -6,8 +7,7 @@ public class PlayerMovement : MonoBehaviour
     public Animator anim;
     public Transform cameraTransform;
     
-    [SerializeField] private MonoBehaviour inputSourceRef;
-    private IPlayerInputSource input;
+    private PlayerInputHandler input;
     
     private Rigidbody _rb;
 
@@ -52,9 +52,9 @@ public class PlayerMovement : MonoBehaviour
         _rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
 
-        input = inputSourceRef as IPlayerInputSource;
+        input = PlayerInputHandler.Instance;
         if (input == null)
-            Debug.LogError("Input source 不符合 IPlayerInputSource");
+            Debug.LogError("沒有獲取input");
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
@@ -262,10 +262,11 @@ public class PlayerMovement : MonoBehaviour
     {
         anim.SetBool("IsLedgeGrabbing", false);
 
-        yield return new WaitForSeconds(3.27f / 2);
+        yield return new WaitForSeconds(3.6f / 2);
         if (isGrabbing)
         {
-            transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y * 0.5f + 0.03f, transform.position.z);
+            transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y 
+                * 0.5f + 0.03f, transform.position.z);
             transform.position += transform.forward;
             _rb.useGravity = true;
         }
@@ -299,12 +300,12 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private Vector3 GetCameraRelativeMovement(Vector2 input)
+    private Vector3 GetCameraRelativeMovement(Vector2 cameraInput)
     {
         Vector3 cameraForward = cameraTransform.forward;
         Vector3 cameraRight = cameraTransform.right;
         cameraForward.y = 0f;
         cameraRight.y = 0f;
-        return (cameraForward.normalized * input.y + cameraRight.normalized * input.x).normalized;
+        return (cameraForward.normalized * cameraInput.y + cameraRight.normalized * cameraInput.x).normalized;
     }
 }
