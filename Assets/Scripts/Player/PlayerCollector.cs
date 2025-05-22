@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -118,8 +119,9 @@ public class PlayerCollector : MonoBehaviour
         if (other.gameObject.CompareTag("Collectible"))
         {
             if(!isCollecting)return;
-
+            
             collectParticle.Play();
+            
             CollectionSystem.CollectedType collectedType = other.transform.GetComponent<ThoughtObject>().collectedType;
             CollectionSystem.CollectItem(collectedType);
                 
@@ -127,7 +129,7 @@ public class PlayerCollector : MonoBehaviour
             Destroy(other.gameObject);
         }
     }
-
+    
 #if UNITY_EDITOR
 
     private void OnDrawGizmosSelected()

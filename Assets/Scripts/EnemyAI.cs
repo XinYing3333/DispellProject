@@ -17,12 +17,14 @@ public class EnemyAI : MonoBehaviour
 
     private ThoughtObject thoughtScript;
     private NavMeshAgent agent;
+    private MeshRenderer mesh;
 
     void Start()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
         thoughtScript = GetComponent<ThoughtObject>();
+        mesh = GetComponent<MeshRenderer>();
     }
 
     void Update()
@@ -47,11 +49,16 @@ public class EnemyAI : MonoBehaviour
         agent.isStopped = true;
         thoughtScript.enabled = true;
         Debug.Log("Stunned");
+        mesh.material.color = Color.yellow;
+        transform.tag = "Collectible";
         
         yield return new WaitForSeconds(stunTime);
         
         thoughtScript.enabled = false;
         _isStunned = false;
+        mesh.material.color = new Color(0.7937579f, 0f, 1f);
+        transform.tag = "Untagged";
+
     }
     
     private void OnTriggerEnter(Collider other)

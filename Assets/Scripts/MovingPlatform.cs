@@ -16,7 +16,6 @@ public class MovingPlatform : MonoBehaviour
 
     private float _timeToWaypoint;
     private float _elapsedTime;
-    private bool isStart = false;
 
     void Start()
     {

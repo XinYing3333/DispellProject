@@ -31,7 +31,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float grabOffset = 0.5f; // 微調吸到邊的偏移
     [SerializeField] private float grabDetectionHeight = 1.2f; // 玩家高於這個點才能抓
     [SerializeField] private float ledgeCheckDistance = 0.5f; // 檢測前方距離
-    [SerializeField] private float climbSpeed = 2f; // 抓牆時左右移動速度
     private bool isGrabbing;
     private bool isFinishClimb;
     private Collider currentCollider;
@@ -40,7 +39,6 @@ public class PlayerMovement : MonoBehaviour
     private bool canDash = true;
     private bool isDashing = false;
     
-    private bool isMoving = false;
     private bool isFootstepPlaying = false;
     private bool isOnGround = false;
     
@@ -103,9 +101,9 @@ public class PlayerMovement : MonoBehaviour
         _rawInputMovement = GetCameraRelativeMovement(inputMovement);
         float targetSpeed = Mathf.Lerp(movementSpeed, runSpeed, input.MoveSpeedMultiplier);
         
-        if (input.IsAiming)
+        if (input.IsCollecting)
         {
-            _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed/1.5f, Time.deltaTime * 10f);
+            _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed/2f, Time.deltaTime * 10f);
 
         }
         else
@@ -113,7 +111,8 @@ public class PlayerMovement : MonoBehaviour
             _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, Time.deltaTime * 10f);
         }
 
-        anim.SetFloat("Speed", _rawInputMovement.magnitude < 0.1f ? 0f : Mathf.Lerp(anim.GetFloat("Speed"), _rawInputMovement.magnitude * (targetSpeed / runSpeed), Time.deltaTime * 10f));
+        anim.SetFloat("Speed", _rawInputMovement.magnitude < 0.1f ? 
+            0f : Mathf.Lerp(anim.GetFloat("Speed"), _rawInputMovement.magnitude * (targetSpeed / runSpeed), Time.deltaTime * 10f));
         
         Vector3 moveDirection = _rawInputMovement * (_currentSpeed * Time.deltaTime);
         _rb.MovePosition(_rb.position + moveDirection);
@@ -127,11 +126,6 @@ public class PlayerMovement : MonoBehaviour
                 _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
 
             }
-        }
-
-        if (_rawInputMovement.magnitude < 0.01f)
-        {
-            isMoving = false;
         }
     }
     
@@ -261,7 +255,7 @@ public class PlayerMovement : MonoBehaviour
     private IEnumerator ReleaseLedge()
     {
         anim.SetBool("IsLedgeGrabbing", false);
-
+        input.ResetJump();
         yield return new WaitForSeconds(3.6f / 2);
         if (isGrabbing)
         {
@@ -270,7 +264,6 @@ public class PlayerMovement : MonoBehaviour
             transform.position += transform.forward;
             _rb.useGravity = true;
         }
-        input.ResetJump();
         isGrabbing = false;
     }
 
