@@ -117,6 +117,8 @@ public class PlayerCollector : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Collectible"))
         {
+            if(!isCollecting)return;
+
             collectParticle.Play();
             CollectionSystem.CollectedType collectedType = other.transform.GetComponent<ThoughtObject>().collectedType;
             CollectionSystem.CollectItem(collectedType);
