@@ -170,6 +170,7 @@ MonoBehaviour:
   _waypointPath: {fileID: 0}
   parentTransform: {fileID: 1857651017}
   _speed: 0
+  waitTimeAtWaypoint: 1.2
 --- !u!1001 &70891001
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1312,15 +1313,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anim: {fileID: 222922654}
   cameraTransform: {fileID: 1776491448}
-  inputSourceRef: {fileID: 1244809890}
   movementSpeed: 2
   runSpeed: 4.5
   turnSpeed: 20
-  jumpForce: 10
-  maxJumpCount: 2
-  dashSpeed: 12
-  dashDuration: 0.2
-  dashCooldown: 0.6
 --- !u!1001 &235973816
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6038,6 +6033,7 @@ MonoBehaviour:
   _waypointPath: {fileID: 0}
   parentTransform: {fileID: 1733368648}
   _speed: 0
+  waitTimeAtWaypoint: 1.2
 --- !u!1 &1104836065
 GameObject:
   m_ObjectHideFlags: 3
@@ -7294,7 +7290,7 @@ PrefabInstance:
     - target: {fileID: 1182836783596607037, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: fbe7cdc0386863a498573c4d7013d8d6, type: 2}
+      objectReference: {fileID: 2100000, guid: 2d7d29506687cad478d196c61fc86e12, type: 2}
     - target: {fileID: 1462329253290889169, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: -4.4384294
@@ -7322,7 +7318,7 @@ PrefabInstance:
     - target: {fileID: 1511374084949595526, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: fbe7cdc0386863a498573c4d7013d8d6, type: 2}
+      objectReference: {fileID: 2100000, guid: 2d7d29506687cad478d196c61fc86e12, type: 2}
     - target: {fileID: 1524433454819391818, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: -5.0692067
@@ -7402,7 +7398,7 @@ PrefabInstance:
     - target: {fileID: 2540380136212149696, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: fbe7cdc0386863a498573c4d7013d8d6, type: 2}
+      objectReference: {fileID: 2100000, guid: 2d7d29506687cad478d196c61fc86e12, type: 2}
     - target: {fileID: 2990754574666503684, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0.000015613594
@@ -7722,11 +7718,11 @@ PrefabInstance:
     - target: {fileID: 7716477437071351217, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: fbe7cdc0386863a498573c4d7013d8d6, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 7716477437071351217, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
-      objectReference: {fileID: 2100000, guid: fbe7cdc0386863a498573c4d7013d8d6, type: 2}
+      objectReference: {fileID: 2100000, guid: 2d7d29506687cad478d196c61fc86e12, type: 2}
     - target: {fileID: 7822444256734397731, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 16.719177
@@ -8724,6 +8720,7 @@ MonoBehaviour:
   _waypointPath: {fileID: 0}
   parentTransform: {fileID: 708460977}
   _speed: 0
+  waitTimeAtWaypoint: 1.2
 --- !u!1 &1417785027 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -2725171762418766391, guid: 4e1502b23f395dd4bb995c4de761145a, type: 3}
@@ -8765,6 +8762,7 @@ MonoBehaviour:
   _waypointPath: {fileID: 0}
   parentTransform: {fileID: 522120918}
   _speed: 0
+  waitTimeAtWaypoint: 1.2
 --- !u!1001 &1426243895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14132,6 +14130,7 @@ MonoBehaviour:
   _waypointPath: {fileID: 0}
   parentTransform: {fileID: 629343799}
   _speed: 0
+  waitTimeAtWaypoint: 1.2
 --- !u!4 &2137384687 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6551334739737705199, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
