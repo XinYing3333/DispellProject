@@ -10,12 +10,11 @@ public class EnemyAI : MonoBehaviour
     [Header("General Settings")]
     public AttackMode attackMode = AttackMode.Idle;
     public Transform target;
-    public float detectionRange = 2f;
+    public float detectionRange = 5f;
     
     public float stunTime = 2f;
     private bool _isStunned = false;
 
-    private ThoughtObject thoughtScript;
     private NavMeshAgent agent;
     private MeshRenderer mesh;
 
@@ -23,7 +22,6 @@ public class EnemyAI : MonoBehaviour
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
-        thoughtScript = GetComponent<ThoughtObject>();
         mesh = GetComponent<MeshRenderer>();
     }
 
@@ -47,14 +45,12 @@ public class EnemyAI : MonoBehaviour
     {
         _isStunned = true;
         agent.isStopped = true;
-        thoughtScript.enabled = true;
         Debug.Log("Stunned");
         mesh.material.color = Color.yellow;
         transform.tag = "Collectible";
         
         yield return new WaitForSeconds(stunTime);
         
-        thoughtScript.enabled = false;
         _isStunned = false;
         mesh.material.color = new Color(0.7937579f, 0f, 1f);
         transform.tag = "Untagged";

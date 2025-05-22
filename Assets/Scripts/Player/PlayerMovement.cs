@@ -56,9 +56,14 @@ public class PlayerMovement : MonoBehaviour
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+        
     }
 
-
+    void Update()
+    {
+        SetAnimatorLayerWeight("Upper", input.IsCollecting ? 1f : 0f);
+    }
+    
     void FixedUpdate()
     {
         if (!isGrabbing)
@@ -92,6 +97,15 @@ public class PlayerMovement : MonoBehaviour
         
         UpdateFootstepAudio();
     }
+    
+    private void SetAnimatorLayerWeight(string layerName, float weight)
+    {
+        int layerIndex = anim.GetLayerIndex(layerName);
+        if (layerIndex != -1)
+        {
+            anim.SetLayerWeight(layerIndex, weight);
+        }
+    }
 
     private void OnMovement()
     {
@@ -120,12 +134,8 @@ public class PlayerMovement : MonoBehaviour
         if (_rawInputMovement.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(_rawInputMovement);
-            if (!input.IsAiming)
-            {
-                
-                _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
-
-            }
+            
+            _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
         }
     }
     
