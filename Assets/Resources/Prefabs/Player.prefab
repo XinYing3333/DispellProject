@@ -129,7 +129,6 @@ MonoBehaviour:
   throwPoint: {fileID: 2194343288844909621}
   throwForce: 10
   checkPoint: {fileID: 0}
-  switchImage: {fileID: 0}
 --- !u!114 &2222260344463854279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -251,6 +250,14 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: d9deed7a-052c-4cb5-b52d-3cfa7abb15f6
     m_ActionName: 'Player/Dash[/Keyboard/ctrl,/XInputControllerWindows/buttonWest]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 1361c88a-c2b0-4f77-8833-22cf44881bb8
+    m_ActionName: 'Player/Skill[/Keyboard/f]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: de578ec5-005a-48b6-8ca8-f15644730b51
+    m_ActionName: 'Player/SkillUI[/Keyboard/tab]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -270,7 +277,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anim: {fileID: 6132482211437129219}
   cameraTransform: {fileID: 0}
-  inputSourceRef: {fileID: 1872362274397396953}
   movementSpeed: 2
   runSpeed: 4.5
   turnSpeed: 20
@@ -279,6 +285,13 @@ MonoBehaviour:
   dashSpeed: 12
   dashDuration: 0.2
   dashCooldown: 0.6
+  ledgeLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  grabOffset: 0.5
+  grabDetectionHeight: 1.2
+  ledgeCheckDistance: 0.5
+  climbSpeed: 2
 --- !u!114 &565717469823576011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,16 +304,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97a84d8fb0377384b9294126cb66fc8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lineRendererPrefab: {fileID: 0}
-  pickupVFX: {fileID: 0}
-  shrinkSpeed: 3
   collectRadius: 1
   collectAngle: 100
-  attractionSpeed: 3
   collectibleLayer:
     serializedVersion: 2
     m_Bits: 64
   collectPoint: {fileID: 6551334739737705199}
+  captureParticle: {fileID: 0}
+  captureParticle2: {fileID: 0}
+  collectParticle: {fileID: 0}
 --- !u!114 &3173126410757870351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -616,8 +628,8 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8e64b1ba9a56c73489019b125e9ef867, type: 2}
-  - {fileID: 2100000, guid: 31040c90c8aa5ce4c8a2bb914196caaa, type: 2}
+  - {fileID: 2100000, guid: 2d7d29506687cad478d196c61fc86e12, type: 2}
+  - {fileID: 2100000, guid: 35dbcdbe1d024fc4d985311782c204bb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1499,7 +1511,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b4997b452d1680547956f2bf17681a5a, type: 2}
+  - {fileID: 2100000, guid: 43ea07c6e0ca0d44082191c44af2df8f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1838,7 +1850,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9af4fe068770f134088324680788e440, type: 2}
+  - {fileID: 2100000, guid: 43ea07c6e0ca0d44082191c44af2df8f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2660,7 +2672,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9af4fe068770f134088324680788e440, type: 2}
+  - {fileID: 2100000, guid: 43ea07c6e0ca0d44082191c44af2df8f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
