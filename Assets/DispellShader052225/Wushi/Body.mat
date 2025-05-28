@@ -7,7 +7,11 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+<<<<<<<< HEAD:Assets/DispellShader052225/Wushi/Body.mat
   m_Name: Body
+========
+  m_Name: Jacket
+>>>>>>>> origin/cadie:Assets/DispellShader052225/Wushi/Jacket.mat
   m_Shader: {fileID: -6465566751694194690, guid: 05f7f85dd4ce06640b3ca166e8126095, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -46,12 +50,21 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+<<<<<<<< HEAD:Assets/DispellShader052225/Wushi/Body.mat
     - _Highlight: 0.15
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Reflect: 1.87
     m_Colors:
     - _Color: {r: 1, g: 0.7590451, b: 0, a: 0}
+========
+    - _Highlight: 0.092
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _Reflect: 1.69
+    m_Colors:
+    - _Color: {r: 1, g: 0.79047215, b: 0, a: 0}
+>>>>>>>> origin/cadie:Assets/DispellShader052225/Wushi/Jacket.mat
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
     - _ReflectColor: {r: 0.7830189, g: 0.20978993, b: 0.20978993, a: 0}
   m_BuildTextureStacks: []
