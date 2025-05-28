@@ -10,7 +10,7 @@ public class EnemyAI : MonoBehaviour
     [Header("General Settings")]
     public AttackMode attackMode = AttackMode.Idle;
     public Transform target;
-    public float detectionRange = 5f;
+    public float detectionRange = 10f;
     
     public float stunTime = 2f;
     private bool _isStunned = false;

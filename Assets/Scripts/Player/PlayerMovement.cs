@@ -19,6 +19,9 @@ public class PlayerMovement : MonoBehaviour
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 8f;
     [SerializeField] private int maxJumpCount = 2;
+    [SerializeField] private PhysicsMaterial defaultMaterial;
+    [SerializeField] private PhysicsMaterial noFrictionMaterial;
+    private Collider _playerCollider;
     private int currentJumpCount = 0;
 
     [Header("Dash Settings")]
@@ -49,6 +52,7 @@ public class PlayerMovement : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
+        _playerCollider = GetComponent<Collider>();
 
         input = PlayerInputHandler.Instance;
         if (input == null)
@@ -207,6 +211,7 @@ public class PlayerMovement : MonoBehaviour
         }
         
         _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, jumpForce, _rb.linearVelocity.z);
+        Debug.Log($"{_rb.linearVelocity.x},{jumpForce},{_rb.linearVelocity.z}");
     }
     
     private IEnumerator DashCoroutine()
