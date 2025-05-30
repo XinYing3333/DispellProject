@@ -211,7 +211,6 @@ public class PlayerMovement : MonoBehaviour
         }
         
         _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, jumpForce, _rb.linearVelocity.z);
-        Debug.Log($"{_rb.linearVelocity.x},{jumpForce},{_rb.linearVelocity.z}");
     }
     
     private IEnumerator DashCoroutine()
