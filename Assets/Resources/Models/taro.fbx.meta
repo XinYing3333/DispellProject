@@ -7,8 +7,13 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: lambert2
+    second: {fileID: 2100000, guid: b0d41d816a143714f951671a51f16603, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: lambert3
-    second: {fileID: 2100000, guid: d4066047576ba5f4fa0adfa56c17d607, type: 2}
+    second: {fileID: 2100000, guid: e4d14a701e382124e87b90580d800b8a, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -21,8 +26,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 

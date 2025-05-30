@@ -7,31 +7,33 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: White
-  m_Shader: {fileID: -6465566751694194690, guid: e690dd5c2a9b6eb45992af3e720597cc, type: 3}
+  m_Name: Foliage 1
+  m_Shader: {fileID: -6465566751694194690, guid: 53d1fb25f1a290c488df258b4c7c1f8d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ALPHATEST_ON
+  - _SPECULAR_SETUP
+  - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
   m_LightmapFlags: 2
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap:
-    RenderType: TransparentCutout
+    RenderType: Transparent
   disabledShaderPasses:
   - MOTIONVECTORS
+  - DepthOnly
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _SampleTexture2D_1203a55f28924de39a8849318569deeb_Texture_1_Texture2D:
-        m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
+    - _Texture2D:
+        m_Texture: {fileID: 2800000, guid: 37639fb43f1ee9649aad1cae03d97e8f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Texture:
-        m_Texture: {fileID: 2800000, guid: fa3ab8700e76078459226585fbf3dd5a, type: 3}
+    - _WindVertexDisplacementSubGraph_5f54dfadb5694df981c2efc3c861fd38_NoiseTexture_3733225736_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 1a78818c4cd6a674a9d946683e38cd57, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -48,28 +50,42 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaClip: 1
-    - _AlphaToMask: 1
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _BillboardSize: 0.04
     - _Blend: 0
-    - _BlendModePreserveSpecular: 1
+    - _BlendModePreserveSpecular: 0
     - _CastShadows: 1
     - _Cull: 0
-    - _DstBlend: 0
+    - _DstBlend: 10
+    - _EmissionPower: -1
+    - _Inflate: 0
+    - _JitterScale: 2
+    - _PositionScale: 0.1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _SrcBlend: 1
-    - _Surface: 0
-    - _WorkflowMode: 1
+    - _RotationScale: 11.83
+    - _RotationScrollSpeed: 0.36
+    - _RotationSpeed: 0.01
+    - _RotationStrengh: 2
+    - _Smoothness: 0.82
+    - _SrcBlend: 5
+    - _Surface: 1
+    - _TextureSize: 3.45
+    - _WindJitter: 0
+    - _WindScale: 0
+    - _WindScroll: 0
+    - _WorkflowMode: 0
     - _ZTest: 4
-    - _ZWrite: 1
+    - _ZWrite: 0
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 0}
-    - _OutlineColor: {r: 1, g: 1, b: 1, a: 0}
+    - _Color: {r: 0.6584221, g: 0.9924528, b: 0.49248126, a: 0.454902}
+    - _EmissionColor: {r: 0.70615286, g: 1, b: 0.073584795, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &4125316218869781698
+--- !u!114 &5373710250384104421
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

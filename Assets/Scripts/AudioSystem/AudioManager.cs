@@ -61,9 +61,7 @@ public class AudioManager : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log(PlayerPrefs.GetFloat("BGMVolume", bgmVolume));
-        Debug.Log(PlayerPrefs.GetFloat("SFXVolume", sfxVolume));
-
+       
     }
 
     private void LoadAudioClips()
