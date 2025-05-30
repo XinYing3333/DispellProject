@@ -1,20 +1,33 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
 
     [Header("AudioSources")]
-    public AudioSource bgmSource; // 背景音樂播放器
-    public AudioSource sfxSource; // 音效播放器
-    public AudioSource sfxLoopSource; // 音效播放器
+    public AudioSource bgmSource;
+    public AudioSource sfxSource;
+    public AudioSource sfxLoopSource;
 
-    private Dictionary<SFXType, AudioClip> sfxLibrary = new Dictionary<SFXType, AudioClip>();
-    private Dictionary<BGMType, AudioClip> bgmLibrary = new Dictionary<BGMType, AudioClip>();
+    [Header("Audio Mixer")]
+    public AudioMixer audioMixer;
+    public string bgmParam = "BGM";
+    public string sfxParam = "SFX";
+
+    [Header("Volume UI Sliders")]
+    public Slider bgmSlider;
+    public Slider sfxSlider;
+
+    private Dictionary<SFXType, AudioClip> sfxLibrary = new();
+    private Dictionary<BGMType, AudioClip> bgmLibrary = new();
 
     [Header("Volume Settings")]
-    [Range(0f, 1f)] public float musicVolume = 1f;
+    [Range(0f, 1f)] public float bgmVolume = 1f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
 
     private void Awake()
@@ -22,46 +35,76 @@ public class AudioManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // 確保音頻管理器不被刪除
+            DontDestroyOnLoad(gameObject);
             LoadAudioClips();
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
+
+        /*LoadVolumePref();
+        ApplyVolumes();*/
+
+        if (bgmSlider != null) bgmSlider.onValueChanged.AddListener(SetBGMVolume);
+        if (sfxSlider != null) sfxSlider.onValueChanged.AddListener(SetSFXVolume);
+        
+        //PlayBGM(BGMType.MainMenu);
     }
 
-    // **自動加載 Resources/Audio 內的音效**
+    private void Start()
+    {
+        LoadVolumePref();
+        ApplyVolumes();
+    }
+
+    private void Update()
+    {
+        Debug.Log(PlayerPrefs.GetFloat("BGMVolume", bgmVolume));
+        Debug.Log(PlayerPrefs.GetFloat("SFXVolume", sfxVolume));
+
+    }
+
     private void LoadAudioClips()
     {
         foreach (SFXType sfx in System.Enum.GetValues(typeof(SFXType)))
         {
             AudioClip clip = Resources.Load<AudioClip>($"Audios/SFX/{sfx}");
             if (clip != null)
-            {
                 sfxLibrary[sfx] = clip;
-            }
         }
 
         foreach (BGMType bgm in System.Enum.GetValues(typeof(BGMType)))
         {
             AudioClip clip = Resources.Load<AudioClip>($"Audios/BGM/{bgm}");
             if (clip != null)
-            {
                 bgmLibrary[bgm] = clip;
-            }
         }
     }
 
-    // **播放 BGM**
+    public void LoadVolumePref()
+    {
+        bgmVolume = PlayerPrefs.GetFloat("BGMVolume", bgmVolume);
+        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", sfxVolume);
+    }
+
+    private void ApplyVolumes()
+    {
+        if (bgmSlider != null) bgmSlider.value = bgmVolume;
+        if (sfxSlider != null) sfxSlider.value = sfxVolume;
+        
+        SetBGMVolume(bgmVolume);
+        SetSFXVolume(sfxVolume);
+    }
+
     public void PlayBGM(BGMType bgmType)
     {
         if (bgmLibrary.TryGetValue(bgmType, out AudioClip bgmClip))
         {
-            if (bgmSource.clip == bgmClip && bgmSource.isPlaying) return; // 避免重複播放
+            if (bgmSource.clip == bgmClip && bgmSource.isPlaying) return;
             bgmSource.clip = bgmClip;
             bgmSource.loop = true;
-            bgmSource.volume = musicVolume;
             bgmSource.Play();
         }
         else
@@ -69,19 +112,15 @@ public class AudioManager : MonoBehaviour
             Debug.LogWarning($"BGM {bgmType} 未找到！");
         }
     }
-    
-    public void StopBGM()
-    {
-        bgmSource.Stop();
-    }
 
-    // **播放音效**
+    public void StopBGM() => bgmSource.Stop();
+
     public void PlaySFXLoop(SFXType sfxType)
     {
         if (sfxLibrary.TryGetValue(sfxType, out AudioClip sfxClip))
         {
             sfxLoopSource.clip = sfxClip;
-            sfxLoopSource.volume = sfxVolume;
+            sfxLoopSource.loop = true;
             sfxLoopSource.Play();
         }
         else
@@ -89,35 +128,35 @@ public class AudioManager : MonoBehaviour
             Debug.LogWarning($"SFX {sfxType} 未找到！");
         }
     }
-    
-    public void StopSFXLoop()
+
+    public void StopSFXLoop() => sfxLoopSource.Stop();
+
+    public void Test()//---------------------------------------------------------------------------------
     {
-        sfxLoopSource.Stop();
+        PlaySFX(SFXType.Shoot);
     }
-    
+
     public void PlaySFX(SFXType sfxType)
     {
         if (sfxLibrary.TryGetValue(sfxType, out AudioClip sfxClip))
-        {
-            sfxSource.PlayOneShot(sfxClip, sfxVolume);
-        }
+            sfxSource.PlayOneShot(sfxClip);
         else
-        {
             Debug.LogWarning($"SFX {sfxType} 未找到！");
-        }
     }
 
-    // **調整音量**
-    public void SetMusicVolume(float volume)
+    public void SetBGMVolume(float value)
     {
-        musicVolume = volume;
-        bgmSource.volume = musicVolume;
-        PlayerPrefs.SetFloat("MusicVolume", musicVolume);
+        bgmVolume = value;
+        float dB = Mathf.Lerp(-80f, 0f, value);
+        audioMixer.SetFloat(bgmParam, dB);
+        PlayerPrefs.SetFloat("BGMVolume", bgmVolume);
     }
 
-    public void SetSFXVolume(float volume)
+    public void SetSFXVolume(float value)
     {
-        sfxVolume = volume;
+        sfxVolume = value;
+        float dB = Mathf.Lerp(-80f, 0f, value);
+        audioMixer.SetFloat(sfxParam, dB);
         PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
     }
 }

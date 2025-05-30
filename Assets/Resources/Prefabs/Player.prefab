@@ -129,7 +129,6 @@ MonoBehaviour:
   throwPoint: {fileID: 2194343288844909621}
   throwForce: 10
   checkPoint: {fileID: 0}
-  switchImage: {fileID: 0}
 --- !u!114 &2222260344463854279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,7 +269,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anim: {fileID: 6132482211437129219}
   cameraTransform: {fileID: 0}
-  inputSourceRef: {fileID: 1872362274397396953}
   movementSpeed: 2
   runSpeed: 4.5
   turnSpeed: 20
@@ -279,6 +277,12 @@ MonoBehaviour:
   dashSpeed: 12
   dashDuration: 0.2
   dashCooldown: 0.6
+  ledgeLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  grabOffset: 0.5
+  grabDetectionHeight: 1.2
+  ledgeCheckDistance: 0.5
 --- !u!114 &565717469823576011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,16 +295,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97a84d8fb0377384b9294126cb66fc8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lineRendererPrefab: {fileID: 0}
-  pickupVFX: {fileID: 0}
-  shrinkSpeed: 3
   collectRadius: 1
-  collectAngle: 100
-  attractionSpeed: 3
+  collectAngle: 90
   collectibleLayer:
     serializedVersion: 2
     m_Bits: 64
   collectPoint: {fileID: 6551334739737705199}
+  captureParticle: {fileID: 0}
+  captureParticle2: {fileID: 0}
+  collectParticle: {fileID: 0}
 --- !u!114 &3173126410757870351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -376,7 +379,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &1680932206411122352

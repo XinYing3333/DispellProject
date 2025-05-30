@@ -50,7 +50,12 @@ MonoBehaviour:
   bgmSource: {fileID: 781527380855813169}
   sfxSource: {fileID: 8928780081815975508}
   sfxLoopSource: {fileID: 1583921491255994941}
-  musicVolume: 1
+  audioMixer: {fileID: 24100000, guid: b4d60b8408e09a94e9ee0e6a5864b896, type: 2}
+  bgmParam: BGMVolume
+  sfxParam: SFXVolume
+  bgmSlider: {fileID: 0}
+  sfxSlider: {fileID: 0}
+  bgmVolume: 1
   sfxVolume: 1
 --- !u!1 &5466592176199971821
 GameObject:
@@ -222,7 +227,7 @@ AudioSource:
   m_GameObject: {fileID: 7860185389587070205}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -7333652366214089299, guid: b4d60b8408e09a94e9ee0e6a5864b896, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
@@ -351,7 +356,7 @@ AudioSource:
   m_GameObject: {fileID: 8181532026131163742}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 7251553455227377457, guid: b4d60b8408e09a94e9ee0e6a5864b896, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0

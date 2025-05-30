@@ -14,15 +14,15 @@ public class PushLevel : MonoBehaviour
     void Update()
     {
         bool isPush = playerInRange && cloneInRange;
-        rb.mass = isPush ? 200f : 1000f;
+        rb.mass = isPush ? 150f : 2000f;
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerStay(Collider collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        if (collision.CompareTag("Player"))
             playerInRange = true;
 
-        if (collision.gameObject.CompareTag("Clone"))
+        if (collision.CompareTag("Clone"))
             cloneInRange = true;
     }
 

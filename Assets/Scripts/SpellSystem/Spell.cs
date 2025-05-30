@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Spell : MonoBehaviour
@@ -9,7 +10,8 @@ public class Spell : MonoBehaviour
 
     private MeshRenderer mesh;
     
-    private float lifeTime = 1f; 
+    private float lifeTime = 0.5f; 
+    private float destroyTime = 1.5f; 
     private float counter;
 
     void Start()
@@ -35,7 +37,7 @@ public class Spell : MonoBehaviour
         counter -= Time.deltaTime; // 減少計時器
         if (counter <= 0)
         {
-            SpawnTotem();
+            StartCoroutine(SpawnTotem());
         }
     }
     
@@ -44,6 +46,11 @@ public class Spell : MonoBehaviour
         if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
         {
             interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnEnter);
+        }
+
+        if (other.gameObject.TryGetComponent(out EnemyAI enemy))
+        {
+            StartCoroutine(SpawnTotem());
         }
     }
 
@@ -62,25 +69,18 @@ public class Spell : MonoBehaviour
             interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnExit);
         }
     }
-    
-    /*private void OnTriggerEnter(Collider collision)
-    {
-        if (collision.gameObject.TryGetComponent<ThoughtObject>(out ThoughtObject spawnObject))
-        {
-            spawnObject.ApplyEffect(spellType);
-            SpawnTotem();
-        }
-    }*/
 
-    private void SpawnTotem()
+    IEnumerator SpawnTotem()
     {
         if (!fxSpawned && fxPrefab != null)
         {
             AudioManager.Instance.PlaySFX(SFXType.Spawn);
             mesh.enabled = false;
-            Instantiate(fxPrefab, transform.position, Quaternion.identity);
+            GameObject fx = Instantiate(fxPrefab, transform.position, Quaternion.identity);
             fxSpawned = true;  // 設定 FX 已生成
+            yield return new WaitForSeconds(destroyTime);
+            Destroy(fx);
+            Destroy(gameObject);
         }
-        Destroy(gameObject, 1.5f);
     }
 }

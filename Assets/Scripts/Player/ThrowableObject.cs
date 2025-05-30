@@ -34,27 +34,4 @@ public class ThrowableObject : MonoBehaviour
         }
     }
 
-    /*void SpawnItem()
-    {
-        if (hasSpawned) return;  // 確保只執行一次
-        hasSpawned = true;
-
-        spawnType = PlayerCollector.CurrentSpawnType;
-        Quaternion rotation = PlayerCollector.CurrentSpawnRotation;
-
-        // 生成目標物件
-        SpawnFactory.CreateSpawnObject(spawnType, transform.position, rotation);
-
-        // 生成 FX 特效（確保只生成一次）
-        if (!fxSpawned && fxPrefab != null)
-        {
-            Instantiate(fxPrefab, transform.position, Quaternion.identity);
-            gameObject.GetComponent<MeshRenderer>().enabled = false;
-            fxSpawned = true;  // 設定 FX 已生成
-        }
-
-        Destroy(gameObject, 1.5f);  // 投擲物消失
-    }
-    */
-
 }
