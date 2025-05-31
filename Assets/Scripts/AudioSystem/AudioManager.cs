@@ -57,6 +57,8 @@ public class AudioManager : MonoBehaviour
     {
         LoadVolumePref();
         ApplyVolumes();
+        
+        PlayBGM(BGMType.FirstLevel);
     }
 
     private void Update()

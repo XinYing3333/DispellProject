@@ -17,12 +17,14 @@ public class EnemyAI : MonoBehaviour
 
     private NavMeshAgent agent;
     private MeshRenderer mesh;
+    private Rigidbody rb;
 
     void Start()
     {
         target = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
-        mesh = GetComponent<MeshRenderer>();
+        rb = GetComponent<Rigidbody>();
+        mesh = transform.GetChild(0).GetComponent<MeshRenderer>();
     }
 
     void Update()
@@ -40,20 +42,27 @@ public class EnemyAI : MonoBehaviour
             agent.isStopped = true;
         }
     }
+    
+    int originalLayer;
 
     IEnumerator OnStun()
     {
         _isStunned = true;
         agent.isStopped = true;
-        Debug.Log("Stunned");
         mesh.material.color = Color.yellow;
+
+        originalLayer = gameObject.layer;
         transform.tag = "Collectible";
+        gameObject.layer = LayerMask.NameToLayer("Collectible");
+        rb.isKinematic = false;
         
         yield return new WaitForSeconds(stunTime);
-        
+
         _isStunned = false;
-        mesh.material.color = new Color(0.7937579f, 0f, 1f);
+        mesh.material.color = new Color(0.3632075f , 0.7480484f, 1f);
         transform.tag = "Untagged";
+        gameObject.layer = originalLayer;
+        rb.isKinematic = true;
 
     }
     

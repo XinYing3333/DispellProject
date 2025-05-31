@@ -297,6 +297,29 @@ public class PlayerMovement : MonoBehaviour
         {
             currentCollider = other.collider;
         }
+        if(other.gameObject.CompareTag("Object"))
+        {
+            if (_rawInputMovement.magnitude > 0.1f)
+            {
+               anim.SetBool("isPush", true);
+            }
+        }
+    }
+    
+    private void OnCollisionStay(Collision other)
+    {
+        if(other.gameObject.CompareTag("Object"))
+        {
+            switch (_rawInputMovement.magnitude)
+            {
+                case < 0.1f:
+                    anim.SetBool("isPush", false);
+                    break;
+                case > 0.1f:
+                    anim.SetBool("isPush", true);
+                    break;
+            }
+        }
     }
     
     private void OnCollisionExit(Collision other)
@@ -304,6 +327,10 @@ public class PlayerMovement : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
             isOnGround = false;
+        }
+        if(other.gameObject.CompareTag("Object"))
+        {
+            anim.SetBool("isPush", false);
         }
     }
 
