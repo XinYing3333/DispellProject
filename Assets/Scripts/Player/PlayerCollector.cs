@@ -102,6 +102,20 @@ public class PlayerCollector : MonoBehaviour
 
             rb.AddForce(direction * forceMagnitude);
             rb.AddTorque(Random.insideUnitSphere * 2f, ForceMode.Acceleration);
+            
+            if (distance < 0.5f)
+            {
+                if(!rb.gameObject.CompareTag("Collectible"))return;
+                var thoughtObj = rb.GetComponent<ThoughtObject>();
+                if (thoughtObj != null)
+                {
+                    CollectionSystem.CollectItem(thoughtObj.collectedType);
+                    collectParticle.Play();
+                    Destroy(rb.gameObject);
+                    attractedObjects.Remove(rb);
+                }
+                continue;
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 using System.Collections;
 using Player;
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float movementSpeed = 2f;
     [SerializeField] private float runSpeed = 4f;
     [SerializeField] private float turnSpeed = 10f;
+    [SerializeField] private VisualEffect stepVFX;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 8f;
@@ -60,6 +62,7 @@ public class PlayerMovement : MonoBehaviour
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+        stepVFX.Stop();
         
     }
 
@@ -154,6 +157,7 @@ public class PlayerMovement : MonoBehaviour
             if (isFootstepPlaying)
             {
                 AudioManager.Instance.StopSFXLoop();
+                stepVFX.Stop();
                 isFootstepPlaying = false;
                 //currentMoveState = "";
             }
@@ -166,6 +170,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (!isFootstepPlaying || currentMoveState != moveState)
         {
+            stepVFX.Play();
             AudioManager.Instance.PlaySFXLoop(moveState);
             isFootstepPlaying = true;
             currentMoveState = moveState;
@@ -297,6 +302,29 @@ public class PlayerMovement : MonoBehaviour
         {
             currentCollider = other.collider;
         }
+        if(other.gameObject.CompareTag("Object"))
+        {
+            if (_rawInputMovement.magnitude > 0.1f)
+            {
+               anim.SetBool("isPush", true);
+            }
+        }
+    }
+    
+    private void OnCollisionStay(Collision other)
+    {
+        if(other.gameObject.CompareTag("Object"))
+        {
+            switch (_rawInputMovement.magnitude)
+            {
+                case < 0.1f:
+                    anim.SetBool("isPush", false);
+                    break;
+                case > 0.1f:
+                    anim.SetBool("isPush", true);
+                    break;
+            }
+        }
     }
     
     private void OnCollisionExit(Collision other)
@@ -304,6 +332,10 @@ public class PlayerMovement : MonoBehaviour
         if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
             isOnGround = false;
+        }
+        if(other.gameObject.CompareTag("Object"))
+        {
+            anim.SetBool("isPush", false);
         }
     }
 
