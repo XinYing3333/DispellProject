@@ -35,8 +35,15 @@ public class EnemyAI : MonoBehaviour
 
         if (distanceToTarget < detectionRange && !_isStunned)
         {
+            mesh.material.color = new Color(1f , 0.2783019f, 0.2783019f);
+
             agent.isStopped = false;
-            agent.destination = target.position;        }
+            agent.destination = target.position;        
+        }
+        else if(distanceToTarget > detectionRange && !_isStunned)
+        {
+            mesh.material.color = new Color(0.3254717f , 0.9400993f, 1f);
+        }
         else
         {
             agent.isStopped = true;
@@ -59,7 +66,7 @@ public class EnemyAI : MonoBehaviour
         yield return new WaitForSeconds(stunTime);
 
         _isStunned = false;
-        mesh.material.color = new Color(0.3632075f , 0.7480484f, 1f);
+        mesh.material.color = new Color(1f , 0.2783019f, 0.2783019f);
         transform.tag = "Untagged";
         gameObject.layer = originalLayer;
         rb.isKinematic = true;

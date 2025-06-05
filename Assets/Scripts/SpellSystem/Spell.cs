@@ -52,6 +52,10 @@ public class Spell : MonoBehaviour
         {
             StartCoroutine(SpawnTotem());
         }
+        if (other.gameObject.TryGetComponent(out BossLevel bossLevel))
+        {
+            StartCoroutine(SpawnTotem());
+        }
     }
 
     private void OnTriggerStay(Collider other)
