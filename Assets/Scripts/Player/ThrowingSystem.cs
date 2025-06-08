@@ -31,8 +31,5 @@ public class ThrowingSystem
 
             rb.AddForce(throwDirection * throwForce, ForceMode.Impulse);
         }
-
-        Debug.Log($"投擲");
     }
-
 }

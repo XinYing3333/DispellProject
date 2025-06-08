@@ -1,3 +1,4 @@
+using Cinemachine;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -6,7 +7,10 @@ public class TriggerTextUI : MonoBehaviour
 {
     [SerializeField] private GameObject triggerUI;
     [SerializeField] private bool isCheckPoint;
+    [SerializeField] private bool isTextAppear;
     private TMP_Text triggerText;
+    [SerializeField] private bool isCameraChange;
+    [SerializeField] private CinemachineVirtualCamera cam;
     [SerializeField][TextArea] private string txtInfo;
     private Transform _playerCheckPoint;
 
@@ -14,6 +18,7 @@ public class TriggerTextUI : MonoBehaviour
     {
         triggerText = triggerUI.GetComponent<TMP_Text>();
         _playerCheckPoint = GameObject.FindGameObjectWithTag("CheckPoint").transform;
+        triggerUI.SetActive(false);
     }
     
     private void OnTriggerEnter(Collider other)
@@ -24,9 +29,17 @@ public class TriggerTextUI : MonoBehaviour
             {
                 _playerCheckPoint.transform.position = transform.position;
             }
-            triggerUI.SetActive(false);
-            triggerText.text = txtInfo;
-            triggerUI.SetActive(true);
+            if (isCameraChange && cam != null)
+            {
+                cam.Priority = 100;
+            }
+
+            if (isTextAppear)
+            {
+                triggerText.text = txtInfo;
+                triggerUI.SetActive(true);
+            }
+            
             Destroy(gameObject);
         }
     }

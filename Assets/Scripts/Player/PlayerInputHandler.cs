@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,6 +16,8 @@ namespace Player
         public bool JumpPressed { get; private set; }
         public bool SkillPressed { get; private set; }
         public bool DashPressed { get; private set; }
+        public bool ShootPressed { get; private set; }
+
         public bool IsCollecting { get; private set; }
         public bool IsSkillUIOpen { get; private set; }
 
@@ -26,7 +29,6 @@ namespace Player
         public event Action OnJump;
         public event Action OnSkill;
         public event Action OnDash;
-        public event Action OnShoot;
         public event Action OnSwitchThrow;
 
         // === Dependencies ===
@@ -41,7 +43,6 @@ namespace Player
         private PlayerInput _playerInput;
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim ,_skill;
         private InputAction _skillUI, _setting;
-        private Camera _playerCamera;
         private PlayerCollector _playerCollector;
         private ThrowingSystem _throwingSystem;
 
@@ -57,7 +58,6 @@ namespace Player
             checkPoint = GameObject.FindGameObjectWithTag("CheckPoint").transform;
             _playerInput = GetComponent<PlayerInput>();
             _playerCollector = GetComponent<PlayerCollector>();
-            _playerCamera = Camera.main;
             _throwingSystem = new ThrowingSystem(throwablePrefab, spellPrefab, throwPoint, throwForce);
 
             if (_playerInput == null)
@@ -167,8 +167,9 @@ namespace Player
 
         private void OnShootPerformed(InputAction.CallbackContext ctx)
         {
-            OnShoot?.Invoke();
-            HandleShoot();
+            Debug.Log("isShoot");
+            ShootPressed = true;
+            StartCoroutine(HandleShoot());
         }
         
         
@@ -180,11 +181,14 @@ namespace Player
 
         // ==== Internal Logic ====
 
-        private void HandleShoot()
+        IEnumerator HandleShoot()
         {
-            AudioManager.Instance.PlaySFX(SFXType.Shoot);
+            AudioManager.Instance.PlaySFX(SFXType.shoot2);
             
             _throwingSystem.ThrowObject(transform);
+            
+            yield return new WaitForSeconds(0.5f);
+            ShootPressed = false;
         }
 
         public void SetSpellType(SpellType newSpellType)

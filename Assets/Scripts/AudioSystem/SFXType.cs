@@ -7,6 +7,8 @@ public enum SFXType
     Jump,
     Shoot,
     Dash,
+    Click,
+    shoot2,
     CoinPickup,
     Explosion,
     EnemyHit,

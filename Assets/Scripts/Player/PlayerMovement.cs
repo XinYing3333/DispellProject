@@ -68,7 +68,8 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        SetAnimatorLayerWeight("Upper", input.IsCollecting ? 1f : 0f);
+        SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);//--------------------------------------------
+        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
     }
     
     void FixedUpdate()
@@ -103,6 +104,11 @@ public class PlayerMovement : MonoBehaviour
         }
         
         UpdateFootstepAudio();
+    }
+
+    private void OnPlayerShot()
+    {
+        SetAnimatorLayerWeight("Shoot", 1f);
     }
     
     private void SetAnimatorLayerWeight(string layerName, float weight)

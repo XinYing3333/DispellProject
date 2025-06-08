@@ -41,4 +41,9 @@ public class SceneController : MonoBehaviour
     {
         settingPanel.SetActive(true);
     }
+
+    public void SoundOnClick()
+    {
+        AudioManager.Instance.PlaySFX(SFXType.Click);
+    }
 }

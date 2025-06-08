@@ -23,6 +23,5 @@ public interface IPlayerInputSource
     event Action OnJump;
     event Action OnSkill;
     event Action OnDash;
-    event Action OnShoot;
     event Action OnSwitchThrow;
 }
