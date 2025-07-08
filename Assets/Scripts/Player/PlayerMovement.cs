@@ -18,7 +18,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float turnSpeed = 10f;
     [SerializeField] private VisualEffect stepVFX;
 
+    
     [Header("Jump Settings")]
+    [SerializeField] private LayerMask groundLayer;
     [SerializeField] private float jumpForce = 8f;
     [SerializeField] private int maxJumpCount = 2;
     [SerializeField] private PhysicsMaterial defaultMaterial;
@@ -38,6 +40,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float ledgeCheckDistance = 0.5f; // 檢測前方距離
     private bool isGrabbing;
     private bool isFinishClimb;
+    private bool isPushing;
     private Collider currentCollider;
 
     
@@ -70,6 +73,9 @@ public class PlayerMovement : MonoBehaviour
     {
         SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);//--------------------------------------------
         SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
+        SetAnimatorLayerWeight("UpperBody", isGrabbing || isPushing ? 0f : 1f);//--------------------------------------------
+
+        SwitchJumpFriction();
     }
     
     void FixedUpdate()
@@ -106,6 +112,25 @@ public class PlayerMovement : MonoBehaviour
         UpdateFootstepAudio();
     }
 
+    void SwitchJumpFriction()
+    {
+        if (IsGrounded())
+        {
+            _playerCollider.material = defaultMaterial;
+        }
+        else
+        {
+            _playerCollider.material = noFrictionMaterial;
+        }
+    }
+    
+    bool IsGrounded()
+    {
+        Vector3 origin = transform.position + Vector3.up * 0.1f;
+        return Physics.Raycast(origin, Vector3.down, 0.2f, groundLayer);
+    }
+
+    
     private void OnPlayerShot()
     {
         SetAnimatorLayerWeight("Shoot", 1f);
@@ -325,9 +350,14 @@ public class PlayerMovement : MonoBehaviour
             {
                 case < 0.1f:
                     anim.SetBool("isPush", false);
+                    isPushing = false;
+
                     break;
                 case > 0.1f:
+                    
                     anim.SetBool("isPush", true);
+                    isPushing = true;
+
                     break;
             }
         }
@@ -342,6 +372,7 @@ public class PlayerMovement : MonoBehaviour
         if(other.gameObject.CompareTag("Object"))
         {
             anim.SetBool("isPush", false);
+            isPushing = false;
         }
     }
 

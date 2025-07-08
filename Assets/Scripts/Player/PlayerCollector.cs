@@ -29,21 +29,35 @@ public class PlayerCollector : MonoBehaviour
         CollectionSystem.LoadCollection(); // 遊戲開始時讀取收集數據
     }
 
+    private bool hasStartedLoopSFX = false;
+
     private void Update()
     {
         if (isCollecting && !isDetectCollect)
         {
             isDetectCollect = true;
+
+            if (!hasStartedLoopSFX)
+            {
+                AudioManager.Instance.PlaySFXLoop(SFXType.Inhale);
+                hasStartedLoopSFX = true;
+            }
+
             captureParticle.Play();
             captureParticle2.Play();
         }
         else if (!isCollecting && isDetectCollect)
         {
             isDetectCollect = false;
+
+            AudioManager.Instance.StopSFXLoop();
+            hasStartedLoopSFX = false;
+
             captureParticle.Stop();
             captureParticle2.Stop();
         }
     }
+
 
     public void OnCollectCollectibles()
     {
@@ -58,7 +72,7 @@ public class PlayerCollector : MonoBehaviour
 
         if (_currentRb != null)
         {
-            _currentRb.useGravity = true;
+            //_currentRb.useGravity = true;
             _currentRb = null;
         }
     }
@@ -111,6 +125,7 @@ public class PlayerCollector : MonoBehaviour
                 {
                     CollectionSystem.CollectItem(thoughtObj.collectedType);
                     collectParticle.Play();
+                    AudioManager.Instance.PlaySFX(SFXType.Collect);
                     Destroy(rb.gameObject);
                     attractedObjects.Remove(rb);
                 }
@@ -135,6 +150,7 @@ public class PlayerCollector : MonoBehaviour
             if(!isCollecting)return;
             
             collectParticle.Play();
+            AudioManager.Instance.PlaySFX(SFXType.Collect);
             
             CollectionSystem.CollectedType collectedType = other.transform.GetComponent<ThoughtObject>().collectedType;
             CollectionSystem.CollectItem(collectedType);

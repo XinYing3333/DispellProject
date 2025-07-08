@@ -24,7 +24,7 @@ namespace AbilitySystem
         void Start()
         {
             _rb = GetComponent<Rigidbody>();
-            anim = GetComponent<Animator>();
+            anim = transform.GetChild(0).GetComponent<Animator>();
 
             input = PlayerInputHandler.Instance;
             cameraTransform = Camera.main.transform;
@@ -52,13 +52,16 @@ namespace AbilitySystem
                 _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, Time.deltaTime * 10f);
             }
 
+            /*
             anim.SetFloat("Speed", _rawInputMovement.magnitude < 0.1f ? 0f : Mathf.Lerp(anim.GetFloat("Speed"), _rawInputMovement.magnitude * (targetSpeed / runSpeed), Time.deltaTime * 10f));
+            */
         
             Vector3 moveDirection = _rawInputMovement * (_currentSpeed * Time.deltaTime);
             _rb.MovePosition(_rb.position + moveDirection);
 
             if (_rawInputMovement.magnitude > 0.1f)
             {
+                anim.SetBool("isMove",true);
                 Quaternion targetRotation = Quaternion.LookRotation(_rawInputMovement);
                 if (!input.IsAiming)
                 {
@@ -66,6 +69,10 @@ namespace AbilitySystem
                     _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
 
                 }
+            }
+            else
+            {
+                anim.SetBool("isMove", false);
             }
         }
         
@@ -76,6 +83,30 @@ namespace AbilitySystem
             cameraForward.y = 0f;
             cameraRight.y = 0f;
             return (cameraForward.normalized * cameraInput.y + cameraRight.normalized * cameraInput.x).normalized;
+        }
+        
+        private void OnCollisionStay(Collision other)
+        {
+            if(other.gameObject.CompareTag("Object"))
+            {
+                switch (_rawInputMovement.magnitude)
+                {
+                    case < 0.1f:
+                        anim.SetBool("isPush", false);
+                        break;
+                    case > 0.1f:
+                        anim.SetBool("isPush", true);
+                        break;
+                }
+            }
+        }
+    
+        private void OnCollisionExit(Collision other)
+        {
+            if(other.gameObject.CompareTag("Object"))
+            {
+                anim.SetBool("isPush", false);
+            }
         }
     }
 }

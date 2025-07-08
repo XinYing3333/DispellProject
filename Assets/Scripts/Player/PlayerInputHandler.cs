@@ -9,6 +9,7 @@ namespace Player
     public class PlayerInputHandler : MonoBehaviour, IPlayerInputSource
     {
         public static PlayerInputHandler Instance { get; private set; }
+        public bool noPlayer;
         
         // === Input Properties ===
         public Vector2 MoveInput { get; private set; }
@@ -20,6 +21,7 @@ namespace Player
 
         public bool IsCollecting { get; private set; }
         public bool IsSkillUIOpen { get; private set; }
+        public bool IsSettingPressed { get; private set; }
 
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
@@ -77,6 +79,7 @@ namespace Player
             _aim = _playerInput.actions["Aim"];
             _skill = _playerInput.actions["Skill"];
             _skillUI = _playerInput.actions["SkillUI"];
+            _setting = _playerInput.actions["Setting"];
 
         }
 
@@ -93,6 +96,7 @@ namespace Player
             _shoot.performed += OnShootPerformed;
             _skill.performed += OnSkillPerformed;
             _skillUI.performed += OnSkillUIPerformed;
+            _setting.performed += OnSettingPerformed;
             
            // _switch.performed += OnSwitchPerformed;
         }
@@ -110,12 +114,14 @@ namespace Player
             _shoot.performed -= OnShootPerformed;
             _skill.performed -= OnSkillPerformed;
             _skillUI.performed -= OnSkillUIPerformed;
+            _setting.performed -= OnSettingPerformed;
             
             //_switch.performed -= OnSwitchPerformed;
         }
 
         void Update()
         {
+            if(noPlayer)return;
             MoveInput = _movement.ReadValue<Vector2>();
 
             string controlScheme = _playerInput.currentControlScheme;
@@ -158,6 +164,11 @@ namespace Player
         {
             IsSkillUIOpen = !IsSkillUIOpen;
         }
+        
+        private void OnSettingPerformed(InputAction.CallbackContext ctx)
+        {
+            IsSettingPressed = !IsSettingPressed;
+        }
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
         {
@@ -183,7 +194,8 @@ namespace Player
 
         IEnumerator HandleShoot()
         {
-            AudioManager.Instance.PlaySFX(SFXType.shoot2);
+            if(noPlayer)yield break;
+            AudioManager.Instance.PlaySFX(SFXType.Shoot);
             
             _throwingSystem.ThrowObject(transform);
             

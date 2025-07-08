@@ -16,25 +16,25 @@ namespace AbilitySystem
         private GameObject cloneInstance;
         private readonly GameObject clonePrefab;
         private readonly Transform playerTransform;
+        private ParticleSystem particle;
 
         public HumanAbility(GameObject clonePrefab, Transform playerTransform)
         {
             this.clonePrefab = clonePrefab;
             this.playerTransform = playerTransform;
+            this.particle = clonePrefab.GetComponentInChildren<ParticleSystem>();
         }
 
         public void Activate()
         {
-            Debug.Log("同步能力啟用");
             currentState = SyncAbilityState.Clone;
         }
 
         public void Deactivate()
         {
-            Debug.Log("同步能力停用");
             if (cloneInstance != null)
             {
-                GameObject.Destroy(cloneInstance);
+                cloneInstance.SetActive(false);
                 cloneInstance = null;
             }
             currentState = SyncAbilityState.Clone;
@@ -42,6 +42,7 @@ namespace AbilitySystem
 
         public void Use()
         {
+            particle.Play();
             switch (currentState)
             {
                 case SyncAbilityState.Clone:
@@ -55,7 +56,7 @@ namespace AbilitySystem
                     break;
 
                 case SyncAbilityState.Remove:
-                    HandleDestroyClone();
+                    HandleRemoveClone();
                     currentState = SyncAbilityState.Clone;
                     break;
             }
@@ -65,8 +66,12 @@ namespace AbilitySystem
         {
             if (cloneInstance != null) return;
 
-            cloneInstance = GameObject.Instantiate(clonePrefab, playerTransform.position, playerTransform.rotation);
-            Debug.Log("已生成複製體");
+            Vector3 spawnPosition = playerTransform.position + playerTransform.forward * 1f;
+            cloneInstance = clonePrefab;
+            cloneInstance.transform.position = spawnPosition;
+            cloneInstance.SetActive(true);
+            cloneInstance.transform.rotation = playerTransform.rotation;
+
         }
 
         private void HandleStartSync()
@@ -82,11 +87,15 @@ namespace AbilitySystem
             }
         }
 
-        private void HandleDestroyClone()
+        private void HandleRemoveClone()
         {
             if (cloneInstance == null) return;
-
-            GameObject.Destroy(cloneInstance);
+            var sync = cloneInstance.GetComponent<CloneMovement>();
+            if (sync != null)
+            {
+                sync.enabled = false;
+            }
+            cloneInstance.SetActive(false);
             Debug.Log("複製體已銷毀");
             cloneInstance = null;
         }

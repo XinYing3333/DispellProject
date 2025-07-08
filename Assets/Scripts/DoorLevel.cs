@@ -3,9 +3,11 @@ using UnityEngine;
 public class DoorLevel : MonoBehaviour
 {
     [SerializeField] private GameObject door;
+
     private bool isOpen = false;
     private int objectsInTrigger = 0;
 
+    
     void Update()
     {
         door.SetActive(!isOpen);

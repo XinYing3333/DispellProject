@@ -13,6 +13,8 @@ public class SavePoint : MonoBehaviour
     
     [Header("KeyE")]
     [SerializeField] private GameObject keyE;
+    [SerializeField] private ParticleSystem particle;
+
     
     private bool playerIsClose;
 
@@ -31,6 +33,7 @@ public class SavePoint : MonoBehaviour
             if (PlayerInputHandler.Instance.InteractPressed) 
             {
                 AudioManager.Instance.PlaySFX(SFXType.PickUp);
+                particle.Play();
                 _playerCheckPoint.transform.position = transform.position;
             }
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -29,7 +30,7 @@ public class AudioManager : MonoBehaviour
     [Header("Volume Settings")]
     [Range(0f, 1f)] public float bgmVolume = 1f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
-
+    
     private void Awake()
     {
         if (Instance == null)
@@ -43,27 +44,42 @@ public class AudioManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
-        /*LoadVolumePref();
-        ApplyVolumes();*/
-
-        if (bgmSlider != null) bgmSlider.onValueChanged.AddListener(SetBGMVolume);
-        if (sfxSlider != null) sfxSlider.onValueChanged.AddListener(SetSFXVolume);
-        
-        //PlayBGM(BGMType.MainMenu);
     }
+
 
     private void Start()
     {
         LoadVolumePref();
         ApplyVolumes();
-        
-        PlayBGM(BGMType.FirstLevel);
     }
 
     private void Update()
     {
-       
+        ApplyVolumes();
+    }
+
+    public void OnSceneLoaded()
+    {
+        // 重新找到當前場景的 Slider（根據名稱或 Tag）
+        bgmSlider = GameObject.FindGameObjectWithTag("BGMSlider").GetComponent<Slider>();
+        sfxSlider = GameObject.FindGameObjectWithTag("SFXSlider").GetComponent<Slider>();
+
+        if (bgmSlider != null)
+        {
+            bgmSlider.onValueChanged.RemoveAllListeners();
+            bgmSlider.onValueChanged.AddListener(SetBGMVolume);
+            bgmSlider.value = bgmVolume;
+        }
+
+        if (sfxSlider != null)
+        {
+            sfxSlider.onValueChanged.RemoveAllListeners();
+            sfxSlider.onValueChanged.AddListener(SetSFXVolume);
+            sfxSlider.value = sfxVolume;
+        }
+
+        SetBGMVolume(bgmVolume);
+        SetSFXVolume(sfxVolume);
     }
 
     private void LoadAudioClips()
@@ -158,5 +174,10 @@ public class AudioManager : MonoBehaviour
         float dB = Mathf.Lerp(-80f, 0f, value);
         audioMixer.SetFloat(sfxParam, dB);
         PlayerPrefs.SetFloat("SFXVolume", sfxVolume);
+    }
+
+    public void SetSelectSFX()
+    {
+        PlaySFX(SFXType.Click);
     }
 }

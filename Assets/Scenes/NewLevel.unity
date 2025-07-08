@@ -38923,7 +38923,7 @@ Transform:
   m_GameObject: {fileID: 1494572625}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 180.3722, y: -28.481472, z: 177.44305}
+  m_LocalPosition: {x: 180.3722, y: -267, z: 177.44305}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -45538,7 +45538,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 61417a2556a7b294cac42760c91672f2, type: 2}
+  m_NavMeshData: {fileID: 0}
   m_BuildHeightMesh: 0
 --- !u!4 &1765601912
 Transform:
@@ -53330,6 +53330,10 @@ PrefabInstance:
     - target: {fileID: 375509327846555397, guid: c8b95e594da0a18498fe1a6795040e19, type: 3}
       propertyPath: m_Name
       value: SavePoint
+      objectReference: {fileID: 0}
+    - target: {fileID: 4351247981192716352, guid: c8b95e594da0a18498fe1a6795040e19, type: 3}
+      propertyPath: m_AdditionalShaderChannelsFlag
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 6069749330550311713, guid: c8b95e594da0a18498fe1a6795040e19, type: 3}
       propertyPath: m_LocalPosition.x

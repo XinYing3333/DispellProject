@@ -5,14 +5,20 @@ public class PushLevel : MonoBehaviour
     private bool playerInRange = false;
     private bool cloneInRange = false;
     private Rigidbody rb;
-
+    private GameObject clone;
+    
     void Start()
     {
+        clone = GameObject.FindWithTag("Clone");
         rb = GetComponent<Rigidbody>();
     }
 
     void Update()
     {
+        if (!clone.activeSelf)
+        {
+            cloneInRange = false;
+        }
         bool isPush = playerInRange && cloneInRange;
         rb.mass = isPush ? 150f : 2000f;
     }
