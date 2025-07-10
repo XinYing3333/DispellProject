@@ -20,7 +20,7 @@ public class ItemInteract : MonoBehaviour
     
     void Update()
     {
-        if (playerIsClose && !DialogManager.GetInstance().dialogIsPlaying)
+        if (playerIsClose )//&& !DialogManager.GetInstance().dialogIsPlaying)
         {
             keyE.SetActive(true);
             

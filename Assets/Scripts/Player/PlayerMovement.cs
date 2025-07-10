@@ -102,6 +102,7 @@ public class PlayerMovement : MonoBehaviour
             if (input.JumpPressed)
             {
                 StartCoroutine(ReleaseLedge());
+                OnJump();
             }
         }
         else
@@ -282,10 +283,17 @@ public class PlayerMovement : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, ledgeCheckDistance, ledgeLayer))
         {
-            StartLedgeGrab(hit.point);
+            // ✅ 檢查命中表面是否朝上（水平面）
+            float upwardAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+            if (upwardAngle < 150f) // 控制越小 → 越接近水平
+            {
+                StartLedgeGrab(hit.point);
+            }
         }
     }
 
+//====================================== Should Fix ======================================================
     private void StartLedgeGrab(Vector3 ledgePoint)
     {
         isGrabbing = true;
@@ -293,6 +301,7 @@ public class PlayerMovement : MonoBehaviour
         _rb.useGravity = false;
         transform.position = ledgePoint + Vector3.down * grabOffset;
         anim.SetBool("IsLedgeGrabbing", true);
+        input.ResetJump();
     }
 
     private void HandleLedgeMovement()
@@ -305,13 +314,13 @@ public class PlayerMovement : MonoBehaviour
     private IEnumerator ReleaseLedge()
     {
         anim.SetBool("IsLedgeGrabbing", false);
-        input.ResetJump();
-        yield return new WaitForSeconds(3.6f / 2);
+        //input.ResetJump();
+        yield return new WaitForSeconds(0.1f);
         if (isGrabbing)
         {
-            transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y 
+            /*transform.position = new Vector3(transform.position.x, currentCollider.bounds.center.y + currentCollider.bounds.size.y 
                 * 0.5f + 0.03f, transform.position.z);
-            transform.position += transform.forward;
+            transform.position += transform.forward;*/
             _rb.useGravity = true;
         }
         isGrabbing = false;
