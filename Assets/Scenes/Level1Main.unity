@@ -2612,7 +2612,7 @@ RectTransform:
   m_Father: {fileID: 1092223451}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -2.5, y: 0}
   m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -21794,7 +21794,7 @@ RectTransform:
   m_Father: {fileID: 960371723}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -36156,8 +36156,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1803652443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.443, y: 0}
+  m_AnchorMax: {x: 0.443, y: 1}
   m_AnchoredPosition: {x: 0.000030517578, y: 0.00002670288}
   m_SizeDelta: {x: 40.2818, y: -38.5152}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -38651,8 +38651,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1087160911}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.497, y: 0}
+  m_AnchorMax: {x: 0.497, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 40.2818, y: 41.4848}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -45666,8 +45666,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2126307679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.575, y: 0}
+  m_AnchorMax: {x: 0.575, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -49319,7 +49319,7 @@ RectTransform:
   m_Father: {fileID: 1594520515}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.575, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -59497,7 +59497,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2138279089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60509,6 +60509,10 @@ PrefabInstance:
     - target: {fileID: 1773800664358947447, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: -37.92604
+      objectReference: {fileID: 0}
+    - target: {fileID: 1872362274397396953, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
+      propertyPath: noPlayer
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1872362274397396953, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: checkPoint

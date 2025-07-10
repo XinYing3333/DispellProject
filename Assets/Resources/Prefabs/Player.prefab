@@ -72,8 +72,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 661257878903891946}
-  - component: {fileID: 1872362274397396953}
   - component: {fileID: 2222260344463854279}
+  - component: {fileID: 1872362274397396953}
   - component: {fileID: 9165629142308398503}
   - component: {fileID: 565717469823576011}
   - component: {fileID: 3173126410757870351}
@@ -114,23 +114,6 @@ Transform:
   - {fileID: 3425228776224252832}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1872362274397396953
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 172986323484736848}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: caf75415c0248a84fae96fab4924802f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  throwablePrefab: {fileID: 189642744835014286, guid: f3c118594f14916418fe567aeda8bc66, type: 3}
-  spellPrefab: {fileID: 3607109397721024389, guid: a1a91c10114dd5340acc29746df76fde, type: 3}
-  throwPoint: {fileID: 2194343288844909621}
-  throwForce: 10
-  checkPoint: {fileID: 0}
 --- !u!114 &2222260344463854279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,6 +248,24 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &1872362274397396953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172986323484736848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: caf75415c0248a84fae96fab4924802f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  noPlayer: 0
+  throwablePrefab: {fileID: 189642744835014286, guid: f3c118594f14916418fe567aeda8bc66, type: 3}
+  spellPrefab: {fileID: 3607109397721024389, guid: a1a91c10114dd5340acc29746df76fde, type: 3}
+  throwPoint: {fileID: 2194343288844909621}
+  throwForce: 10
+  checkPoint: {fileID: 0}
 --- !u!114 &9165629142308398503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -283,6 +284,9 @@ MonoBehaviour:
   runSpeed: 4.5
   turnSpeed: 20
   stepVFX: {fileID: 3114034229090049716}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   jumpForce: 10
   maxJumpCount: 2
   defaultMaterial: {fileID: 0}
