@@ -25,6 +25,11 @@ namespace AbilitySystem
             this.particle = clonePrefab.GetComponentInChildren<ParticleSystem>();
         }
 
+        public void Tick()
+        {
+           //
+        }
+        
         public void Activate()
         {
             currentState = SyncAbilityState.Clone;

@@ -1,4 +1,6 @@
 using System.Collections;
+using Cinemachine;
+using Events;
 using Player;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -12,16 +14,20 @@ public class PlayerMovement : MonoBehaviour
     
     private Rigidbody _rb;
 
+    [Header("Camera Settings")] 
+    [SerializeField] private CinemachineFreeLook mainCam;
+    [SerializeField] private CinemachineFreeLook elephantCam;
+    
     [Header("Movement Settings")]
     [SerializeField] private float movementSpeed = 2f;
-    [SerializeField] private float runSpeed = 4f;
-    [SerializeField] private float turnSpeed = 10f;
+    [SerializeField] private float runSpeed = 4.5f;
+    [SerializeField] private float turnSpeed = 20f;
     [SerializeField] private VisualEffect stepVFX;
 
     
     [Header("Jump Settings")]
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float jumpForce = 8f;
+    [SerializeField] private float jumpForce = 10f;
     [SerializeField] private int maxJumpCount = 2;
     [SerializeField] private PhysicsMaterial defaultMaterial;
     [SerializeField] private PhysicsMaterial noFrictionMaterial;
@@ -35,7 +41,7 @@ public class PlayerMovement : MonoBehaviour
     
     [Header("Grab Settings")]
     [SerializeField] private LayerMask ledgeLayer;
-    [SerializeField] private float grabOffset = 0.5f; // 微調吸到邊的偏移
+    [SerializeField] private float grabOffset = 1.5f; // 微調吸到邊的偏移
     [SerializeField] private float grabDetectionHeight = 1.2f; // 玩家高於這個點才能抓
     [SerializeField] private float ledgeCheckDistance = 0.5f; // 檢測前方距離
     private bool isGrabbing;
@@ -53,6 +59,27 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 _rawInputMovement;
     private float _currentSpeed;
 
+    public void ApplyElephantStats()
+    {
+        movementSpeed = 3.5f;
+        runSpeed = 7f;
+        jumpForce = 12f;
+        dashSpeed = 15f;
+        anim.SetBool("IsRidingElephant", true);
+        EventBus<ChangeCameraEvent>.Publish(new ChangeCameraEvent(elephantCam));
+    }
+
+    public void RestoreDefaultStats()
+    {
+        movementSpeed = 2f;
+        runSpeed = 4.5f;
+        jumpForce = 10f;
+        dashSpeed = 12f;
+        anim.SetBool("IsRidingElephant", false);
+        EventBus<ChangeCameraEvent>.Publish(new ChangeCameraEvent(mainCam));
+
+    }
+    
     void Start()
     {
         _rb = GetComponent<Rigidbody>();
@@ -75,7 +102,7 @@ public class PlayerMovement : MonoBehaviour
         SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
         SetAnimatorLayerWeight("UpperBody", isGrabbing || isPushing ? 0f : 1f);//--------------------------------------------
 
-        SwitchJumpFriction();
+        //SwitchJumpFriction();
     }
     
     void FixedUpdate()
@@ -110,10 +137,11 @@ public class PlayerMovement : MonoBehaviour
             CheckForLedgeGrab();
         }
         
+        CheckWallFriction();
         UpdateFootstepAudio();
     }
 
-    void SwitchJumpFriction()
+    /*void SwitchJumpFriction()
     {
         if (IsGrounded())
         {
@@ -123,7 +151,30 @@ public class PlayerMovement : MonoBehaviour
         {
             _playerCollider.material = noFrictionMaterial;
         }
+    }*/
+    
+    private void CheckWallFriction()
+    {
+        bool touchingWall = false;
+        Vector3 origin = transform.position + Vector3.up * 0.5f;
+        Vector3[] dirs = { transform.forward, -transform.forward, transform.right, -transform.right };
+
+        foreach (var dir in dirs)
+        {
+            if (Physics.Raycast(origin, dir, out RaycastHit hit, 0.6f, groundLayer))
+            {
+                float wallAngle = Vector3.Dot(hit.normal, Vector3.up);
+                if (Mathf.Abs(wallAngle) < 0.2f)
+                {
+                    touchingWall = true;
+                    break;
+                }
+            }
+        }
+
+        _playerCollider.material = touchingWall ? noFrictionMaterial : defaultMaterial;
     }
+
     
     bool IsGrounded()
     {
@@ -132,10 +183,6 @@ public class PlayerMovement : MonoBehaviour
     }
 
     
-    private void OnPlayerShot()
-    {
-        SetAnimatorLayerWeight("Shoot", 1f);
-    }
     
     private void SetAnimatorLayerWeight(string layerName, float weight)
     {
@@ -278,24 +325,34 @@ public class PlayerMovement : MonoBehaviour
 
     private void CheckForLedgeGrab()
     {
-        Vector3 rayStart = transform.position + Vector3.up * grabDetectionHeight;
-        Ray ray = new Ray(rayStart, transform.forward);
+        Vector3 forwardStart = transform.position + Vector3.up * 1.5f;
+        Vector3 forwardDir = transform.forward;
 
-        if (Physics.Raycast(ray, out RaycastHit hit, ledgeCheckDistance, ledgeLayer))
+        Debug.DrawRay(forwardStart, forwardDir * 0.6f, Color.blue);
+
+        if (Physics.Raycast(forwardStart, forwardDir, out RaycastHit forwardHit, 0.6f, ledgeLayer))
         {
-            // ✅ 檢查命中表面是否朝上（水平面）
-            float upwardAngle = Vector3.Angle(hit.normal, Vector3.up);
+            Vector3 downStart = forwardHit.point + Vector3.up * 0.3f;
 
-            if (upwardAngle < 150f) // 控制越小 → 越接近水平
+            Debug.DrawRay(downStart, Vector3.down * 1.0f, Color.yellow);
+
+            if (Physics.Raycast(downStart, Vector3.down, out RaycastHit downHit, 1.0f, ledgeLayer))
             {
-                StartLedgeGrab(hit.point);
+                float angle = Vector3.Angle(downHit.normal, Vector3.up);
+
+                if (angle < 45f)
+                {
+                    StartLedgeGrab(downHit.point);
+                }
             }
         }
     }
 
-//====================================== Should Fix ======================================================
+
     private void StartLedgeGrab(Vector3 ledgePoint)
     {
+        if (isGrabbing) return;
+
         isGrabbing = true;
         _rb.linearVelocity = Vector3.zero;
         _rb.useGravity = false;
@@ -303,6 +360,7 @@ public class PlayerMovement : MonoBehaviour
         anim.SetBool("IsLedgeGrabbing", true);
         input.ResetJump();
     }
+
 
     private void HandleLedgeMovement()
     {
@@ -393,4 +451,17 @@ public class PlayerMovement : MonoBehaviour
         cameraRight.y = 0f;
         return (cameraForward.normalized * cameraInput.y + cameraRight.normalized * cameraInput.x).normalized;
     }
+    
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        
+        Gizmos.color = Color.red;
+        Vector3 rayStart = transform.position + Vector3.up * grabDetectionHeight;
+        Vector3 rayDir = transform.forward;
+
+        Gizmos.DrawLine(rayStart, rayStart + rayDir * ledgeCheckDistance);
+        Gizmos.DrawWireSphere(rayStart + rayDir * ledgeCheckDistance + Vector3.up * 0.5f, 0.2f);
+    }
+#endif
 }
