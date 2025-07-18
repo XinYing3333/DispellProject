@@ -30389,7 +30389,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 33512189}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1939572d33134092ba179e9a4fe13988, type: 3}
   m_Name: 
@@ -30399,6 +30399,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 661257878903891946, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
   m_PrefabInstance: {fileID: 5254292586336772296}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1244809905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33512189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a894531f2aac4c16a792f0f2786f97aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MoveSpeed: 4
+  CameraTransform: {fileID: 1776491448}
 --- !u!1001 &1246291797
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -50400,7 +50414,7 @@ PrefabInstance:
     - target: {fileID: 1680932206411122352, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_Material
       value: 
-      objectReference: {fileID: 13400000, guid: 7677b27d84b6c234fa28b7beb5cad4a5, type: 2}
+      objectReference: {fileID: 13400000, guid: 6d098bfaa5c46f641b60d77c91e21703, type: 2}
     - target: {fileID: 1773800664358947447, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 32.045704
@@ -50918,6 +50932,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 819385532}
     - target: {fileID: 9165629142308398503, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9165629142308398503, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: grabOffset
       value: 1.5
       objectReference: {fileID: 0}
@@ -50971,7 +50989,10 @@ PrefabInstance:
       addedObject: {fileID: 1769012428}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 172986323484736848, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-      insertIndex: 5
+      insertIndex: 4
+      addedObject: {fileID: 1244809905}
+    - targetCorrespondingSourceObject: {fileID: 172986323484736848, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
+      insertIndex: 6
       addedObject: {fileID: 1244809899}
   m_SourcePrefab: {fileID: 100100000, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
 --- !u!1001 &5576554059460464688

@@ -76,7 +76,6 @@ GameObject:
   - component: {fileID: 1872362274397396953}
   - component: {fileID: 9165629142308398503}
   - component: {fileID: 565717469823576011}
-  - component: {fileID: 3173126410757870351}
   - component: {fileID: 4654341072770035373}
   - component: {fileID: 6132482211437129219}
   - component: {fileID: 1863769368042349058}
@@ -280,6 +279,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anim: {fileID: 6132482211437129219}
   cameraTransform: {fileID: 0}
+  mainCam: {fileID: 0}
+  elephantCam: {fileID: 0}
   movementSpeed: 2
   runSpeed: 4.5
   turnSpeed: 20
@@ -321,21 +322,6 @@ MonoBehaviour:
   captureParticle: {fileID: 4922685370934598294}
   captureParticle2: {fileID: 7534041146685429580}
   collectParticle: {fileID: 6457458379288819765}
---- !u!114 &3173126410757870351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 172986323484736848}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 280f2b832a613eb42bd72ddb78f7b3cc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  aimVirtualCamera: {fileID: 0}
-  normalSensitivity: 1
-  aimSensitivity: 2
 --- !u!114 &4654341072770035373
 MonoBehaviour:
   m_ObjectHideFlags: 0
