@@ -4,50 +4,49 @@ namespace Player.PlayerState
 {
     public class MoveState : IPlayerState
     {
-        private readonly PlayerStateMachine _context;
-        private readonly Rigidbody _rb;
-        private readonly Animator _anim;
-        private readonly Transform _transform;
-        private readonly PlayerInputHandler _input;
-
-        public MoveState(PlayerStateMachine context)
+        public void Enter(PlayerStateMachine context)
         {
-            _context = context;
-            _rb = context.Rigidbody;
-            _anim = context.Animator;
-            _transform = context.Transform;
-            _input = context.Input;
+            context.Animator.SetFloat("Speed", 0.5f); // 起始速度值
         }
 
-        public void Enter(PlayerStateMachine context) { }
         public void Update(PlayerStateMachine context)
         {
-            if (_context.MovementData.IsDashing) return;
+            Vector3 inputDirection = context.GetCameraRelativeInput();
+            float speedFactor = Mathf.Lerp(context.MovementData.MovementSpeed, context.MovementData.RunSpeed, context.Input.MoveSpeedMultiplier);
+            context.MovementData.CurrentSpeed = Mathf.Lerp(context.MovementData.CurrentSpeed, speedFactor, Time.deltaTime * 10f);
 
-            Vector2 inputMovement = _input.MoveInput;
-            Vector3 cameraForward = _context.CameraTransform.forward;
-            Vector3 cameraRight = _context.CameraTransform.right;
-            cameraForward.y = 0f;
-            cameraRight.y = 0f;
-            Vector3 moveDirection = (cameraForward.normalized * inputMovement.y + cameraRight.normalized * inputMovement.x).normalized;
+            // 更新動畫參數
+            context.Animator.SetFloat("Speed", inputDirection.magnitude > 0.1f ? inputDirection.magnitude : 0f);
+            context.MovementData.RawInputMovement = inputDirection;
 
-            float targetSpeed = Mathf.Lerp(_context.MovementData.MovementSpeed, _context.MovementData.RunSpeed, _input.MoveSpeedMultiplier);
-            float currentSpeed = Mathf.Lerp(_context.MovementData.CurrentSpeed, targetSpeed, Time.deltaTime * 10f);
-
-            _context.MovementData.CurrentSpeed = currentSpeed;
-
-            _anim.SetFloat("Speed", moveDirection.magnitude * (targetSpeed / _context.MovementData.RunSpeed));
-
-            _rb.MovePosition(_rb.position + moveDirection * (currentSpeed * Time.deltaTime));
-
-            if (moveDirection.magnitude > 0.1f)
+            if (inputDirection.magnitude < 0.1f)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-                _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, _context.MovementData.TurnSpeed * Time.deltaTime);
+                context.TransitionToState(new IdleState());
+            }
+            else if (context.Input.JumpPressed && context.MovementData.JumpCount < context.MovementData.MaxJumpCount)
+            {
+                context.Input.ResetJump();
+                context.TransitionToState(new JumpState());
+            }
+            else if (context.Input.DashPressed && context.MovementData.CanDash)
+            {
+                context.Input.ResetDash();
+                context.TransitionToState(new DashState());
             }
         }
-        public void FixedUpdate(PlayerStateMachine context) { }
-        public void Exit(PlayerStateMachine context) { }
-    }
 
+        public void FixedUpdate(PlayerStateMachine context)
+        {
+            Vector3 move = context.MovementData.RawInputMovement * (context.MovementData.CurrentSpeed * Time.fixedDeltaTime);
+            context.Rigidbody.MovePosition(context.Rigidbody.position + move);
+
+            if (context.MovementData.RawInputMovement.magnitude > 0.1f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(context.MovementData.RawInputMovement);
+                context.Rigidbody.rotation = Quaternion.Slerp(context.Rigidbody.rotation, targetRot, context.MovementData.TurnSpeed * Time.fixedDeltaTime);
+            }
+        }
+
+        public void Exit(PlayerStateMachine context) {}
+    }
 }

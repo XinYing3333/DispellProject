@@ -12,8 +12,14 @@
             var input = context.Input.MoveInput;
             if (input.magnitude > 0.1f)
             {
-                context.TransitionToState(new MoveState(context));
+                context.TransitionToState(new MoveState());
             }
+            if (context.Input.JumpPressed && context.MovementData.JumpCount < context.MovementData.MaxJumpCount)
+            {
+                context.Input.ResetJump();
+                context.TransitionToState(new JumpState());
+            }
+
         }
 
         public void FixedUpdate(PlayerStateMachine context) { }
