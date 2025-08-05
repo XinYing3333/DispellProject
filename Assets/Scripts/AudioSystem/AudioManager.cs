@@ -149,7 +149,7 @@ public class AudioManager : MonoBehaviour
 
     public void Test()//---------------------------------------------------------------------------------
     {
-        PlaySFX(SFXType.Walk);
+        PlaySFX(SFXType.Click);
     }
 
     public void PlaySFX(SFXType sfxType)

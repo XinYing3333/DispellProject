@@ -23,6 +23,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float runSpeed = 4.5f;
     [SerializeField] private float turnSpeed = 20f;
     [SerializeField] private VisualEffect stepVFX;
+    [SerializeField] private ParticleSystem jumpVFX;
+    [SerializeField] private ParticleSystem groundedVFX;
 
     
     [Header("Jump Settings")]
@@ -58,6 +60,9 @@ public class PlayerMovement : MonoBehaviour
     
     private Vector3 _rawInputMovement;
     private float _currentSpeed;
+    
+    private bool hasPlayedGroundedVFX = false;
+
 
     public void ApplyElephantStats()
     {
@@ -100,7 +105,7 @@ public class PlayerMovement : MonoBehaviour
     {
         SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);//--------------------------------------------
         SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
-        SetAnimatorLayerWeight("UpperBody", isGrabbing || isPushing ? 0f : 1f);//--------------------------------------------
+        SetAnimatorLayerWeight("UpperBody", input.ShootPressed ? 1f : 0f);//--------------------------------------------
 
         //SwitchJumpFriction();
     }
@@ -137,8 +142,23 @@ public class PlayerMovement : MonoBehaviour
             CheckForLedgeGrab();
         }
         
+        StepClimbCheck();
         CheckWallFriction();
         UpdateFootstepAudio();
+
+        bool isGrounded = IsGrounded();
+
+        if (isGrounded && !hasPlayedGroundedVFX)
+        {
+            Debug.Log("Grounded");
+            groundedVFX.Play();
+            hasPlayedGroundedVFX = true;
+        }
+        else if (!isGrounded)
+        {
+            // 當離開地面後，重置狀態，準備下次著陸時再次觸發
+            hasPlayedGroundedVFX = false;
+        }
     }
 
     /*void SwitchJumpFriction()
@@ -273,7 +293,28 @@ public class PlayerMovement : MonoBehaviour
         return "Default";
     }*/
 
+    [SerializeField] private float maxStepHeight = 0.3f;
+    [SerializeField] private float stepCheckDistance = 0.4f;
 
+    private void StepClimbCheck()
+    {
+        Vector3 origin = transform.position + Vector3.up * 0.05f;
+        Vector3 direction = _rawInputMovement.normalized;
+
+        if (direction == Vector3.zero) return;
+
+        // 檢查腳邊碰撞
+        if (Physics.Raycast(origin, direction, out RaycastHit lowerHit, stepCheckDistance, groundLayer))
+        {
+            // 從上方高度發出射線檢查是否能通過
+            Vector3 upperOrigin = transform.position + Vector3.up * maxStepHeight;
+            if (!Physics.Raycast(upperOrigin, direction, stepCheckDistance, groundLayer))
+            {
+                // 沒有上方障礙，可以往上爬
+                _rb.position += Vector3.up * 0.1f;
+            }
+        }
+    }
 
     private void OnJump()
     {
@@ -292,6 +333,7 @@ public class PlayerMovement : MonoBehaviour
             anim.SetBool("IsDoubleJump", true);
             anim.SetBool("Jump", false); // 防止影響主跳躍動畫
             AudioManager.Instance.PlaySFX(SFXType.Jump);
+            jumpVFX.Play();
         }
         
         _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, jumpForce, _rb.linearVelocity.z);

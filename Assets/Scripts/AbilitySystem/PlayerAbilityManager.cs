@@ -16,7 +16,11 @@ namespace AbilitySystem
             if (PlayerInputHandler.Instance != null)
                 PlayerInputHandler.Instance.OnSkill += UseCurrentAbility;
 
+            /*
             AddAbility(AbilityType.HumanThought , new HumanAbility(GameObject.FindGameObjectWithTag("Clone"),transform));
+            */
+            var humanPrefab = Resources.Load<GameObject>("Prefabs/Ability/ClonePrefab");
+            AddAbility(AbilityType.HumanThought, new HumanAbility(humanPrefab, transform));
             SwitchAbility(AbilityType.HumanThought);
 
             AddAbility(AbilityType.BirdThought , new GlideAbility(Resources.Load<GameObject>("Prefabs/Ability/BirdPrefab"), transform.GetComponent<Rigidbody>()));

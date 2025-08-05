@@ -1,4 +1,76 @@
 ﻿using UnityEngine;
+using UnityEngine.AI;
+
+namespace AbilitySystem
+{
+    public class HumanAbility : IAbility
+    {
+        private GameObject clonePrefab;
+        private GameObject cloneInstance;
+        private Transform playerTransform;
+        private float followDistance = 1f;
+        private float maxDistance = 15f;
+
+        public HumanAbility(GameObject prefab, Transform player)
+        {
+            clonePrefab = prefab;
+            playerTransform = player;
+        }
+
+        public void Activate() { }
+
+        public void Deactivate()
+        {
+            if (cloneInstance != null)
+                GameObject.Destroy(cloneInstance);
+        }
+
+        private float summonDuration = 8f;
+        private float summonTimer = 0f;
+
+        public void Tick()
+        {
+            /*if (cloneInstance != null)
+            {
+                summonTimer += Time.deltaTime;
+
+                if (summonTimer >= summonDuration)
+                {
+                    GameObject.Destroy(cloneInstance);
+                    cloneInstance = null;
+                    return;
+                }
+
+                // 移除高度補位與 NavMesh 控制，改由 CloneFollower 處理跟隨
+            }*/
+        }
+
+        public void Use()
+        {
+            if (cloneInstance == null)
+            {
+                Vector3 spawnPos = playerTransform.position + playerTransform.forward * -1f;
+                cloneInstance = GameObject.Instantiate(clonePrefab, spawnPos, Quaternion.identity);
+
+                var follower = cloneInstance.GetComponent<CloneFollower>();
+                if (follower != null)
+                    follower.player = playerTransform;
+
+                summonTimer = 0f; // reset timer
+            }
+            else
+            {
+                GameObject.Destroy(cloneInstance);
+                cloneInstance = null;
+            }
+        }
+
+
+    }
+}
+
+/*
+using UnityEngine;
 
 namespace AbilitySystem
 {
@@ -106,3 +178,4 @@ namespace AbilitySystem
         }
     }
 }
+*/

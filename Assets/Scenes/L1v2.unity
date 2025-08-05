@@ -1115,6 +1115,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 
 --- !u!65 &44069949
 BoxCollider:
@@ -6861,6 +6865,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 
 --- !u!65 &319354096
 BoxCollider:
@@ -11389,6 +11397,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 0
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: Press (X / Ctrl) to roll.
 --- !u!65 &512115151
 BoxCollider:
@@ -16582,6 +16594,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 
 --- !u!65 &722990174
 BoxCollider:
@@ -18318,6 +18334,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: Press (Y / Left Mouse Button) to absort Mind Whisp.
 --- !u!65 &783573683
 BoxCollider:
@@ -20473,6 +20493,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 
 --- !u!65 &842907293
 BoxCollider:
@@ -23779,6 +23803,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 
 --- !u!65 &915257295
 BoxCollider:
@@ -26431,6 +26459,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 
 --- !u!65 &1133307036
 BoxCollider:
@@ -30110,7 +30142,7 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 07bf1b4f2195fd344b5a0e388b9d5e56, type: 3}
 --- !u!4 &1262490109 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 2483817543860977622, guid: 07bf1b4f2195fd344b5a0e388b9d5e56, type: 3}
+  m_CorrespondingSourceObject: {fileID: 892923292790704385, guid: 07bf1b4f2195fd344b5a0e388b9d5e56, type: 3}
   m_PrefabInstance: {fileID: 1262490108}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1262490110 stripped
@@ -31457,59 +31489,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1733326606}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1333972307
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1333972309}
-  - component: {fileID: 1333972308}
-  m_Layer: 0
-  m_Name: DialogManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1333972308
+--- !u!114 &1333972308 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+  m_PrefabInstance: {fileID: 8282601759297752446}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1333972307}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dcb1f5ba15235d04086e91cbdb4bec0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  typingSpeed: 0.03
-  dialogFrame: {fileID: 1929274772}
-  dialogIcon: {fileID: 1701175230}
-  dialogText: {fileID: 1499060926}
-  displayNameText: {fileID: 1997111701}
-  portraitAnimator: {fileID: 1224925892}
-  choices:
-  - {fileID: 175544424}
-  - {fileID: 1700034470}
---- !u!4 &1333972309
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1333972307}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.8392026, y: 1.0835682, z: 215.1943}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1340861435
 GameObject:
   m_ObjectHideFlags: 0
@@ -36034,6 +36024,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: Press (RT / Left Mouse Button) to shoot spell.
 --- !u!1001 &1469435087
 PrefabInstance:
@@ -39641,6 +39635,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: Press (A / Space) to jump.
 --- !u!65 &1665645779
 BoxCollider:
@@ -43440,6 +43438,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 0
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: Press (B / E) to talk.
 --- !u!65 &1820193082
 BoxCollider:
@@ -50633,6 +50635,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   triggerUI: {fileID: 165768527}
   isCheckPoint: 1
+  isTextAppear: 0
+  waitTime: 0
+  isCameraChange: 0
+  cam: {fileID: 0}
   txtInfo: 'Press (LB / Q) to switch type.
 
     Press (RT / Left Mouse Button) to
@@ -51170,6 +51176,91 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7f1fe638d23223145bd39fa6625b33a4, type: 3}
+--- !u!1001 &8282601759297752446
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.8392026
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.0835682
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 215.1943
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 444196461441629138, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5563679241898795498, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: m_Name
+      value: DialogManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: dialogIcon
+      value: 
+      objectReference: {fileID: 1701175230}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: dialogText
+      value: 
+      objectReference: {fileID: 1499060926}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: dialogFrame
+      value: 
+      objectReference: {fileID: 1929274772}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: displayNameText
+      value: 
+      objectReference: {fileID: 1997111701}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: portraitAnimator
+      value: 
+      objectReference: {fileID: 1224925892}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: 'choices.Array.data[0]'
+      value: 
+      objectReference: {fileID: 175544424}
+    - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
+      propertyPath: 'choices.Array.data[1]'
+      value: 
+      objectReference: {fileID: 1700034470}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -51178,7 +51269,7 @@ SceneRoots:
   - {fileID: 1758246846}
   - {fileID: 815968818}
   - {fileID: 1242997389}
-  - {fileID: 1333972309}
+  - {fileID: 8282601759297752446}
   - {fileID: 428395655}
   - {fileID: 626936335}
   - {fileID: 171350098}

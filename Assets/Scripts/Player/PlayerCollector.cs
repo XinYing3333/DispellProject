@@ -108,19 +108,27 @@ public class PlayerCollector : MonoBehaviour
             Rigidbody rb = attractedObjects[i];
             if (rb == null) continue;
 
-            Vector3 direction = (collectPoint.position - rb.position).normalized;
-            float distance = Vector3.Distance(rb.position, collectPoint.position);
+            Vector3 toTarget = collectPoint.position - rb.position;
+            float distance = toTarget.magnitude;
 
-            // 根據距離計算吸力，距離越近吸得越快
-            float forceMagnitude = Mathf.Lerp(30f, 100f, 1f - distance / collectRadius);
+            // 添加軌道偏移：讓物體沿「抖動曲線」飛行
+            Vector3 arcOffset = Vector3.up * Mathf.Sin(Time.time * 10f + i) * 0.2f;
 
-            rb.AddForce(direction * forceMagnitude);
-            rb.AddTorque(Random.insideUnitSphere * 2f, ForceMode.Acceleration);
-            
-            if (distance < 0.5f)
+            // 使用 SmoothDamp 模擬黏性吸力感
+            Vector3 targetVelocity = toTarget.normalized * Mathf.Lerp(10f, 60f, 1f - distance / collectRadius);
+            Vector3 velocity = rb.linearVelocity;
+            Vector3 desiredMove = Vector3.SmoothDamp(rb.linearVelocity, targetVelocity, ref velocity, 0.05f);
+
+            rb.linearVelocity = desiredMove + arcOffset;
+
+            // 自轉
+            rb.AddTorque(Random.insideUnitSphere * 1.5f, ForceMode.Force);
+
+            // 判斷是否進入收集距離
+            if (distance < 0.4f)
             {
-                if(!rb.gameObject.CompareTag("Collectible"))return;
-                var thoughtObj = rb.GetComponent<ThoughtObject>();
+                if (!rb.CompareTag("Collectible")) continue;
+                ThoughtObject thoughtObj = rb.GetComponent<ThoughtObject>();
                 if (thoughtObj != null)
                 {
                     CollectionSystem.CollectItem(thoughtObj.collectedType);
@@ -129,12 +137,10 @@ public class PlayerCollector : MonoBehaviour
                     Destroy(rb.gameObject);
                     attractedObjects.Remove(rb);
                 }
-                continue;
             }
         }
     }
-
-
+    
     //判斷吸取範圍
     private bool IsInFront(Transform target)
     {
