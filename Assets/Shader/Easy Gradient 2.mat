@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Easy Gradient
+  m_Name: Easy Gradient 2
   m_Shader: {fileID: -6465566751694194690, guid: 4023d386ca8ea43469f223cb128c7ece, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -35,7 +35,7 @@ Material:
     RenderType: TransparentCutout
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: 
+  m_LockedProperties: _Color3
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -71,10 +71,10 @@ Material:
     - _BlendModePreserveSpecular: 1
     - _CastShadows: 1
     - _Cull: 0
-    - _Details: 2
+    - _Details: 0.27
     - _DstBlend: 0
     - _Float: 0.5
-    - _MossOffset: -0.03
+    - _MossOffset: 13.49
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -85,9 +85,9 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.5188861, g: 0.8679245, b: 0.3234247, a: 0}
-    - _Color2: {r: 0.6037736, g: 0.59391934, b: 0.56105375, a: 0}
-    - _Color3: {r: 0.8207547, g: 0.45296368, b: 0.45296368, a: 0}
+    - _Color: {r: 0.53396225, g: 1, b: 0.68197703, a: 0}
+    - _Color2: {r: 0.5874047, g: 0.74600345, b: 0.79622644, a: 0}
+    - _Color3: {r: 1, g: 0.9644597, b: 0.5113207, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
