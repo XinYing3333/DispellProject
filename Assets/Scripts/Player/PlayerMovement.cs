@@ -104,8 +104,8 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);//--------------------------------------------
-        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
-        SetAnimatorLayerWeight("UpperBody", input.ShootPressed ? 1f : 0f);//--------------------------------------------
+        //SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
+        SetAnimatorLayerWeight("Pray", input.ShootPressed ? 1f : 0f);//--------------------------------------------
 
         //SwitchJumpFriction();
     }
@@ -242,6 +242,19 @@ public class PlayerMovement : MonoBehaviour
             Quaternion targetRotation = Quaternion.LookRotation(_rawInputMovement);
             
             _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            
+            //mainCam.m_RecenterToTargetHeading.m_enabled = true;
+            
+            mainCam.m_RecenterToTargetHeading.m_WaitTime = 0.5f;
+            mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 0.8f;
+        }
+        else
+        {
+            //mainCam.m_RecenterToTargetHeading.m_enabled = false;
+            
+            mainCam.m_RecenterToTargetHeading.m_WaitTime = 5f;
+            mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 2.5f;
+            
         }
     }
     
