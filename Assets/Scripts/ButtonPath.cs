@@ -34,7 +34,7 @@ public class ButtonPath : MonoBehaviour
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    /*private void OnTriggerExit(Collider other)
     {
         if (IsValidActivator(other))
         {
@@ -47,6 +47,7 @@ public class ButtonPath : MonoBehaviour
             }
         }
     }
+    */
 
     private bool IsValidActivator(Collider other)
     {

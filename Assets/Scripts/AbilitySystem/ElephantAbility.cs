@@ -47,33 +47,29 @@ namespace AbilitySystem
         {
             if (elephantInstance == null)
             {
-                elephantInstance = GameObject.Instantiate(elephantPrefab, playerTransform.position, Quaternion.identity);
-                elephantInstance.transform.SetParent(playerTransform);
-            }
-            else
-            {
+                elephantInstance = elephantPrefab;
                 elephantInstance.transform.position = playerTransform.position;
-                elephantInstance.SetActive(true);
             }
 
-            //playerModel.SetActive(false); // 隱藏玩家角色
+            elephantInstance.SetActive(true);
+
             playerMovement.ApplyElephantStats();
             isRiding = true;
 
-            // 可以在此觸發煙霧、音效等特效
             Debug.Log("騎乘野象！");
         }
+
 
         private void ExitElephant()
         {
             if (elephantInstance != null)
                 elephantInstance.SetActive(false);
 
-            //playerModel.SetActive(true); // 顯示玩家角色
             playerMovement.RestoreDefaultStats();
             isRiding = false;
 
             Debug.Log("下象！");
         }
+
     }
 }

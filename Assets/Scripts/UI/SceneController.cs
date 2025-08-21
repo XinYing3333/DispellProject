@@ -1,3 +1,4 @@
+using System.Collections;
 using Player;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,12 @@ public class SceneController : MonoBehaviour
     [SerializeField] private GameObject skillPanel;
     [SerializeField] private CanvasGroup skillCanvasGroup;
     [SerializeField] private GameObject skillFirstButton;
+    
+    [Header("Loading UI")]
+    [SerializeField] private GameObject loadingPanel;
+    [SerializeField] private CanvasGroup loadingCanvasGroup;
+    [SerializeField] private float minimumLoadingTime = 2f; // 最少顯示時間（秒）
+
 
     private bool wasSettingOpen = false;
     private bool wasSkillOpen = false;
@@ -32,13 +39,14 @@ public class SceneController : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject); // 保留此物件跨場景
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
-
-    void Start()
+    
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        string sceneName = SceneManager.GetActiveScene().name;
+        string sceneName = scene.name;
 
-        // 播放對應場景的背景音樂，初始化 UI 面板狀態
         AudioManager.Instance.OnSceneLoaded();
 
         switch (sceneName)
@@ -46,15 +54,19 @@ public class SceneController : MonoBehaviour
             case "MainMenu":
                 AudioManager.Instance.PlayBGM(BGMType.MainMenu);
                 InitCanvasGroup(settingPanel, ref settingCanvasGroup);
+                InitCanvasGroup(loadingPanel, ref loadingCanvasGroup);
                 break;
 
-            case "Level1Main":
+            case "L1v4":
                 AudioManager.Instance.PlayBGM(BGMType.FirstLevel);
                 InitCanvasGroup(settingPanel, ref settingCanvasGroup);
                 InitCanvasGroup(skillPanel, ref skillCanvasGroup);
+                InitCanvasGroup(loadingPanel, ref loadingCanvasGroup);
                 break;
         }
+
     }
+
 
     void Update()
     {
@@ -73,7 +85,7 @@ public class SceneController : MonoBehaviour
         string sceneName = SceneManager.GetActiveScene().name;
         //if (sceneName == "MainMenu") SetSettingPanelInMainMenu();
         //else 
-        if (sceneName == "Level1Main")
+        if (sceneName == "L1v4")
         {
             SetSkillPanel();
             SetSettingPanel();
@@ -175,4 +187,37 @@ public class SceneController : MonoBehaviour
             SetCanvasGroup(group, false);
         }
     }
+    
+    public void LoadSceneWithLoading(string sceneName)
+    {
+        StartCoroutine(LoadSceneWithSimpleLoadingUI(sceneName));
+    }
+
+    private IEnumerator LoadSceneWithSimpleLoadingUI(string sceneName)
+    {
+        SetCanvasGroup(loadingCanvasGroup, true);
+        loadingPanel?.SetActive(true);
+
+        float loadingStartTime = Time.time;
+
+        yield return null;
+
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
+        asyncLoad.allowSceneActivation = false;
+
+        while (asyncLoad.progress < 0.9f)
+        {
+            yield return null;
+        }
+
+        // 保證至少顯示一段時間
+        float elapsedTime = Time.time - loadingStartTime;
+        float remainingTime = minimumLoadingTime - elapsedTime;
+
+        if (remainingTime > 0)
+            yield return new WaitForSeconds(remainingTime);
+
+        asyncLoad.allowSceneActivation = true;
+    }
+
 }

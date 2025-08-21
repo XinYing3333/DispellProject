@@ -128,13 +128,12 @@ public class PlayerCollector : MonoBehaviour
             if (distance < 0.4f)
             {
                 if (!rb.CompareTag("Collectible")) continue;
-                ThoughtObject thoughtObj = rb.GetComponent<ThoughtObject>();
-                if (thoughtObj != null)
+                var tc = rb.GetComponent<ThoughtCollectible>();
+                if (tc != null)
                 {
-                    CollectionSystem.CollectItem(thoughtObj.collectedType);
+                    tc.Collect(); // ← 交由 ThoughtCollectible 統一處理：標記、加庫存、回池
                     collectParticle.Play();
                     AudioManager.Instance.PlaySFX(SFXType.Collect);
-                    Destroy(rb.gameObject);
                     attractedObjects.Remove(rb);
                 }
             }
@@ -149,22 +148,21 @@ public class PlayerCollector : MonoBehaviour
         return angle < collectAngle * 0.8f;
     }
 
-    private void OnCollisionEnter(Collision other)
+    /*private void OnCollisionEnter(Collision other)
     {
         if (other.gameObject.CompareTag("Collectible"))
         {
             if(!isCollecting)return;
             
-            collectParticle.Play();
-            AudioManager.Instance.PlaySFX(SFXType.Collect);
-            
-            CollectionSystem.CollectedType collectedType = other.transform.GetComponent<ThoughtObject>().collectedType;
-            CollectionSystem.CollectItem(collectedType);
-                
-            Debug.Log($"收集了 {collectedType}");
-            Destroy(other.gameObject);
+            var tc = other.gameObject.GetComponent<ThoughtCollectible>();
+            if (tc != null)
+            {
+                tc.Collect(); // ← 統一由 ThoughtCollectible 處理
+                collectParticle.Play();
+                AudioManager.Instance.PlaySFX(SFXType.Collect);
+            }
         }
-    }
+    }*/
     
 #if UNITY_EDITOR
 

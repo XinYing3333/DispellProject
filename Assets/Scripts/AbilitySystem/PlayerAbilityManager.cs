@@ -11,23 +11,31 @@ namespace AbilitySystem
         private IAbility currentAbility;
         private AbilityType? currentAbilityType = null;
 
+        private GameObject elephantPrefab;
+        private GameObject birdPrefab;
+
         void Start()
         {
             if (PlayerInputHandler.Instance != null)
                 PlayerInputHandler.Instance.OnSkill += UseCurrentAbility;
 
-            /*
-            AddAbility(AbilityType.HumanThought , new HumanAbility(GameObject.FindGameObjectWithTag("Clone"),transform));
-            */
+            // Instantiate Bird and Elephant prefabs as children of the player
+            birdPrefab = Instantiate(Resources.Load<GameObject>("Prefabs/Ability/BirdPrefab"), transform);
+            birdPrefab.SetActive(false);
+
+            elephantPrefab = Instantiate(Resources.Load<GameObject>("Prefabs/Ability/ElephantPrefab"), transform);
+            elephantPrefab.SetActive(false);
+
+
             var humanPrefab = Resources.Load<GameObject>("Prefabs/Ability/ClonePrefab");
             AddAbility(AbilityType.HumanThought, new HumanAbility(humanPrefab, transform));
             SwitchAbility(AbilityType.HumanThought);
 
-            AddAbility(AbilityType.BirdThought , new GlideAbility(Resources.Load<GameObject>("Prefabs/Ability/BirdPrefab"), transform.GetComponent<Rigidbody>()));
+            AddAbility(AbilityType.BirdThought, new GlideAbility(birdPrefab, transform.GetComponent<Rigidbody>()));
             //SwitchAbility(AbilityType.BirdThought);
 
             AddAbility(AbilityType.ElephantThought,
-                new ElephantAbility(Resources.Load<GameObject>("Prefabs/Ability/ElephantPrefab"), transform,
+                new ElephantAbility(elephantPrefab, transform,
                     transform.gameObject.GetComponent<PlayerMovement>()));
             //SwitchAbility(AbilityType.ElephantThought);
         }
@@ -35,9 +43,9 @@ namespace AbilitySystem
         void Update()
         {
             currentAbility?.Tick();
-            
+
             //================ 測試用記得改 ============================
-            if(Input.GetKeyDown(KeyCode.Q))
+            if (Input.GetKeyDown(KeyCode.Q))
             {
                 switch (currentAbilityType)
                 {

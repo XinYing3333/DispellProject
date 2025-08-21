@@ -87,4 +87,24 @@ public class Spell : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    
+    public float homingSpeed = 5f;
+    public float rotateSpeed = 5f;
+    private Transform target;
+
+    Rigidbody rb;
+
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget;
+    }
+
+    void FixedUpdate()
+    {
+        if (target == null) return;
+
+        Vector3 direction = (target.position - transform.position).normalized;
+        Vector3 newVelocity = Vector3.Lerp(rb.linearVelocity, direction * homingSpeed, rotateSpeed * Time.fixedDeltaTime);
+        rb.linearVelocity = newVelocity;
+    }
 }

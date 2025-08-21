@@ -14,6 +14,7 @@ public class EnemyAI : MonoBehaviour
     
     public float stunTime = 2f;
     private bool _isStunned = false;
+    public Collider[] damageColliders;               // ★ 這些是會對玩家造成傷害的 Trigger/Collider（暈眩時關閉）
 
     private NavMeshAgent agent;
     private MeshRenderer mesh;
@@ -58,6 +59,9 @@ public class EnemyAI : MonoBehaviour
         agent.isStopped = true;
         mesh.material.color = Color.yellow;
 
+        if (damageColliders != null)
+            foreach (var c in damageColliders) if (c) c.enabled = false;
+        
         originalLayer = gameObject.layer;
         transform.tag = "Collectible";
         gameObject.layer = LayerMask.NameToLayer("Collectible");
@@ -65,6 +69,9 @@ public class EnemyAI : MonoBehaviour
         
         yield return new WaitForSeconds(stunTime);
 
+        if (damageColliders != null)
+            foreach (var c in damageColliders) if (c) c.enabled = true;
+        
         _isStunned = false;
         mesh.material.color = new Color(1f , 0.2783019f, 0.2783019f);
         transform.tag = "Untagged";

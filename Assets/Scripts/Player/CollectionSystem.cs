@@ -1,113 +1,116 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 
 public static class CollectionSystem
 {
-    private static Dictionary<string, int> collectedItems = new Dictionary<string, int>();
+    private static Dictionary<string, int> saved   = new Dictionary<string, int>();   // 已存檔
+    private static Dictionary<string, int> session = new Dictionary<string, int>();   // 未存檔暫存
 
-    public enum CollectedType
+    public enum CollectedType { Regular, Special }
+
+    private static string Key(CollectedType t) => t.ToString();
+
+    // ==== 撿取：只記到 session（未存檔不會被記得） ====
+    public static void CollectItem(CollectedType itemName, int amount = 1)
     {
-        Regular,
-        Special
+        string key = Key(itemName);
+        if (!session.ContainsKey(key)) session[key] = 0;
+        session[key] += Mathf.Max(1, amount);
+
+#if UNITY_EDITOR
+        Debug.Log($"[Collection] 收集到 {key}，本輪暫存數量：{session[key]}");
+#endif
     }
 
-    // 收集物品
-    public static void CollectItem(CollectedType itemName)
-    {
-        string key = itemName.ToString();
-
-        if (collectedItems.ContainsKey(key))
-        {
-            collectedItems[key]++;
-        }
-        else
-        {
-            collectedItems[key] = 1;
-        }
-
-        Debug.Log($"收集到 {key}，數量：{collectedItems[key]}");
-    }
-
-    /*public static void UseItem()
-    {
-        string itemToUse = GetFirstUsableItem();
-
-        if (itemToUse != null)
-        {
-            collectedItems[itemToUse]--;
-            Debug.Log($"使用 {itemToUse}，剩餘數量：{collectedItems[itemToUse]}");
-
-            if (collectedItems[itemToUse] == 0)
-            {
-                collectedItems.Remove(itemToUse);
-                Debug.Log($"{itemToUse} 已用完，從背包移除！");
-            }
-        }
-        else
-        {
-            Debug.Log("沒有可用的物品！");
-        }
-    }
-
-    public static string GetFirstUsableItem()
-    {
-        return collectedItems.FirstOrDefault(item => item.Value > 0).Key;
-    }*/
-
+    // 是否收過（以「當前遊戲狀態」為準 = saved ∪ session）
     public static bool HasCollected(CollectedType itemName)
     {
-        return collectedItems.ContainsKey(itemName.ToString());
+        string key = Key(itemName);
+        return (saved.ContainsKey(key) && saved[key] > 0) || (session.ContainsKey(key) && session[key] > 0);
     }
 
+    // 目前數量（顯示用 = saved + session）
     public static int GetItemCount(CollectedType itemName)
     {
-        return collectedItems.TryGetValue(itemName.ToString(), out int count) ? count : 0;
+        string key = Key(itemName);
+        int a = saved.ContainsKey(key) ? saved[key] : 0;
+        int b = session.ContainsKey(key) ? session[key] : 0;
+        return a + b;
     }
 
+    // 當前字典數量（合併後的鍵數）
     public static int GetDictionaryCount()
     {
-        return collectedItems.Count;
+        HashSet<string> keys = new HashSet<string>(saved.Keys);
+        foreach (var k in session.Keys) keys.Add(k);
+        return keys.Count;
     }
 
+    // 取得「當前顯示」的合併資料（saved + session）
     public static Dictionary<string, int> GetAllCollectedItems()
     {
-        return new Dictionary<string, int>(collectedItems);
+        Dictionary<string, int> merged = new Dictionary<string, int>(saved);
+        foreach (var kv in session)
+        {
+            if (!merged.ContainsKey(kv.Key)) merged[kv.Key] = 0;
+            merged[kv.Key] += kv.Value;
+        }
+        return merged;
     }
 
+    // 清空全部並保存（等於新遊戲）
     public static void ClearCollection()
     {
-        collectedItems.Clear();
-        SaveCollection();
+        saved.Clear();
+        session.Clear();
+        SaveCollection(); // 存一個空的
         Debug.Log("庫存已清空");
     }
 
+    // ==== 存檔：把 session 合併進 saved，然後只把 saved 落地到 JSON ====
     public static void SaveCollection()
     {
+        foreach (var kv in session)
+        {
+            if (!saved.ContainsKey(kv.Key)) saved[kv.Key] = 0;
+            saved[kv.Key] += kv.Value;
+        }
+        session.Clear();
+
         string savePath = Application.persistentDataPath + "/collectionData.json";
-        string json = JsonUtility.ToJson(new Serialization<string, int>(collectedItems));
+        string json = JsonUtility.ToJson(new Serialization<string, int>(saved));
         File.WriteAllText(savePath, json);
         Debug.Log("收集數據已保存：" + savePath);
     }
 
+    // ==== 讀檔：載入 saved，並清空 session ====
     public static void LoadCollection()
     {
         string savePath = Application.persistentDataPath + "/collectionData.json";
         if (File.Exists(savePath))
         {
             string json = File.ReadAllText(savePath);
-            collectedItems = JsonUtility.FromJson<Serialization<string, int>>(json).ToDictionary();
+            saved = JsonUtility.FromJson<Serialization<string, int>>(json).ToDictionary();
+            session.Clear();
             Debug.Log("收集數據已加載");
         }
         else
         {
+            saved.Clear();
+            session.Clear();
             Debug.Log("未找到存檔，開始新遊戲");
         }
     }
+
+    // —— 可選：回到上次存檔（丟棄未存的收集）——
+    public static void RevertToLastSave()
+    {
+        session.Clear();
+    }
 }
 
-// ==== 只保留序列化輔助類 ====
+// ==== 你的序列化輔助類（保留原樣） ====
 [System.Serializable]
 public class Serialization<TKey, TValue>
 {

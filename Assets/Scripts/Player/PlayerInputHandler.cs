@@ -207,13 +207,5 @@ namespace Player
         {
             spellPrefab.GetComponent<Spell>().spellType = newSpellType;
         }
-    
-        private void OnTriggerEnter(Collider other)
-        {
-            if (other.CompareTag("DeadPoint"))
-            {
-                transform.position = checkPoint.position;
-            }
-        }
     }
 }
