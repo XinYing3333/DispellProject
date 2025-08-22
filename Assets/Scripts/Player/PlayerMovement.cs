@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Cinemachine;
 using Events;
@@ -104,8 +105,8 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);//--------------------------------------------
-        //SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
-        SetAnimatorLayerWeight("Pray", input.ShootPressed ? 1f : 0f);//--------------------------------------------
+        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);//--------------------------------------------
+        //SetAnimatorLayerWeight("Pray", input.ShootPressed ? 1f : 0f);//--------------------------------------------
 
         //SwitchJumpFriction();
     }
@@ -495,6 +496,14 @@ public class PlayerMovement : MonoBehaviour
         {
             anim.SetBool("isPush", false);
             isPushing = false;
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("CenterPoint"))
+        {
+            anim.SetTrigger("isPraying");
         }
     }
 

@@ -8,6 +8,7 @@ namespace Events
     {
         private TMP_Text myTxt;
         private Coroutine _currentRoutine;
+        [SerializeField]private GameObject myObj;
 
         private void Awake()
         {
@@ -17,11 +18,14 @@ namespace Events
         private void OnEnable()
         {
             EventBus<TriggerUITextEvent>.Subscribe(OnChangeUI);
+            EventBus<OpenObjectEvent>.Subscribe(OnSetObject);
         }
 
         private void OnDisable()
         {
             EventBus<TriggerUITextEvent>.Unsubscribe(OnChangeUI);
+            EventBus<OpenObjectEvent>.Unsubscribe(OnSetObject);
+
         }
 
         private void OnChangeUI(TriggerUITextEvent e)
@@ -37,6 +41,10 @@ namespace Events
             myTxt.text = text;
             yield return new WaitForSeconds(duration);
             myTxt.text = string.Empty;
+        }
+        private void OnSetObject(OpenObjectEvent e)
+        {
+            e.objectToOpen.SetActive(e.objectToOpen);
         }
     }
 }
