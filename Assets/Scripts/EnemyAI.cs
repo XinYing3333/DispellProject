@@ -30,7 +30,7 @@ public class EnemyAI : MonoBehaviour
 
     void Update()
     {
-        if (target == null) return;
+        if (!target) return;
 
         float distanceToTarget = Vector3.Distance(transform.position, target.position);
 

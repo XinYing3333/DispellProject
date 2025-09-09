@@ -7,13 +7,14 @@ namespace Events
     {
         //這裏擴充加入新的 Event
         //需要加上對應的 Event 脚本
-        public enum EventType { ChangeCamera, ShowUIText, PlaySound, GainPower }
+        public enum EventType { ChangeCamera, ShowUIText, OpenGameObject, PlaySound, GainPower }
 
         public EventType eventType;
         public Cinemachine.CinemachineVirtualCamera cameraToActivate;
         [TextArea] public string uiText;
         public AudioClip soundToPlay;
         public float displayTime = 3f;
+        public GameObject objectToOpen;
 
     }
 }

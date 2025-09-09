@@ -39,6 +39,10 @@ public class GenericTriggerSender : MonoBehaviour
             case TriggerEventData.EventType.ShowUIText:
                 EventBus<TriggerUITextEvent>.Publish(new TriggerUITextEvent(triggerEventData.uiText, triggerEventData.displayTime));
                 break;
+            
+            case TriggerEventData.EventType.OpenGameObject:
+                EventBus<OpenObjectEvent>.Publish(new OpenObjectEvent(triggerEventData.objectToOpen));
+                break;
 
             /*case TriggerEventData.EventType.PlaySound:
                 EventBus<PlaySoundEvent>.Publish(new PlaySoundEvent(triggerEventData.soundToPlay));

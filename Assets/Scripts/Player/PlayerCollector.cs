@@ -1,198 +1,298 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening; // <-- DOTween
 using Random = UnityEngine.Random;
 
 public class PlayerCollector : MonoBehaviour
 {
-    /*public static SpawnType CurrentSpawnType { get; private set; } // 記錄當前收集的物品類型
-    public static Quaternion CurrentSpawnRotation { get; private set; } // 記錄當前收集的物品類型*/
-
+    [Header("Detect")]
     public float collectRadius = 1f;
-    public float collectAngle = 90f;
+    [Range(1f, 180f)] public float collectAngle = 90f;
     public LayerMask collectibleLayer;
     public Transform collectPoint;
 
-    private Rigidbody _currentRb;
-    
-    private bool isDetectCollect;
-    private bool isCollecting;
+    [Header("FX")]
     [SerializeField] private ParticleSystem captureParticle;
     [SerializeField] private ParticleSystem captureParticle2;
     [SerializeField] private ParticleSystem collectParticle;
 
-    private List<Rigidbody> attractedObjects = new List<Rigidbody>();
+    [Header("Tween Settings")]
+    public float pullSpeed = 6f;             // 距離越遠，時間越長（SetSpeedBased）
+    public float minDuration = 0.55f;        // 最短保底
+    public float maxDuration = 1.2f;         // 最長保底
+    public Ease pullEase = Ease.OutCubic;    // 或改成 AnimationCurve
+    public float shakeStrength = 0.1f;      // 抖動強度
+    public int shakeVibrato = 20;            // 抖動頻率
+    
+    [Header("Arrival Tuning")]
+    [SerializeField] private float preCollectOffset = 0.65f; // 在收集點前方停下來的距離(單位：m)
+    [SerializeField] private float hoverTime       = 0.18f;  // 停留/展示時間
+    [SerializeField] private float finalSnapTime   = 0.1f;  // 最後吸入的時間
+    [SerializeField] private Ease  finalSnapEase   = Ease.OutQuad; // 最後吸入手感
+    [SerializeField] private bool  offsetAlongForward = true; // 依 collectPoint.forward 退後
+    
+
+    private bool isCollecting;
+    private bool hasStartedLoopSFX = false;
+
+    // 用 NonAlloc
+    private Collider[] _overlapBuffer = new Collider[64];
+
+    // 快取資料結構
+    private readonly HashSet<Rigidbody> _attracting = new HashSet<Rigidbody>();
+    private readonly Dictionary<Rigidbody, Tween> _tweens = new Dictionary<Rigidbody, Tween>();
+    private readonly Dictionary<Rigidbody, ThoughtCollectible> _tcCache = new Dictionary<Rigidbody, ThoughtCollectible>();
+
+    // 角度判斷預算
+    private float _cosThreshold;
 
     private void Start()
     {
-        CollectionSystem.LoadCollection(); // 遊戲開始時讀取收集數據
+        CollectionSystem.LoadCollection();
+        _cosThreshold = Mathf.Cos(Mathf.Deg2Rad * (collectAngle * 0.5f));
     }
-
-    private bool hasStartedLoopSFX = false;
 
     private void Update()
     {
-        if (isCollecting && !isDetectCollect)
+        // 邊界觸發：音效/粒子
+        if (isCollecting && !hasStartedLoopSFX)
         {
-            isDetectCollect = true;
-
-            if (!hasStartedLoopSFX)
-            {
-                AudioManager.Instance.PlaySFXLoop(SFXType.Inhale);
-                hasStartedLoopSFX = true;
-            }
-
-            captureParticle.Play();
-            captureParticle2.Play();
+            AudioManager.Instance.PlaySFXLoop(SFXType.Inhale);
+            hasStartedLoopSFX = true;
+            ToggleSuckVFX(true);
+            // 啟動降頻掃描
+            if (_scanRoutine == null) _scanRoutine = StartCoroutine(ScanLoop());
         }
-        else if (!isCollecting && isDetectCollect)
+        else if (!isCollecting && hasStartedLoopSFX)
         {
-            isDetectCollect = false;
-
-            AudioManager.Instance.StopSFXLoop();
-            hasStartedLoopSFX = false;
-
-            captureParticle.Stop();
-            captureParticle2.Stop();
+            StopLoopSFXIfIdle();
+            ToggleSuckVFX(false);
+            // 停止掃描
+            if (_scanRoutine != null) { StopCoroutine(_scanRoutine); _scanRoutine = null; }
         }
     }
 
+    private void ToggleSuckVFX(bool on)
+    {
+        if (captureParticle != null)
+        {
+            var e = captureParticle.emission;
+            e.enabled = on;
+            if (on && !captureParticle.isPlaying) captureParticle.Play();
+        }
+        if (captureParticle2 != null)
+        {
+            var e2 = captureParticle2.emission;
+            e2.enabled = on;
+            if (on && !captureParticle2.isPlaying) captureParticle2.Play();
+        }
+        if (!on)
+        {
+            captureParticle?.Stop();
+            captureParticle2?.Stop();
+        }
+    }
 
     public void OnCollectCollectibles()
     {
         isCollecting = true;
-        FindCollectibles();
-        MoveCollectibles();
+        // 其餘交由 ScanLoop 週期掃描
     }
 
     public void OnCancelCollect()
     {
         isCollecting = false;
-
-        if (_currentRb != null)
+        // 結束所有 tween，恢復剛體
+        foreach (var kv in _tweens)
         {
-            //_currentRb.useGravity = true;
-            _currentRb = null;
+            if (kv.Value.IsActive()) kv.Value.Kill(false);
+            var rb = kv.Key;
+            if (rb != null) rb.isKinematic = false;
         }
+        _tweens.Clear();
+        _tcCache.Clear();
+        _attracting.Clear();
     }
 
-    private void FindCollectibles()
-    {
-        Collider[] collectibles = Physics.OverlapSphere(collectPoint.position, collectRadius, collectibleLayer);
+    private Coroutine _scanRoutine;
 
-        foreach (Collider collectible in collectibles)
+    // 降頻掃描避免每禎 OverlapSphere
+    private System.Collections.IEnumerator ScanLoop()
+    {
+        var wait = new WaitForSeconds(0.12f);
+        while (isCollecting)
         {
-            if (IsInFront(collectible.transform))
-            {
-                ThoughtObject thoughtObj = collectible.GetComponent<ThoughtObject>();
-                if (thoughtObj != null && thoughtObj.isCollectable) // 檢查是否可被收集
-                {
-                    _currentRb = collectible.GetComponent<Rigidbody>();
-                    if (_currentRb != null && !attractedObjects.Contains(_currentRb))
-                    {
-                        _currentRb.useGravity = false;
-                        //rb.linearDamping = 2f;
-                        attractedObjects.Add(_currentRb);
-                    }
-                }
-            }
+            ScanAndBeginAttract();
+            yield return wait;
         }
+        _scanRoutine = null;
     }
 
-
-    private void MoveCollectibles()
-    {
-        for (int i = attractedObjects.Count - 1; i >= 0; i--)
-        {
-            Rigidbody rb = attractedObjects[i];
-            if (rb == null) continue;
-
-            Vector3 toTarget = collectPoint.position - rb.position;
-            float distance = toTarget.magnitude;
-
-            // 添加軌道偏移：讓物體沿「抖動曲線」飛行
-            Vector3 arcOffset = Vector3.up * Mathf.Sin(Time.time * 10f + i) * 0.2f;
-
-            // 使用 SmoothDamp 模擬黏性吸力感
-            Vector3 targetVelocity = toTarget.normalized * Mathf.Lerp(10f, 60f, 1f - distance / collectRadius);
-            Vector3 velocity = rb.linearVelocity;
-            Vector3 desiredMove = Vector3.SmoothDamp(rb.linearVelocity, targetVelocity, ref velocity, 0.05f);
-
-            rb.linearVelocity = desiredMove + arcOffset;
-
-            // 自轉
-            rb.AddTorque(Random.insideUnitSphere * 1.5f, ForceMode.Force);
-
-            // 判斷是否進入收集距離
-            if (distance < 0.4f)
-            {
-                if (!rb.CompareTag("Collectible")) continue;
-                var tc = rb.GetComponent<ThoughtCollectible>();
-                if (tc != null)
-                {
-                    tc.Collect(); // ← 交由 ThoughtCollectible 統一處理：標記、加庫存、回池
-                    collectParticle.Play();
-                    AudioManager.Instance.PlaySFX(SFXType.Collect);
-                    attractedObjects.Remove(rb);
-                }
-            }
-        }
-    }
-    
-    //判斷吸取範圍
-    private bool IsInFront(Transform target)
-    {
-        Vector3 directionToTarget = (target.position - collectPoint.position).normalized;
-        float angle = Vector3.Angle(transform.forward, directionToTarget);
-        return angle < collectAngle * 0.8f;
-    }
-
-    /*private void OnCollisionEnter(Collision other)
-    {
-        if (other.gameObject.CompareTag("Collectible"))
-        {
-            if(!isCollecting)return;
-            
-            var tc = other.gameObject.GetComponent<ThoughtCollectible>();
-            if (tc != null)
-            {
-                tc.Collect(); // ← 統一由 ThoughtCollectible 處理
-                collectParticle.Play();
-                AudioManager.Instance.PlaySFX(SFXType.Collect);
-            }
-        }
-    }*/
-    
-#if UNITY_EDITOR
-
-    private void OnDrawGizmosSelected()
+    private void ScanAndBeginAttract()
     {
         if (collectPoint == null) return;
 
-        // 畫出中心線
+        int count = Physics.OverlapSphereNonAlloc(
+            collectPoint.position, 
+            collectRadius, 
+            _overlapBuffer, 
+            collectibleLayer
+        );
+
+        var forward = collectPoint.forward;
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider col = _overlapBuffer[i];
+            if (col == null) continue;
+
+            Vector3 dir = (col.transform.position - collectPoint.position);
+            float distSqr = dir.sqrMagnitude;
+            if (distSqr < 0.0001f) continue;
+            dir /= Mathf.Sqrt(distSqr);
+
+            // dot 角度判斷
+            if (Vector3.Dot(forward, dir) < _cosThreshold) continue;
+
+            if (!col.TryGetComponent<Rigidbody>(out var rb)) continue;
+            if (_attracting.Contains(rb)) continue;
+
+            // 只要能被收集就開始吸
+            if (!col.TryGetComponent<ThoughtCollectible>(out var tc)) continue;
+            if (!TryIsCollectable(col.transform)) continue;
+
+            _attracting.Add(rb);
+            _tcCache[rb] = tc;
+            BeginAttract(rb);
+        }
+    }
+
+    // 你原本的 ThoughtObject.isCollectable 判斷（這裡包成方法，方便替換邏輯）
+    private bool TryIsCollectable(Transform t)
+    {
+        var thoughtObj = t.GetComponent<ThoughtObject>();
+        return thoughtObj != null && thoughtObj.isCollectable;
+    }
+
+    private void BeginAttract(Rigidbody rb)
+{
+    if (rb == null) return;
+
+    if (_tweens.TryGetValue(rb, out var oldTween))
+    {
+        if (oldTween.IsActive()) oldTween.Kill(false);
+        _tweens.Remove(rb);
+    }
+
+    // 目標位置：先到「面前的中繼點」，再進行最終吸入
+    Vector3 cpPos = collectPoint.position;
+    Vector3 cpFwd = collectPoint.forward;
+    Vector3 midTarget = offsetAlongForward
+        ? cpPos - cpFwd * preCollectOffset   // 在你面前「退後一點」停住
+        : cpPos;                              // 如果不想要中繼點，直接設為 cpPos
+
+    float distToMid = Vector3.Distance(rb.position, midTarget);
+    float d1 = Mathf.Clamp(distToMid / Mathf.Max(0.007f, pullSpeed), minDuration, maxDuration);
+
+    // 進入吸附期，避免物理干擾
+    bool origKinematic = rb.isKinematic;
+    rb.isKinematic = true;
+
+    var seq = DOTween.Sequence().SetUpdate(UpdateType.Fixed);
+
+    // 第一段：拉到中繼點（看得到飛到你面前）
+    var move1 = rb.DOMove(midTarget, d1).SetEase(pullEase);
+    seq.Append(move1);
+
+    // 中繼停留（可選：小抖動展示）
+    if (hoverTime > 0.001f)
+    {
+        // 用 transform 抖，不影響剛體到位
+        if (shakeStrength > 0f)
+            seq.Join(rb.transform
+                .DOShakePosition(d1, shakeStrength, shakeVibrato, 90, false, true)
+                .SetUpdate(UpdateType.Fixed));
+
+        // 停一下（用 AppendInterval 讓玩家看清楚有聚到面前）
+        seq.AppendInterval(hoverTime);
+    }
+
+    // 第二段：短促吸入到真正收集點
+    if (offsetAlongForward)
+    {
+        var move2 = rb.DOMove(cpPos, finalSnapTime).SetEase(finalSnapEase);
+        seq.Append(move2);
+    }
+
+    // 完成後才 Collect
+    seq.OnComplete(() =>
+    {
+        if (_tcCache.TryGetValue(rb, out var tc) && tc != null)
+        {
+            tc.Collect();
+            collectParticle?.Play();
+            AudioManager.Instance.PlaySFX(SFXType.Collect);
+        }
+
+        rb.isKinematic = false;
+        _tweens.Remove(rb);
+        _attracting.Remove(rb);
+        _tcCache.Remove(rb);
+
+        if (_attracting.Count == 0 && !isCollecting)
+        {
+            StopLoopSFXIfIdle();
+            ToggleSuckVFX(false);
+        }
+    });
+
+    seq.OnKill(() =>
+    {
+        if (rb != null) rb.isKinematic = false;
+        _tweens.Remove(rb);
+        _attracting.Remove(rb);
+        _tcCache.Remove(rb);
+    });
+
+    // 連結生命週期（物件回池/刪除自動 Kill）
+    seq.SetLink(rb.gameObject, LinkBehaviour.KillOnDestroy);
+
+    _tweens[rb] = seq;
+}
+
+
+    private void StopLoopSFXIfIdle()
+    {
+        if (hasStartedLoopSFX)
+        {
+            AudioManager.Instance.StopSFXLoop();
+            hasStartedLoopSFX = false;
+        }
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        if (collectPoint == null) return;
         Gizmos.color = Color.green;
         Gizmos.DrawLine(collectPoint.position, collectPoint.position + collectPoint.forward * 2f);
 
-        // 畫出扇形範圍
-        Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f); // 橘色半透明
-        DrawViewCone(collectPoint.position, collectPoint.forward, collectAngle * 0.8f, 2f);
+        Gizmos.color = Color.green;
+        DrawViewCone(collectPoint.position, collectPoint.forward, collectAngle * 0.5f, 2f);
     }
 
-// 幫助方法：畫一個視野範圍（扇形）
-    private void DrawViewCone(Vector3 origin, Vector3 forward, float angle, float distance)
+    private void DrawViewCone(Vector3 origin, Vector3 forward, float halfAngle, float distance)
     {
         int segments = 20;
-        float step = angle * 2f / segments;
-
-        Vector3 prevPoint = origin + Quaternion.Euler(0, -angle, 0) * forward * distance;
+        float step = (halfAngle * 2f) / segments;
+        Vector3 prev = origin + Quaternion.Euler(0, -halfAngle, 0) * forward * distance;
         for (int i = 1; i <= segments; i++)
         {
-            float currentAngle = -angle + step * i;
-            Vector3 nextPoint = origin + Quaternion.Euler(0, currentAngle, 0) * forward * distance;
-            Gizmos.DrawLine(origin, nextPoint);
-            Gizmos.DrawLine(prevPoint, nextPoint);
-            prevPoint = nextPoint;
+            float ang = -halfAngle + step * i;
+            Vector3 next = origin + Quaternion.Euler(0, ang, 0) * forward * distance;
+            Gizmos.DrawLine(origin, next);
+            Gizmos.DrawLine(prev, next);
+            prev = next;
         }
     }
 #endif

@@ -30,6 +30,10 @@ public class TriggerEventDataEditor : Editor
                 data.soundToPlay = (AudioClip)EditorGUILayout.ObjectField("Sound To Play", data.soundToPlay, typeof(AudioClip), false);
                 break;
 
+            case TriggerEventData.EventType.OpenGameObject:
+                data.objectToOpen = (GameObject)EditorGUILayout.ObjectField("Object To Open", data.objectToOpen,typeof(GameObject));
+                break;
+            
             case TriggerEventData.EventType.GainPower:
                 EditorGUILayout.LabelField("No additional data required for GainPower.");
                 break;

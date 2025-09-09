@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5315091463323568863}
   - component: {fileID: 5060440401541479313}
   - component: {fileID: 1313520887103400425}
-  - component: {fileID: 5061168583929372141}
+  - component: {fileID: 2678502278186241145}
   m_Layer: 0
   m_Name: Spell
   m_TagString: Untagged
@@ -103,6 +103,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fxPrefab: {fileID: 141433446842962269, guid: e031ed5b30c5aa14faea6ae796eb7f92, type: 3}
   spellType: 1
+  homingSpeed: 5
+  rotateSpeed: 5
 --- !u!135 &1313520887103400425
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -124,7 +126,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 1.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &5061168583929372141
+--- !u!54 &2678502278186241145
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -132,9 +134,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3607109397721024389}
   serializedVersion: 4
-  m_Mass: 0.5
-  m_Drag: 5
-  m_AngularDrag: 1
+  m_Mass: 0.12
+  m_Drag: 0
+  m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -150,4 +152,4 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 1
+  m_CollisionDetection: 0

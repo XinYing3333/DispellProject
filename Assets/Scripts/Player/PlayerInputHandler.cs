@@ -46,7 +46,11 @@ namespace Player
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim ,_skill;
         private InputAction _skillUI, _setting;
         private PlayerCollector _playerCollector;
+        
         private ThrowingSystem _throwingSystem;
+        [Header("Aim Assist")]
+        public AimAssist aimAssist;
+
 
         void Awake()
         {
@@ -60,7 +64,14 @@ namespace Player
             checkPoint = GameObject.FindGameObjectWithTag("CheckPoint").transform;
             _playerInput = GetComponent<PlayerInput>();
             _playerCollector = GetComponent<PlayerCollector>();
-            _throwingSystem = new ThrowingSystem(throwablePrefab, spellPrefab, throwPoint, throwForce);
+            _throwingSystem = new ThrowingSystem(
+                throwablePrefab,
+                spellPrefab,
+                throwPoint,
+                throwForce,
+                aimAssist // ← 關鍵：把場景中的 AimAssist 丟進去
+            );
+
 
             if (_playerInput == null)
             {

@@ -7,6 +7,8 @@ public static class CollectionSystem
     private static Dictionary<string, int> saved   = new Dictionary<string, int>();   // 已存檔
     private static Dictionary<string, int> session = new Dictionary<string, int>();   // 未存檔暫存
 
+    // 宣告事件：參數 = 物品類型, 當前總數量
+    public static event System.Action<CollectedType, int> OnCollected;
     public enum CollectedType { Regular, Special }
 
     private static string Key(CollectedType t) => t.ToString();
@@ -21,6 +23,8 @@ public static class CollectionSystem
 #if UNITY_EDITOR
         Debug.Log($"[Collection] 收集到 {key}，本輪暫存數量：{session[key]}");
 #endif
+        // ✅ 這裡觸發事件，傳回累計總數（saved + session）
+        OnCollected?.Invoke(itemName, GetItemCount(itemName));
     }
 
     // 是否收過（以「當前遊戲狀態」為準 = saved ∪ session）
