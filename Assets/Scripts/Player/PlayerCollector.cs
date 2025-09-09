@@ -8,7 +8,7 @@ public class PlayerCollector : MonoBehaviour
     [Header("Detect")]
     public float collectRadius = 1f;
     [Range(1f, 180f)] public float collectAngle = 90f;
-    public LayerMask collectibleLayer;
+    public LayerMask interactionMask;
     public Transform collectPoint;
 
     [Header("FX")]
@@ -31,21 +31,25 @@ public class PlayerCollector : MonoBehaviour
     [SerializeField] private Ease  finalSnapEase   = Ease.OutQuad; // 最後吸入手感
     [SerializeField] private bool  offsetAlongForward = true; // 依 collectPoint.forward 退後
     
+    private readonly Collider[] _overlapBuffer = new Collider[64];
 
-    private bool isCollecting;
-    private bool hasStartedLoopSFX = false;
-
-    // 用 NonAlloc
-    private Collider[] _overlapBuffer = new Collider[64];
-
-    // 快取資料結構
-    private readonly HashSet<Rigidbody> _attracting = new HashSet<Rigidbody>();
-    private readonly Dictionary<Rigidbody, Tween> _tweens = new Dictionary<Rigidbody, Tween>();
-    private readonly Dictionary<Rigidbody, ThoughtCollectible> _tcCache = new Dictionary<Rigidbody, ThoughtCollectible>();
+    // 近距離高亮名單
+    private readonly HashSet<Highlightable> _proxActive = new HashSet<Highlightable>();
 
     // 角度判斷預算
     private float _cosThreshold;
 
+    private float _proxScanTimer;
+    public float proximityScanInterval = 0.15f;                 
+
+    private bool isCollecting;
+    private bool hasStartedLoopSFX = false;
+    
+    // 快取資料結構
+    private readonly HashSet<Rigidbody> _attracting = new HashSet<Rigidbody>();
+    private readonly Dictionary<Rigidbody, Tween> _tweens = new Dictionary<Rigidbody, Tween>();
+    private readonly Dictionary<Rigidbody, ThoughtCollectible> _tcCache = new Dictionary<Rigidbody, ThoughtCollectible>();
+    
     private void Start()
     {
         CollectionSystem.LoadCollection();
@@ -54,6 +58,27 @@ public class PlayerCollector : MonoBehaviour
 
     private void Update()
     {
+        _proxScanTimer += Time.deltaTime;
+        if (_proxScanTimer >= proximityScanInterval)
+        {
+            _proxScanTimer = 0f;
+            ProximityScanAndHighlight();
+        }
+
+        // ② 吸收：沿用你原來的開關與掃描邏輯
+        if (isCollecting && !hasStartedLoopSFX)
+        {
+            AudioManager.Instance.PlaySFXLoop(SFXType.Inhale);
+            hasStartedLoopSFX = true;
+            ToggleSuckVFX(true);
+            if (_scanRoutine == null) _scanRoutine = StartCoroutine(ScanLoop());
+        }
+        else if (!isCollecting && hasStartedLoopSFX)
+        {
+            StopLoopSFXIfIdle();
+            ToggleSuckVFX(false);
+            if (_scanRoutine != null) { StopCoroutine(_scanRoutine); _scanRoutine = null; }
+        }/*
         // 邊界觸發：音效/粒子
         if (isCollecting && !hasStartedLoopSFX)
         {
@@ -69,8 +94,69 @@ public class PlayerCollector : MonoBehaviour
             ToggleSuckVFX(false);
             // 停止掃描
             if (_scanRoutine != null) { StopCoroutine(_scanRoutine); _scanRoutine = null; }
-        }
+        }*/
     }
+    
+    private void OnDisable()
+    {
+        // 關掉所有近距離高亮，避免物件被 disable 時殘留
+        foreach (var h in _proxActive) if (h) h.SetProximityHighlight(false);
+        _proxActive.Clear();
+    }
+
+    
+    private void ProximityScanAndHighlight()
+    {
+        if (collectPoint == null) return;
+
+        int count = Physics.OverlapSphereNonAlloc(
+            collectPoint.position,
+            collectRadius,
+            _overlapBuffer,
+            interactionMask,                                        // ← 用互動層粗篩
+            QueryTriggerInteraction.Ignore
+        );
+
+        Vector3 forward = collectPoint.forward;
+        var newSet = new HashSet<Highlightable>();
+
+        for (int i = 0; i < count; i++)
+        {
+            var col = _overlapBuffer[i];
+            if (!col) continue;
+
+            // 角度扇形判斷
+            Vector3 to = (col.transform.position - collectPoint.position);
+            float d2 = to.sqrMagnitude;
+            if (d2 < 1e-6f) continue;
+            to /= Mathf.Sqrt(d2);
+            if (Vector3.Dot(forward, to) < _cosThreshold) continue;
+
+            // 找有 Highlightable，且具備 Collectible 或 Targetable 任一
+            var h = col.GetComponentInParent<Highlightable>();
+            if (!h) continue;
+
+            bool isInteractable = col.GetComponentInParent<Collectible>() ||
+                                  col.GetComponentInParent<Targetable>();
+            if (!isInteractable) continue;
+
+            newSet.Add(h);
+        }
+
+        // 關掉離開範圍的
+        foreach (var h in _proxActive)
+            if (h && !newSet.Contains(h))
+                h.SetProximityHighlight(false);
+
+        // 開啟新進範圍的
+        foreach (var h in newSet)
+            if (!_proxActive.Contains(h))
+                h.SetProximityHighlight(true);
+
+        _proxActive.Clear();
+        foreach (var h in newSet) _proxActive.Add(h);
+    }
+
 
     private void ToggleSuckVFX(bool on)
     {
@@ -99,7 +185,7 @@ public class PlayerCollector : MonoBehaviour
         // 其餘交由 ScanLoop 週期掃描
     }
 
-    public void OnCancelCollect()
+    /*public void OnCancelCollect()
     {
         isCollecting = false;
         // 結束所有 tween，恢復剛體
@@ -112,7 +198,25 @@ public class PlayerCollector : MonoBehaviour
         _tweens.Clear();
         _tcCache.Clear();
         _attracting.Clear();
+    }*/
+    public void OnCancelCollect()
+    {
+        isCollecting = false;
+
+        // 結束吸附 tween，恢復剛體（保留）
+        foreach (var kv in _tweens)
+        {
+            if (kv.Value.IsActive()) kv.Value.Kill(false);
+            var rb = kv.Key;
+            if (rb != null) rb.isKinematic = false;
+        }
+        _tweens.Clear();
+        _tcCache.Clear();
+        _attracting.Clear();
+
+        // ⚠️ 不要清 _proxActive，不要關掉 ProximityHighlight（讓靠近的物件仍維持近距離高亮）
     }
+
 
     private Coroutine _scanRoutine;
 
@@ -128,6 +232,45 @@ public class PlayerCollector : MonoBehaviour
         _scanRoutine = null;
     }
 
+    private void ScanAndBeginAttract()
+    {
+        if (collectPoint == null) return;
+
+        int count = Physics.OverlapSphereNonAlloc(
+            collectPoint.position,
+            collectRadius,
+            _overlapBuffer,
+            interactionMask                                       // ← 改用互動層
+        );
+
+        var forward = collectPoint.forward;
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider col = _overlapBuffer[i];
+            if (col == null) continue;
+
+            Vector3 dir = (col.transform.position - collectPoint.position);
+            float distSqr = dir.sqrMagnitude;
+            if (distSqr < 0.0001f) continue;
+            dir /= Mathf.Sqrt(distSqr);
+
+            if (Vector3.Dot(forward, dir) < _cosThreshold) continue;
+
+            if (!col.TryGetComponent<Rigidbody>(out var rb)) continue;
+            if (_attracting.Contains(rb)) continue;
+
+            // 仍然只吸「可被收集」的（沿用你現有細篩）
+            if (!col.TryGetComponent<ThoughtCollectible>(out var tc)) continue;
+            if (!TryIsCollectable(col.transform)) continue;
+
+            _attracting.Add(rb);
+            _tcCache[rb] = tc;
+            BeginAttract(rb);
+        }
+    }
+
+    /*
     private void ScanAndBeginAttract()
     {
         if (collectPoint == null) return;
@@ -165,7 +308,7 @@ public class PlayerCollector : MonoBehaviour
             _tcCache[rb] = tc;
             BeginAttract(rb);
         }
-    }
+    }*/
 
     // 你原本的 ThoughtObject.isCollectable 判斷（這裡包成方法，方便替換邏輯）
     private bool TryIsCollectable(Transform t)

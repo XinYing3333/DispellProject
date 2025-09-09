@@ -11,7 +11,7 @@ public class AimAssist : MonoBehaviour
     public Transform playerForwardRef;
 
     [Header("Detection")]
-    public LayerMask shootableMask;        // 設定你的可射擊圖層
+    public LayerMask interactionMask;       // 設定你的可射擊圖層
     public float detectRadius = 6f;        // 偵測半徑
     [Range(1f, 90f)] public float maxSnapAngle = 25f; // 與前向的最大夾角
     public float maxDistance = 30f;        // 最遠距離
@@ -43,7 +43,25 @@ public class AimAssist : MonoBehaviour
     {
         var best = FindBestTarget(out float bestScore);
 
-        if (_current && _lockTimer > 0f)
+        if (best != _current)
+        {
+            // 關掉舊高亮（Aim 通道）
+            if (_current)
+            {
+                // 如果你已有 SetAimHighlight，建議用下面這行
+                _current.SetHighlighted(false);      // ← 若你有 SetAimHighlight：_current.SetAimHighlight(false);
+            }
+
+            _current = best;
+            _lockTimer = targetStickyTime;
+
+            // 開啟新高亮（Aim 通道）
+            if (_current)
+            {
+                _current.SetHighlighted(true);       // ← 若你有 SetAimHighlight：_current.SetAimHighlight(true);
+            }
+        }
+        /*if (_current && _lockTimer > 0f)
         {
             _lockTimer -= Time.deltaTime;
 
@@ -66,7 +84,7 @@ public class AimAssist : MonoBehaviour
 
             // 開啟新高亮
             if (_current) _current.SetHighlighted(true);
-        }
+        }*/
     }
 
     Targetable FindBestTarget(out float bestScore)
@@ -77,22 +95,20 @@ public class AimAssist : MonoBehaviour
         Vector3 origin = cameraTransform ? cameraTransform.position : (playerForwardRef ? playerForwardRef.position : transform.position);
         Vector3 forward = cameraTransform ? cameraTransform.forward : (playerForwardRef ? playerForwardRef.forward : transform.forward);
 
-        int count = Physics.OverlapSphereNonAlloc(origin, detectRadius, _hits, shootableMask, QueryTriggerInteraction.Ignore);
+        int count = Physics.OverlapSphereNonAlloc(
+            origin,
+            detectRadius,
+            _hits,
+            interactionMask,                         // ← 替換舊的 shootableMask
+            QueryTriggerInteraction.Ignore
+        );
         for (int i = 0; i < count && i < maxTargetsCheck; i++)
         {
             var c = _hits[i];
             if (!c) continue;
 
-            var t = c.GetComponentInParent<Targetable>();
+            var t = c.GetComponentInParent<Targetable>(); // ← 僅收 Targetable
             if (!t) continue;
-
-            // 距離/夾角限制
-            Vector3 to = t.GetAimPoint() - origin;
-            float dist = to.magnitude;
-            if (dist > maxDistance) continue;
-
-            float ang = Vector3.Angle(forward, to);
-            if (ang > maxSnapAngle) continue;
 
             // LOS 可見性
             if (requireLineOfSight)

@@ -173,7 +173,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   outlineChild: {fileID: 422625578}
   useMaterialSwitch: 0
-  outlineMaterial: {fileID: 2100000, guid: c40b174b457fc464798565add1218759, type: 2}
+  aimOutlineMat: {fileID: 0}
+  proximityOutlineMat: {fileID: 0}
 --- !u!65 &7393599
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -373,7 +374,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   outlineChild: {fileID: 280141369}
   useMaterialSwitch: 0
-  outlineMaterial: {fileID: 2100000, guid: c40b174b457fc464798565add1218759, type: 2}
+  aimOutlineMat: {fileID: 0}
+  proximityOutlineMat: {fileID: 0}
 --- !u!65 &13691023
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -16573,6 +16575,10 @@ PrefabInstance:
       propertyPath: captureParticle2
       value: 
       objectReference: {fileID: 1107951140}
+    - target: {fileID: 565717469823576011, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
+      propertyPath: interactionMask.m_Bits
+      value: 1024
+      objectReference: {fileID: 0}
     - target: {fileID: 599097695132017722, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -34027,7 +34033,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   outlineChild: {fileID: 64180545}
   useMaterialSwitch: 0
-  outlineMaterial: {fileID: 2100000, guid: c40b174b457fc464798565add1218759, type: 2}
+  aimOutlineMat: {fileID: 0}
+  proximityOutlineMat: {fileID: 0}
 --- !u!65 &872867256
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -39159,7 +39166,7 @@ MonoBehaviour:
   cameraTransform: {fileID: 454553314}
   throwOrigin: {fileID: 588177482}
   playerForwardRef: {fileID: 0}
-  shootableMask:
+  interactionMask:
     serializedVersion: 2
     m_Bits: 1024
   detectRadius: 4.76
@@ -48045,7 +48052,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   outlineChild: {fileID: 273083046}
   useMaterialSwitch: 0
-  outlineMaterial: {fileID: 2100000, guid: c40b174b457fc464798565add1218759, type: 2}
+  aimOutlineMat: {fileID: 0}
+  proximityOutlineMat: {fileID: 0}
 --- !u!114 &1283425733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49642,31 +49650,31 @@ PrefabInstance:
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: dialogIcon
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1283074620}
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: dialogText
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 799984344}
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: dialogFrame
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 366719263}
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: displayNameText
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 118759826}
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: portraitAnimator
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 366719265}
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: 'choices.Array.data[0]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 954425618}
     - target: {fileID: 8807549618744641002, guid: b567f0ce93caffb47a52c98d0a4c18ae, type: 3}
       propertyPath: 'choices.Array.data[1]'
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1425266897}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
