@@ -9,7 +9,7 @@ namespace Player
     public class PlayerInputHandler : MonoBehaviour, IPlayerInputSource
     {
         public static PlayerInputHandler Instance { get; private set; }
-        public bool noPlayer;
+        public bool cannotMove;
         
         // === Input Properties ===
         public Vector2 MoveInput { get; private set; }
@@ -132,7 +132,7 @@ namespace Player
 
         void Update()
         {
-            if(noPlayer)return;
+            if(cannotMove)return;
             MoveInput = _movement.ReadValue<Vector2>();
 
             string controlScheme = _playerInput.currentControlScheme;
@@ -205,7 +205,7 @@ namespace Player
 
         IEnumerator HandleShoot()
         {
-            if(noPlayer)yield break;
+            if(cannotMove)yield break;
             AudioManager.Instance.PlaySFX(SFXType.Shoot);
             
             _throwingSystem.ThrowObject(transform);

@@ -12,6 +12,8 @@ public class NPCDialog : MonoBehaviour
     
     /*[Header("SceneSwitcher")]
     [SerializeField] private SceneSwitcher sceneSwitcher;*/
+    [Header("Emote Animator")]
+    [SerializeField] private Animator emoteAnimator;
     
     [Header("Ink JSON")]
     [SerializeField] private TextAsset inkJSON;
@@ -21,19 +23,20 @@ public class NPCDialog : MonoBehaviour
 
     void Awake()
     {
+        emoteAnimator = transform.GetChild(0).GetComponent<Animator>();
         _playerInputHandler = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInputHandler>();
     }
     
     void Update()
     {
-        if (playerIsClose && !DialogManager.GetInstance().dialogIsPlaying)
+        if (playerIsClose && !DialogueManager.GetInstance().dialogueIsPlaying)
         {
             keyE.SetActive(true);
             
             if (_playerInputHandler.InteractPressed) 
             {
                 Debug.Log("Interact");
-                DialogManager.GetInstance().EnterDialogMode(inkJSON); //,sceneSwitcher);
+                DialogueManager.GetInstance().EnterDialogueMode(inkJSON, emoteAnimator); 
             }
             
         }

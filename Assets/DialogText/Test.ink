@@ -1,23 +1,23 @@
-hi#speaker:NPC1  #layout:layout1
-this is a test
-and i wanna say
+INCLUDE globals.ink
+EXTERNAL playEmote(emoteName)
+
+hi#speaker:NPC1  #layout:layout1 #audio:default
+this is a <b><color=\#FF1E35>test</color>.
     -> sub
     
 === sub ===
-hi again #portrait:change
+~ playEmote("pangolin-walk")
+choose a number #portrait:change 
 
-  + [talk]
-    -> talk
-    + [nothing]
-    -> last
+  + [1]
+    -> chosen("1")
+      + [2]
+    -> chosen("2")
+   
 
-=== talk ===
-this is first conversation
-
-    -> last
-
-
-=== last ===
-this is last conversation
+=== chosen(number) ===
+~ playEmote("pangolin-ball02")
+~ chooseNumber = number
+ok you chose {number}.
 
 ->END

@@ -2,75 +2,63 @@ using UnityEngine;
 
 public class BouncePad : MonoBehaviour
 {
+    [Header("Bounce Settings")]
     public float bounceForce = 12f;
-    public float cooldownTime = 3f;
-    public GameObject visual;
+
+    [Header("Animation")]
+    public Animator padAnimator;              // 跳板自己的 Animator
+    public string triggerParam = "Trigger";   // 你 Animator 內的 Trigger 參數名稱（已存在：Trigger）
 
     private Collider padCollider;
-    private bool isOnCooldown = false;
-    private MeshRenderer meshRenderer;
 
     private void Start()
     {
+        padAnimator = GetComponent<Animator>();
         padCollider = GetComponent<Collider>();
-        meshRenderer = GetComponent<MeshRenderer>();
-        if (!padCollider.isTrigger) padCollider.isTrigger = true;
+        if (padCollider != null && !padCollider.isTrigger) padCollider.isTrigger = true;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isOnCooldown) return;
+        if (!other.CompareTag("Player")) return;
 
-        if (other.CompareTag("Player"))
+        // 1) 上彈玩家
+        var rb   = other.attachedRigidbody;
+        var anim = other.GetComponent<Animator>();
+
+        if (rb != null)
         {
-            Rigidbody rb = other.GetComponent<Rigidbody>();
-            Animator anim = other.GetComponent<Animator>();
-            if (rb != null)
-            {
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, bounceForce, rb.linearVelocity.z);
-                if (anim != null)
-                {
-                    if (anim.GetBool("Jump"))
-                    {
-                        anim.SetBool("Jump", false);
-                        anim.SetBool("IsDoubleJump", true);
-                    }
+            // 直接把垂直速度設為正值，確保向上彈
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, bounceForce, rb.linearVelocity.z);
+            // 也可以改用 AddForce：
+            // rb.AddForce(Vector3.up * bounceForce, ForceMode.VelocityChange);
+        }
 
-                    if (anim.GetBool("IsDoubleJump"))
-                    {
-                        anim.SetBool("Jump", true);
-                        anim.SetBool("IsDoubleJump", false);
-                    }
-                    else
-                    {
-                        anim.SetBool("Jump", true);
-                        anim.SetBool("IsDoubleJump", false);
-                    }
-                }
+        // 2) 切玩家動畫（沿用你原本的邏輯）
+        if (anim != null)
+        {
+            if (anim.GetBool("Jump"))
+            {
+                anim.SetBool("Jump", false);
+                anim.SetBool("IsDoubleJump", true);
             }
 
-            StartCoroutine(HandleCooldown());
+            if (anim.GetBool("IsDoubleJump"))
+            {
+                anim.SetBool("Jump", true);
+                anim.SetBool("IsDoubleJump", false);
+            }
+            else
+            {
+                anim.SetBool("Jump", true);
+                anim.SetBool("IsDoubleJump", false);
+            }
         }
-    }
 
-    private System.Collections.IEnumerator HandleCooldown()
-    {
-        isOnCooldown = true;
-        meshRenderer.enabled = false;
-        
-        if (visual != null)
-            visual.SetActive(false);
-
-        padCollider.enabled = false;
-        
-        yield return new WaitForSeconds(cooldownTime);
-
-        if (visual != null)
-            visual.SetActive(true);
-
-        padCollider.enabled = true;
-        isOnCooldown = false;
-        meshRenderer.enabled = true;
-
+        // 3) 觸發跳板動畫 & 上鎖
+        if (padAnimator != null)
+        {
+            padAnimator.SetTrigger(triggerParam);
+        }
     }
 }
