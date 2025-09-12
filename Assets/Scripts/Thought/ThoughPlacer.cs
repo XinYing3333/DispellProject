@@ -161,7 +161,7 @@ public class ThoughPlacer : MonoBehaviour
     {
         if (!showPreview || startPoint == null || endPoint == null) return;
 
-        Gizmos.color = Color.cyan;
+        Gizmos.color = Color.green;
         for (int i = 0; i < count; i++)
         {
             float t = i / (float)(count - 1);

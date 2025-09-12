@@ -70,6 +70,7 @@ public class CutsceneManager : MonoBehaviour
         }
     }
 
+    
     /// <summary>
     /// 播放 Timeline 過場。
     /// </summary>
@@ -218,5 +219,10 @@ public class CutsceneManager : MonoBehaviour
         bool block = a > 0.001f;
         fadeCanvas.blocksRaycasts = block;
         fadeCanvas.interactable = block;
+    }
+    
+    public void SetFadeMode(FadeMode mode)
+    {
+        fadeMode = mode;
     }
 }
