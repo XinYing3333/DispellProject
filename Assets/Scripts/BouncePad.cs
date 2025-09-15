@@ -30,6 +30,7 @@ public class BouncePad : MonoBehaviour
         {
             // 直接把垂直速度設為正值，確保向上彈
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, bounceForce, rb.linearVelocity.z);
+            AudioManager.Instance.PlaySFX(SFXType.BouncePad);
             // 也可以改用 AddForce：
             // rb.AddForce(Vector3.up * bounceForce, ForceMode.VelocityChange);
         }

@@ -10,6 +10,7 @@ public enum SFXType
     Click,
     Collect,
     Inhale,
+    BouncePad,
     CoinPickup,
     Explosion,
     EnemyHit,
