@@ -5,7 +5,8 @@ using System.Collections.Generic;
 public class Highlightable : MonoBehaviour
 {
     [Header("通用外框（兩路共用）")]
-    public GameObject outlineChild;
+    [SerializeField]private GameObject outlineChild;
+    private Outline outlineScript;
 
     [Header("材質疊加（可不用）")]
     public bool useMaterialSwitch = false;
@@ -23,7 +24,8 @@ public class Highlightable : MonoBehaviour
     {
         _renderers.AddRange(GetComponentsInChildren<Renderer>(true));
         foreach (var r in _renderers) _originalMats.Add(r.sharedMaterials);
-        if (outlineChild) outlineChild.SetActive(false);
+        if (outlineChild) outlineScript = outlineChild.GetComponent<Outline>();
+        outlineScript.enabled = false;
         _initialized = true;
     }
 
@@ -49,7 +51,7 @@ public class Highlightable : MonoBehaviour
         bool any = _aimOn || _proxOn;
 
         // 方案 A：子物件外框
-        if (outlineChild) outlineChild.SetActive(any);
+        if (outlineChild) outlineScript.enabled = any;
 
         // 方案 B：材質切換
         if (useMaterialSwitch)

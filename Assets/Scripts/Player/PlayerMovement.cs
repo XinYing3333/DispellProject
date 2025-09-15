@@ -156,7 +156,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded && !hasPlayedGroundedVFX)
         {
-            Debug.Log("Grounded");
             groundedVFX.Play();
             hasPlayedGroundedVFX = true;
         }

@@ -82,7 +82,7 @@ public class SceneController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape)) QuitGame();
 
         // 控制面板開關
-        string sceneName = SceneManager.GetActiveScene().name;
+        string sceneName = SceneManager.GetActiveScene().name; // TODO：每幀觸發要修改
         //if (sceneName == "MainMenu") SetSettingPanelInMainMenu();
         //else 
         if (sceneName == "L1v4")
