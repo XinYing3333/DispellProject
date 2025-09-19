@@ -3,25 +3,44 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+using EventBus.Events.Health;
+
 public class HeartsUI : MonoBehaviour
 {
+    [Header("Target")]
     public Health target;
-    public Image heartPrefab;           // 一個「滿心」圖
+
+    [Header("Prefabs & Sprites")]
+    public Image heartPrefab;
     public Sprite fullHeart;
     public Sprite emptyHeart;
+
     private readonly List<Image> _pool = new();
 
-    private void OnEnable()
+    // 事件綁定（總線）
+    private EventBinding<HealthChanged> _binding;
+    void OnEnable()
     {
+        _binding = new EventBinding<HealthChanged>(OnHealthChanged);
+        EventBus<HealthChanged>.Register(_binding);
+
         if (target)
         {
-            target.OnHealthChanged += Refresh;
             Refresh(target.GetCurrent(), target.GetMax());
         }
     }
-    private void OnDisable()
+
+    void OnDisable()
     {
-        if (target) target.OnHealthChanged -= Refresh;
+        if (_binding == null) return;
+        EventBus<HealthChanged>.Deregister(_binding);
+        _binding = null;
+    }
+
+    private void OnHealthChanged(HealthChanged e)
+    {
+        if (!target || e.target != target.gameObject) return;
+        Refresh(e.current, e.max);
     }
 
     void Refresh(int current, int max)
@@ -45,5 +64,4 @@ public class HeartsUI : MonoBehaviour
                 _pool[i].sprite = i < curHearts ? fullHeart : emptyHeart;
         }
     }
-
 }

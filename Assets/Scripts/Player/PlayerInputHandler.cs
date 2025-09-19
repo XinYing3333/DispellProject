@@ -10,6 +10,7 @@ namespace Player
     {
         public static PlayerInputHandler Instance { get; private set; }
         public bool cannotMove;
+        private bool isShoot;
         
         // === Input Properties ===
         public Vector2 MoveInput { get; private set; }
@@ -50,6 +51,7 @@ namespace Player
         private ThrowingSystem _throwingSystem;
         [Header("Aim Assist")]
         public AimAssist aimAssist;
+        private AttackCameraShake  _shake;
 
 
         void Awake()
@@ -60,7 +62,8 @@ namespace Player
                 return;
             }
             Instance = this;
-            
+
+            _shake = GetComponent<AttackCameraShake>();
             checkPoint = GameObject.FindGameObjectWithTag("CheckPoint").transform;
             _playerInput = GetComponent<PlayerInput>();
             _playerCollector = GetComponent<PlayerCollector>();
@@ -205,12 +208,15 @@ namespace Player
 
         IEnumerator HandleShoot()
         {
-            if(cannotMove)yield break;
+            if(cannotMove || isShoot)yield break;
+            isShoot = true;
             AudioManager.Instance.PlaySFX(SFXType.Shoot);
             
             _throwingSystem.ThrowObject(transform);
+            _shake.ShakeHeavy();
             
             yield return new WaitForSeconds(0.5f);
+            isShoot = false;
             ShootPressed = false;
         }
 

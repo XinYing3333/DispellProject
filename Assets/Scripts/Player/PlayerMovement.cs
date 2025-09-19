@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using Cinemachine;
-using Events;
 using Player;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -77,7 +76,7 @@ public class PlayerMovement : MonoBehaviour
         jumpForce = 12f;
         dashSpeed = 15f;
         anim.SetBool("IsRidingElephant", true);
-        EventBus<ChangeCameraEvent>.Publish(new ChangeCameraEvent(elephantCam));
+        //EventBus<ChangeCameraEvent>.Publish(new ChangeCameraEvent(elephantCam));
     }
 
     public void RestoreDefaultStats()
@@ -87,7 +86,7 @@ public class PlayerMovement : MonoBehaviour
         jumpForce = 10f;
         dashSpeed = 12f;
         anim.SetBool("IsRidingElephant", false);
-        EventBus<ChangeCameraEvent>.Publish(new ChangeCameraEvent(mainCam));
+        //EventBus<ChangeCameraEvent>.Publish(new ChangeCameraEvent(mainCam));
 
     }
     

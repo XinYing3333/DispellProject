@@ -21,13 +21,13 @@ public class Spell : MonoBehaviour
         switch (spellType)
         {
             case SpellType.AttackSpell:
-                mesh.material.color = Color.red;
+                mesh.material.color = Color.yellow;
                 break;
             case SpellType.RotateSpell:
                 mesh.material.color = Color.green;
                 break;
             case SpellType.ElectricBullet:
-                mesh.material.color = Color.yellow;
+                mesh.material.color = Color.red;
                 break;
         }
     }

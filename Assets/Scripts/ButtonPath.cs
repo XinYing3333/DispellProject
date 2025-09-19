@@ -34,21 +34,6 @@ public class ButtonPath : MonoBehaviour
         }
     }
 
-    /*private void OnTriggerExit(Collider other)
-    {
-        if (IsValidActivator(other))
-        {
-            playerCount--;
-            if (playerCount <= 0)
-            {
-                mesh.material.color = defaultColor;
-                transform.position = defaultPos;
-                SetRoadVisible(false);
-            }
-        }
-    }
-    */
-
     private bool IsValidActivator(Collider other)
     {
         return other.CompareTag("Player") || other.CompareTag("Clone");

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using EventBus.Events.Health;
 using Player;
 using UnityEngine;
 
@@ -23,8 +24,6 @@ public class Health : MonoBehaviour
     public AnimationCurve knockbackEase = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     // 事件：UI/音效/特效/震動都用這些事件接
-    public event Action<int, int> OnHealthChanged; // (current, max)
-    public event Action<DamageInfo> OnDamaged;
     public event Action<int> OnHealed;
     public event Action OnDeath;
 
@@ -38,7 +37,7 @@ public class Health : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody>();
         current = Mathf.Clamp(current == 0 ? MaxTotal : current, 0, MaxTotal);
-        OnHealthChanged?.Invoke(current, MaxTotal);
+        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
     }
 
     // === 對外 API ===
@@ -54,14 +53,14 @@ public class Health : MonoBehaviour
         {
             current = Mathf.Min(current + amount, MaxTotal);
             OnHealed?.Invoke(amount);
-            OnHealthChanged?.Invoke(current, MaxTotal);
+            EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
         }
     }
 
     public void FullHeal()
     {
         current = MaxTotal;
-        OnHealthChanged?.Invoke(current, MaxTotal);
+        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
     }
 
     public int GetCurrent() => current;
@@ -74,9 +73,8 @@ public class Health : MonoBehaviour
         if (_invuln && !info.bypassIFrames) return;
 
         current = Mathf.Max(0, current - Mathf.Max(1, info.amount));
-        OnDamaged?.Invoke(info);
-        OnHealthChanged?.Invoke(current, MaxTotal);
-
+        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
+        
         if (current <= 0)
         {
             Die();
@@ -165,6 +163,6 @@ public class Health : MonoBehaviour
     void ClampAndNotify()
     {
         current = Mathf.Clamp(current, 0, MaxTotal);
-        OnHealthChanged?.Invoke(current, MaxTotal);
+        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
     }
 }

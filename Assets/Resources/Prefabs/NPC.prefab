@@ -179,7 +179,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   keyE: {fileID: 89930620699156193}
-  inkJSON: {fileID: 0}
+  emoteAnimator: {fileID: 0}
+  inkJSON: {fileID: 4900000, guid: 804b213a4e5ba4e428a6d9ea626aa4c0, type: 3}
   playerIsClose: 0
 --- !u!65 &3140889335516661548
 BoxCollider:
@@ -350,6 +351,14 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: bf7a095b853932742aa97616c497e74a, type: 2}
+    - target: {fileID: 4782147115981919867, guid: febec8787f6c58243babb4f87b84c79f, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 4af48ad8da877cc42ab7a2fb03fb8dbd, type: 2}
+    - target: {fileID: 4782147115981919867, guid: febec8787f6c58243babb4f87b84c79f, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 8610dda95b16a824ba82eaae76cfe4c0, type: 2}
     - target: {fileID: 6193558792135139805, guid: febec8787f6c58243babb4f87b84c79f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.036493268
