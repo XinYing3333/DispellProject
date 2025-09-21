@@ -10,7 +10,7 @@ using Player;
 public class DialogueManager : MonoBehaviour
 {
     [Header("Params")]
-    [SerializeField] private float typingSpeed = 0.04f;
+    [SerializeField] private float typingSpeed = 0.09f;
 
     [Header("Load Globals JSON")]
     [SerializeField] private TextAsset loadGlobalsJSON;
@@ -273,12 +273,12 @@ public class DialogueManager : MonoBehaviour
         foreach (char letter in line.ToCharArray())
         {
             // 若按了提交（Interact）就跳到完整行，但同時鎖住提交幾十毫秒
-            if (PlayerInputHandler.Instance.InteractPressed)
+            /*if (PlayerInputHandler.Instance.InteractPressed)
             {
                 dialogueText.maxVisibleCharacters = line.Length;
                 LockSubmit(0.10f); // ← 關鍵：吃掉這次按下，避免立刻觸發 Continue/MakeChoice
                 break;
-            }
+            }*/
 
             // check for rich text tag, if found, add it without waiting
             if (letter == '<' || isAddingRichTextTag) 

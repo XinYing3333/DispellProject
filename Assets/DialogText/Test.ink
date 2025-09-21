@@ -1,13 +1,15 @@
 INCLUDE globals.ink
 EXTERNAL playEmote(emoteName)
 
-hi#speaker:NPC1  #layout:layout1 #audio:default
+hi#speaker:Wushi #portrait:wushi #layout:layout1 #audio:default
 this is a <b><color=\#FF1E35>test</color>.
+I am wushi.
     -> sub
     
 === sub ===
 ~ playEmote("pangolin-walk")
-choose a number #portrait:change 
+I am god.#speaker:God 1 #portrait:god-1
+choose a number 
 
   + [1]
     -> chosen("1")
