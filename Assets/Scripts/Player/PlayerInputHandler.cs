@@ -213,7 +213,7 @@ namespace Player
             AudioManager.Instance.PlaySFX(SFXType.Shoot);
             
             _throwingSystem.ThrowObject(transform);
-            _shake.ShakeHeavy();
+            //_shake.ShakeHeavy(); //鏡頭晃動
             
             yield return new WaitForSeconds(0.5f);
             isShoot = false;
