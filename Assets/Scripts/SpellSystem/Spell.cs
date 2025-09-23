@@ -40,39 +40,6 @@ public class Spell : MonoBehaviour
             StartCoroutine(SpawnTotem());
         }
     }
-    
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
-        {
-            interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnEnter);
-        }
-
-        if (other.gameObject.TryGetComponent(out EnemyAI enemy))
-        {
-            StartCoroutine(SpawnTotem());
-        }
-        if (other.gameObject.TryGetComponent(out BossLevel bossLevel))
-        {
-            StartCoroutine(SpawnTotem());
-        }
-    }
-
-    private void OnTriggerStay(Collider other)
-    {
-        if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
-        {
-            interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnStay);
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.TryGetComponent<InteractionPoint>(out InteractionPoint interactionPoint))
-        {
-            interactionPoint.TriggerInteraction(this , InteractionTriggerType.OnExit);
-        }
-    }
 
     IEnumerator SpawnTotem()
     {
@@ -93,12 +60,7 @@ public class Spell : MonoBehaviour
     private Transform target;
 
     Rigidbody rb;
-
-    public void SetTarget(Transform newTarget)
-    {
-        target = newTarget;
-    }
-
+    
     void FixedUpdate()
     {
         if (target == null) return;

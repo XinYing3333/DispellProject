@@ -26,7 +26,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private VisualEffect stepVFX;
     [SerializeField] private ParticleSystem jumpVFX;
     [SerializeField] private ParticleSystem groundedVFX;
-
     
     [Header("Jump Settings")]
     [SerializeField] private LayerMask groundLayer;
@@ -47,6 +46,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float grabOffset = 1.5f; // 微調吸到邊的偏移
     [SerializeField] private float grabDetectionHeight = 1.2f; // 玩家高於這個點才能抓
     [SerializeField] private float ledgeCheckDistance = 0.5f; // 檢測前方距離
+    
+    [Header("Detect Lock")]
+    [SerializeField] public bool isWalkOnly = false;     // 教學期間=只能走
+    [SerializeField] public bool lockJumpInWalkOnly = false;
+    [SerializeField] public bool lockDashInWalkOnly  = false;
+    
     private bool isGrabbing;
     private bool isFinishClimb;
     private bool isPushing;
@@ -151,7 +156,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (isGrounded && !hasPlayedGroundedVFX)
         {
-            Debug.Log("Grounded");
             groundedVFX.Play();
             hasPlayedGroundedVFX = true;
         }
@@ -195,7 +199,6 @@ public class PlayerMovement : MonoBehaviour
 
         _playerCollider.material = touchingWall ? noFrictionMaterial : defaultMaterial;
     }
-
     
     bool IsGrounded()
     {
@@ -244,18 +247,15 @@ public class PlayerMovement : MonoBehaviour
             
             _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
             
-            //mainCam.m_RecenterToTargetHeading.m_enabled = true;
-            
+            //移動時快速 Recenter
             mainCam.m_RecenterToTargetHeading.m_WaitTime = 0.5f;
             mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 0.8f;
         }
         else
         {
-            //mainCam.m_RecenterToTargetHeading.m_enabled = false;
-            
+            //未移動時慢速 Recenter
             mainCam.m_RecenterToTargetHeading.m_WaitTime = 5f;
             mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 2.5f;
-            
         }
     }
     
@@ -290,7 +290,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
     
-    /*private string DetectSurfaceType()
+    private string DetectSurfaceType()
     {
         Ray ray = new Ray(transform.position + Vector3.up * 0.1f, Vector3.down);
         if (Physics.Raycast(ray, out RaycastHit hit, 1.5f))
@@ -305,7 +305,7 @@ public class PlayerMovement : MonoBehaviour
             }
         }
         return "Default";
-    }*/
+    }
 
     [SerializeField] private float maxStepHeight = 0.3f;
     [SerializeField] private float stepCheckDistance = 0.4f;

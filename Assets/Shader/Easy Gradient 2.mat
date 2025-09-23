@@ -39,12 +39,24 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _GroundTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_1203a55f28924de39a8849318569deeb_Texture_1_Texture2D:
         m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_8ba50bbe38314b0d9e5355db1d70639f_Texture_1_Texture2D:
         m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_dd62107e50954d3d9b4c175611b861fb_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 31038209827531e4db15d2308f27eb03, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_f6bcbda4519145d79aa4c6898b061f1a_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 5caaacd8a50df264ea59fb74a0244c62, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture:
@@ -71,10 +83,12 @@ Material:
     - _BlendModePreserveSpecular: 1
     - _CastShadows: 1
     - _Cull: 0
-    - _Details: 0.27
+    - _Details: -1.09
     - _DstBlend: 0
     - _Float: 0.5
-    - _MossOffset: 13.49
+    - _GroundDetails: 6.39
+    - _MossOffset: 1.75
+    - _OffsetDetails: 2.56
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -85,9 +99,11 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.53396225, g: 1, b: 0.68197703, a: 0}
-    - _Color2: {r: 0.5874047, g: 0.74600345, b: 0.79622644, a: 0}
-    - _Color3: {r: 1, g: 0.9644597, b: 0.5113207, a: 0}
+    - _Color: {r: 0.50993735, g: 0.8396226, b: 0.33664113, a: 0}
+    - _Color2: {r: 0.5882353, g: 0.79607844, b: 0.7264767, a: 0}
+    - _Color3: {r: 0.25364897, g: 0.8385547, b: 0.9433962, a: 0}
+    - _Color4: {r: 0, g: 0, b: 0, a: 0}
+    - _OffsetMinMax: {r: -0.5, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
