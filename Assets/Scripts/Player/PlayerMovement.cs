@@ -196,7 +196,7 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        _playerCollider.material = touchingWall ? noFrictionMaterial : defaultMaterial;
+        //_playerCollider.material = touchingWall ? noFrictionMaterial : defaultMaterial;
     }
     
     bool IsGrounded()

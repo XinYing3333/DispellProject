@@ -58,6 +58,12 @@ public class PlayerCollector : MonoBehaviour
         public Collider[] cols;
         public bool[]     prevColEnabled;
     }
+    
+    // 單一目標控制
+    private Rigidbody _currentTarget;  // 正在「拉動中」的那一顆
+    private Rigidbody _heldRb;         // 已吸附在 collectPoint 的那一顆（不可收集）
+    private bool IsBusy => _currentTarget != null || _heldRb != null;
+
 
     // ===== Runtime / Caches =====
     private readonly Collider[] _overlapBuffer = new Collider[64];
@@ -78,6 +84,15 @@ public class PlayerCollector : MonoBehaviour
     private bool isCollecting;
     private bool hasStartedLoopSFX;
     private Coroutine _scanRoutine;
+    
+    // === 新增：讓上層能控制/接收結果 ===
+    private System.Func<bool> _isBusy; // true 表示現在不能吸
+    private System.Action<Rigidbody, bool> _onPulledResult; 
+// 回報： (rb, wasCollected)；若已入庫 wasCollected=true，rb 可給 null
+
+    public void SetBusyChecker(System.Func<bool> busyChecker) => _isBusy = busyChecker;
+    public void SetOnPulledResult(System.Action<Rigidbody, bool> callback) => _onPulledResult = callback;
+
 
     // ===== Unity =====
     private void Start()
@@ -230,28 +245,33 @@ public class PlayerCollector : MonoBehaviour
                 RestoreColliders(m.cols, m.prevColEnabled);
             }
         }
-
+        
         _magnetized.Clear();
         _magnetizedSet.Clear();
         _tcCache.Clear();
+        
+        _heldRb = null;              // ★ 放下後可再次吸取
+        _currentTarget = null;       // ★ 保險：清除當前目標
     }
 
     // ===== Collect Scan / Tween =====
+    // ScanLoop
     private System.Collections.IEnumerator ScanLoop()
     {
         var wait = new WaitForSeconds(0.12f);
         while (isCollecting)
         {
-            ScanAndBeginAttract();
+            if (!IsBusy) ScanAndBeginAttract(); // ★ 忙碌就跳過掃描
             yield return wait;
         }
         _scanRoutine = null;
     }
 
+
     private void ScanAndBeginAttract()
     {
-        if (!collectPoint) return;
-
+        if (!collectPoint || IsBusy) return; // ★ 忙碌直接返回
+        
         int count = Physics.OverlapSphereNonAlloc(
             collectPoint.position, collectRadius, _overlapBuffer, interactionMask
         );
@@ -366,6 +386,8 @@ public class PlayerCollector : MonoBehaviour
     {
         if (!rb) return;
 
+        _currentTarget = rb; // ★ 標記目前拉動目標
+
         // 起飛前快照 + 關碰撞（避免推玩家）
         var bs = new BodyState
         {
@@ -414,33 +436,34 @@ public class PlayerCollector : MonoBehaviour
         
         seq.OnComplete(() =>
         {
-            // 移除 tween/拉動狀態
             _tweens.Remove(rb);
             _attracting.Remove(rb);
 
-            // 這顆如果是「可收集的念頭」，到點就直接收集，不進入吸附模式
+            // 可收集：直接收進庫存 → 解除忙碌
             if (_tcCache.TryGetValue(rb, out var tc) && tc != null)
             {
-                // 立刻收集
                 tc.Collect();
                 collectParticle?.Play();
                 AudioManager.Instance.PlaySFX(SFXType.Collect);
 
-                // 清理：這顆物件完成生命周期了，不需要還原飛行期狀態
                 _tcCache.Remove(rb);
-                _flightStates.Remove(rb);     // 釋出快照記錄
-                _magnetizedSet.Remove(rb);    // 保險：不應該在這裡，但確保不殘留
+                _flightStates.Remove(rb);
+                _magnetizedSet.Remove(rb);
+
+                if (_currentTarget == rb) _currentTarget = null; // ★ 清掉目標
                 return;
             }
-            ToggleInhaleVFX(false);
-            // 否則：不是可收集的念頭 → 進入吸附，跟著玩家移動，等待取消
+
+            // 不可收集：吸附在手上 → 期間禁止再吸其他
             AttachToMagnet(rb);
-            _tcCache.Remove(rb); // 若不是 Collectible，這裡通常是 null，但清掉以防殘留
+            _tcCache.Remove(rb);
+            _heldRb = rb;                 // ★ 標記手上這顆
+            if (_currentTarget == rb) _currentTarget = null; // ★ 拉動結束
         });
+
 
         seq.OnKill(() =>
         {
-            // 飛行途中被取消：完整還原飛行前狀態
             if (rb && _flightStates.TryGetValue(rb, out var s))
             {
                 RestoreRigidbody(rb, s.kinematic, s.useGravity, s.detect, s.interp, s.constraints);
@@ -450,7 +473,10 @@ public class PlayerCollector : MonoBehaviour
             _tweens.Remove(rb);
             _attracting.Remove(rb);
             _tcCache.Remove(rb);
+
+            if (_currentTarget == rb) _currentTarget = null; // ★ 清掉目標
         });
+
 
         seq.SetLink(rb.gameObject, LinkBehaviour.KillOnDestroy);
         _tweens[rb] = seq;
