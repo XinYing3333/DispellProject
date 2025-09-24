@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace Player
 {
@@ -10,49 +9,30 @@ namespace Player
     {
         public static PlayerInputHandler Instance { get; private set; }
         public bool cannotMove;
-        private bool isShoot;
-        
-        // === Input Properties ===
+
         public Vector2 MoveInput { get; private set; }
         public float MoveSpeedMultiplier { get; private set; } = 1f;
         public bool JumpPressed { get; private set; }
         public bool SkillPressed { get; private set; }
         public bool DashPressed { get; private set; }
         public bool ShootPressed { get; private set; }
-
         public bool IsCollecting { get; private set; }
         public bool IsSkillUIOpen { get; private set; }
         public bool IsSettingPressed { get; private set; }
-
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
 
-
-        // === Events ===
         public event Action OnJump;
         public event Action OnSkill;
         public event Action OnDash;
         public event Action OnSwitchThrow;
 
-        // === Dependencies ===
-        [Header("Throwing System")]
-        public GameObject throwablePrefab;
-        public GameObject spellPrefab;
-        public Transform throwPoint;
-        public float throwForce = 10f;
-        public Transform checkPoint;
+        [Header("Core Interaction")]
+        [SerializeField] private InteractionController interaction;
 
-        // === Private ===
         private PlayerInput _playerInput;
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim ,_skill;
         private InputAction _skillUI, _setting;
-        private PlayerCollector _playerCollector;
-        
-        private ThrowingSystem _throwingSystem;
-        [Header("Aim Assist")]
-        public AimAssist aimAssist;
-        private AttackCameraShake  _shake;
-
 
         void Awake()
         {
@@ -63,104 +43,98 @@ namespace Player
             }
             Instance = this;
 
-            _shake = GetComponent<AttackCameraShake>();
-            checkPoint = GameObject.FindGameObjectWithTag("CheckPoint").transform;
             _playerInput = GetComponent<PlayerInput>();
-            _playerCollector = GetComponent<PlayerCollector>();
-            _throwingSystem = new ThrowingSystem(
-                throwablePrefab,
-                spellPrefab,
-                throwPoint,
-                throwForce,
-                aimAssist // ← 關鍵：把場景中的 AimAssist 丟進去
-            );
-
-
             if (_playerInput == null)
             {
                 Debug.LogError("PlayerInput 未正確掛載");
                 return;
             }
 
-            // Assign actions
             _movement = _playerInput.actions["Move"];
-            _run = _playerInput.actions["Run"];
-            _jump = _playerInput.actions["Jump"];
-            _shoot = _playerInput.actions["Shoot"];
-            _collect = _playerInput.actions["Collect"];
-            _dash = _playerInput.actions["Dash"];
-            _interact = _playerInput.actions["Interact"];
-            _aim = _playerInput.actions["Aim"];
-            _skill = _playerInput.actions["Skill"];
-            _skillUI = _playerInput.actions["SkillUI"];
-            _setting = _playerInput.actions["Setting"];
+            _run      = _playerInput.actions["Run"];
+            _jump     = _playerInput.actions["Jump"];
+            _shoot    = _playerInput.actions["Shoot"];    // 投擲
+            _collect  = _playerInput.actions["Collect"];  // 吸收（按住）
+            _dash     = _playerInput.actions["Dash"];
+            _interact = _playerInput.actions["Interact"]; // 丟下
+            _aim      = _playerInput.actions["Aim"];
+            _skill    = _playerInput.actions["Skill"];
+            _skillUI  = _playerInput.actions["SkillUI"];
+            _setting  = _playerInput.actions["Setting"];
 
+            if (!interaction)
+            {
+                interaction = GetComponentInChildren<InteractionController>();
+                if (!interaction)
+                    Debug.LogWarning("[PlayerInputHandler] 尚未指定 InteractionController，吸收/投擲將無效。");
+            }
         }
 
         private void OnEnable()
         {
-            _collect.started += OnCollectStarted;
-            _collect.canceled += OnCollectCanceled;
+            _collect.started   += OnCollectStarted;
+            _collect.canceled  += OnCollectCanceled;
 
-            _aim.started += OnAimStarted;
-            _aim.canceled += OnAimCanceled;
+            _aim.started       += OnAimStarted;
+            _aim.canceled      += OnAimCanceled;
 
-            _jump.performed += OnJumpPerformed;
-            _dash.performed += OnDashPerformed;
-            _shoot.performed += OnShootPerformed;
-            _skill.performed += OnSkillPerformed;
+            _jump.performed    += OnJumpPerformed;
+            _dash.performed    += OnDashPerformed;
+            _shoot.performed   += OnShootPerformed;   // 投擲
+            _skill.performed   += OnSkillPerformed;
             _skillUI.performed += OnSkillUIPerformed;
             _setting.performed += OnSettingPerformed;
-            
-           // _switch.performed += OnSwitchPerformed;
+            _interact.performed+= OnInteractPerformed; // 丟下
         }
 
         private void OnDisable()
         {
-            _collect.started -= OnCollectStarted;
-            _collect.canceled -= OnCollectCanceled;
+            _collect.started   -= OnCollectStarted;
+            _collect.canceled  -= OnCollectCanceled;
 
-            _aim.started -= OnAimStarted;
-            _aim.canceled -= OnAimCanceled;
+            _aim.started       -= OnAimStarted;
+            _aim.canceled      -= OnAimCanceled;
 
-            _jump.performed -= OnJumpPerformed;
-            _dash.performed -= OnDashPerformed;
-            _shoot.performed -= OnShootPerformed;
-            _skill.performed -= OnSkillPerformed;
+            _jump.performed    -= OnJumpPerformed;
+            _dash.performed    -= OnDashPerformed;
+            _shoot.performed   -= OnShootPerformed;
+            _skill.performed   -= OnSkillPerformed;
             _skillUI.performed -= OnSkillUIPerformed;
             _setting.performed -= OnSettingPerformed;
-            
-            //_switch.performed -= OnSwitchPerformed;
+            _interact.performed-= OnInteractPerformed;
         }
 
         void Update()
         {
-            if(cannotMove)return;
-            MoveInput = _movement.ReadValue<Vector2>();
+            if (cannotMove) return;
 
+            MoveInput = _movement.ReadValue<Vector2>();
             string controlScheme = _playerInput.currentControlScheme;
             MoveSpeedMultiplier = (controlScheme == "Gamepad")
                 ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
                 : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
-
-            if (IsCollecting)
-            {
-                _playerCollector.OnCollectCollectibles();
-            }
-            else
-            {
-                _playerCollector.OnCancelCollect();   
-            }
         }
 
         public void ResetJump() => JumpPressed = false;
         public void ResetDash() => DashPressed = false;
 
-        // ==== Input Callbacks ====
-        private void OnCollectStarted(InputAction.CallbackContext ctx) => IsCollecting = true;
-        private void OnCollectCanceled(InputAction.CallbackContext ctx) => IsCollecting = false;
+        // ===== 吸收（按住） =====
+        private void OnCollectStarted(InputAction.CallbackContext ctx)
+        {
+            IsCollecting = true;
+            if (cannotMove || interaction == null) return;
+            interaction.Input_StartAbsorbHold();
+        }
 
-        private void OnAimStarted(InputAction.CallbackContext ctx) => IsAiming = true;
+        private void OnCollectCanceled(InputAction.CallbackContext ctx)
+        {
+            IsCollecting = false;
+            if (interaction == null) return;
+            interaction.Input_StopAbsorbHold();
+        }
+
+        // ===== 其他 =====
+        private void OnAimStarted(InputAction.CallbackContext ctx)  => IsAiming = true;
         private void OnAimCanceled(InputAction.CallbackContext ctx) => IsAiming = false;
 
         private void OnJumpPerformed(InputAction.CallbackContext ctx)
@@ -168,21 +142,10 @@ namespace Player
             JumpPressed = true;
             OnJump?.Invoke();
         }
-        
-        private void OnSkillPerformed(InputAction.CallbackContext ctx)
-        {
-            OnSkill?.Invoke();
-        }
-        
-        private void OnSkillUIPerformed(InputAction.CallbackContext ctx)
-        {
-            IsSkillUIOpen = !IsSkillUIOpen;
-        }
-        
-        private void OnSettingPerformed(InputAction.CallbackContext ctx)
-        {
-            IsSettingPressed = !IsSettingPressed;
-        }
+
+        private void OnSkillPerformed(InputAction.CallbackContext ctx) => OnSkill?.Invoke();
+        private void OnSkillUIPerformed(InputAction.CallbackContext ctx) => IsSkillUIOpen = !IsSkillUIOpen;
+        private void OnSettingPerformed(InputAction.CallbackContext ctx) => IsSettingPressed = !IsSettingPressed;
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
         {
@@ -190,39 +153,31 @@ namespace Player
             OnDash?.Invoke();
         }
 
+        // 投擲（有持有物才會成功；會自動瞄準，沒有就直前）
         private void OnShootPerformed(InputAction.CallbackContext ctx)
         {
-            Debug.Log("isShoot");
             ShootPressed = true;
-            StartCoroutine(HandleShoot());
+            if (cannotMove || interaction == null) return;
+            interaction.Input_Throw();
+            StartCoroutine(ClearShootFlagNextFrame());
         }
-        
-        
-        /*private void OnSwitchPerformed(InputAction.CallbackContext ctx)
-        {
-            HandleThrowSwitch();
-            OnSwitchThrow?.Invoke();
-        }*/
 
-        // ==== Internal Logic ====
-
-        IEnumerator HandleShoot()
+        // 丟下（不投擲）
+        private void OnInteractPerformed(InputAction.CallbackContext ctx)
         {
-            if(cannotMove || isShoot)yield break;
-            isShoot = true;
-            AudioManager.Instance.PlaySFX(SFXType.Shoot);
-            
-            _throwingSystem.ThrowObject(transform);
-            //_shake.ShakeHeavy(); //鏡頭晃動
-            
-            yield return new WaitForSeconds(0.5f);
-            isShoot = false;
+            if (cannotMove || interaction == null) return;
+            interaction.Input_Drop();
+        }
+
+        private IEnumerator ClearShootFlagNextFrame()
+        {
+            yield return null;
             ShootPressed = false;
         }
-
         public void SetSpellType(SpellType newSpellType)
         {
-            spellPrefab.GetComponent<Spell>().spellType = newSpellType;
+            // 若未使用可留空或保留原設計
+            // spellPrefab.GetComponent<Spell>().spellType = newSpellType;
         }
     }
 }

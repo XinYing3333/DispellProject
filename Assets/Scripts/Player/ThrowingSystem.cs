@@ -1,138 +1,192 @@
-// ThrowingSystem.cs
 using UnityEngine;
 
 public class ThrowingSystem
 {
-    public enum ThrowArcMode { FixedAngle, ToTarget }
-
-    private GameObject throwablePrefab;
-    private GameObject spellPrefab;
-    private Transform throwOrigin;
-    private float throwSpeed;                 // = 初速度(m/s)，以速度發射
-    private AimAssist aimAssist;
-
-    // ===== 可調參數（也可改成建構子參數） =====
-    public ThrowArcMode ArcMode { get; set; } = ThrowArcMode.FixedAngle;
-    public float LaunchAngleDegrees { get; set; } = 35f;   // FixedAngle 模式用
-    public bool PreferHighArc { get; set; } = true;        // ToTarget 模式：高拋/低拋
-    public bool OrientToVelocity { get; set; } = true;     // 讓模型朝向速度
-    public bool UseGravity { get; set; } = true;           // 開啟重力（拋物線關鍵）
-
-    // 舊的 throwForce 其實是在當速度用；為避免混淆，統一叫 throwSpeed
-    public ThrowingSystem(GameObject throwablePrefab, GameObject spellPrefab, Transform throwOrigin, float throwForce, AimAssist aimAssist = null)
+    public enum ThrowArcMode
     {
-        this.throwablePrefab = throwablePrefab;
-        this.spellPrefab = spellPrefab;
+        FixedAngle,
+        ToTarget
+    }
+
+    private readonly Transform throwOrigin;
+    private readonly AimAssist aimAssist;
+    private float throwSpeed;
+
+    public ThrowArcMode ArcMode { get; set; } = ThrowArcMode.ToTarget;
+    public float LaunchAngleDegrees { get; set; } = 35f;
+    public bool PreferHighArc { get; set; } = true;
+    public bool OrientToVelocity { get; set; } = true;
+    public bool UseGravity { get; set; } = true;
+
+    public ThrowingSystem(Transform throwOrigin, float throwSpeed, AimAssist aimAssist = null)
+    {
         this.throwOrigin = throwOrigin;
-        this.throwSpeed = throwForce; // 相容你現有代碼；可改名為 throwSpeed
+        this.throwSpeed = throwSpeed;
         this.aimAssist = aimAssist;
     }
 
-    public void SetThrowSpeed(float speed) => throwSpeed = Mathf.Max(0f, speed);
+    public void SetThrowSpeed(float s) => throwSpeed = Mathf.Max(0f, s);
 
-    public void ThrowObject(Transform player)
+    // 核心：把「手上的 rb」直接丟出去
+    public void ThrowExisting(Rigidbody rb, Transform player)
     {
-        GameObject selectedPrefab = spellPrefab != null ? spellPrefab : throwablePrefab;
-        if (!selectedPrefab)
+        if (!rb) return;
+
+        rb.isKinematic = false;
+        rb.useGravity = UseGravity;
+        rb.detectCollisions = true;
+
+        // ★ 用實際出手位置
+        Vector3 origin = rb.position;
+        
+        if (throwOrigin)
         {
-            Debug.LogError("[ThrowingSystem] 沒有可用的投擲 Prefab。");
-            return;
+            rb.position = throwOrigin.position;
+            rb.rotation = throwOrigin.rotation;
         }
-
-        GameObject go = GameObject.Instantiate(selectedPrefab, throwOrigin.position, throwOrigin.rotation);
-        Rigidbody rb = go.GetComponent<Rigidbody>();
-        if (!rb)
-        {
-            Debug.LogError("[ThrowingSystem] Prefab 沒有 Rigidbody，無法投擲。");
-            return;
-        }
-
-        rb.useGravity = UseGravity; // 讓重力參與 => 才會有拋物線
-
-        // 視線方向（備援）
-        Vector3 lookDir = (aimAssist != null) ? aimAssist.GetAimDirection()
-                         : (player ? player.forward : Vector3.forward);
-        if (lookDir.sqrMagnitude < 1e-6f) lookDir = (player ? player.forward : Vector3.forward);
-        lookDir.Normalize();
-
-        // 計算初速度 v0
+        
         Vector3 v0;
-        bool solved = false;
 
-        if (ArcMode == ThrowArcMode.ToTarget && aimAssist != null && aimAssist.CurrentTarget != null)
+        if (ArcMode == ThrowArcMode.ToTarget && aimAssist && aimAssist.CurrentTarget)
         {
-            Vector3 targetPos = aimAssist.CurrentTarget.GetAimPoint(); // 你 Targetable 已經有 GetAimPoint()
-            solved = TrySolveBallisticVelocity(throwOrigin.position, targetPos, throwSpeed, out v0, PreferHighArc);
+            Vector3 target = aimAssist.CurrentTarget.GetAimPoint();
+
+            const float MaxPitch = 70f;
+            bool ok = TrySolveBallisticBest(origin, target, throwSpeed, MaxPitch,
+                out v0, out float usedPitchDeg, out string reason);
+
+#if UNITY_EDITOR
+            if (ok) Debug.Log($"[Throw] choose ballistic: pitch={usedPitchDeg:F1}°, speed={throwSpeed:F1}");
+            else    Debug.Log($"[Throw] ballistic fallback: {reason}");
+#endif
+            if (!ok) v0 = FallbackFixedAngle(player); // 退回固定角
         }
         else
         {
-            solved = false;
-            v0 = Vector3.zero; // 先給值，下面會用 FixedAngle 回退
+#if UNITY_EDITOR
+            Debug.Log("[Throw] no target → FixedAngle");
+            
+#endif
+            v0 = FallbackFixedAngle(player);
         }
 
-        if (!solved)
-        {
-            // 回退：固定拋角
-            Vector3 horizDir = Vector3.ProjectOnPlane(lookDir, Vector3.up).normalized;
-            if (horizDir.sqrMagnitude < 1e-6f) horizDir = (player ? player.forward : Vector3.forward);
-
-            float rad = LaunchAngleDegrees * Mathf.Deg2Rad;
-            float cos = Mathf.Cos(rad);
-            float sin = Mathf.Sin(rad);
-
-            v0 = horizDir * (throwSpeed * cos) + Vector3.up * (throwSpeed * sin);
-        }
-
-        // 設定剛體速度（Unity 6 可用 linearVelocity；若報 API 錯誤改用 rb.velocity）
         rb.linearVelocity = v0;
 
         if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
-            go.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
-
-        // （可選）忽略與玩家的一次碰撞，避免出手就撞到自己
-        // var playerCol = player ? player.GetComponentInChildren<Collider>() : null;
-        // var bulletCol = go.GetComponentInChildren<Collider>();
-        // if (playerCol && bulletCol) Physics.IgnoreCollision(playerCol, bulletCol, true);
-
+            rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
 #if UNITY_EDITOR
-        if (ArcMode == ThrowArcMode.ToTarget && aimAssist && aimAssist.CurrentTarget)
-            Debug.Log($"[ThrowingSystem] ToTarget 發射，目標：{aimAssist.CurrentTarget.name}，" +
-                      $"{(PreferHighArc ? "高拋" : "低拋")}，速度={throwSpeed:F1} m/s");
-        else
-            Debug.Log($"[ThrowingSystem] FixedAngle 發射，角度={LaunchAngleDegrees:F1}°，速度={throwSpeed:F1} m/s");
+// 取樣 1 秒軌跡
+        Vector3 p = origin;
+        Vector3 vel = v0;
+        Vector3 g = Physics.gravity;
+        float step = 0.02f;
+        for (float t = 0; t < 1.0f; t += step)
+        {
+            Vector3 pNext = origin + vel * t + 0.5f * g * (t * t);
+            Debug.DrawLine(p, pNext, Color.red, 1.0f);
+            p = pNext;
+        }
 #endif
+
     }
 
-    /// <summary>
-    /// 固定初速度 speed，解出從 origin 擲到 target 的初速度向量 v0（可選高拋/低拋）。
-    /// 返回 false 表示 speed 太低或幾何條件無解（例如距離過遠、落差過大）。
-    /// </summary>
-    private static bool TrySolveBallisticVelocity(Vector3 origin, Vector3 target, float speed, out Vector3 v0, bool preferHighArc)
+
+
+    private Vector3 FallbackFixedAngle(Transform player)
     {
-        v0 = Vector3.zero;
+        Vector3 look = aimAssist
+            ? aimAssist.GetAimDirection()
+            : (player ? player.forward : Vector3.forward);
+        Vector3 horiz = Vector3.ProjectOnPlane(look, Vector3.up).normalized;
+        float rad = LaunchAngleDegrees * Mathf.Deg2Rad;
+        return horiz * (throwSpeed * Mathf.Cos(rad)) + Vector3.up * (throwSpeed * Mathf.Sin(rad));
+    }
 
-        Vector3 toTarget = target - origin;
-        Vector3 toTargetXZ = Vector3.ProjectOnPlane(toTarget, Vector3.up);
-        float x = toTargetXZ.magnitude;          // 地面水平距離
-        float y = toTarget.y;                    // 垂直高度差（目標在上為正）
-        float g = Physics.gravity.y;             // Unity 中重力 y 通常為 -9.81
+    // 固定初速度 s，從 origin 擲到 target 的 v0（可選高/低拋）
+    private static bool TrySolveBallisticBest(
+        Vector3 origin, Vector3 target, float speed, float maxPitchDeg,
+        out Vector3 bestV0, out float bestPitchDeg, out string failReason)
+    {
+        bestV0 = Vector3.zero;
+        bestPitchDeg = 0f;
+        failReason = "";
+
+        Vector3 to = target - origin;
+        Vector3 toXZ = Vector3.ProjectOnPlane(to, Vector3.up);
+        float x = toXZ.magnitude;
+        float y = to.y;
+        float g = Physics.gravity.y; // negative
+
+        // 極近距：直接直射，避免 0 除
+        const float MinHoriz = 0.25f;
+        if (x < MinHoriz)
+        {
+            Vector3 dir = (to.sqrMagnitude > 1e-6f) ? to.normalized : Vector3.forward;
+            bestV0 = dir * speed;
+            bestPitchDeg = 0f; // 不重要
+            return true;
+        }
+
         float s2 = speed * speed;
+        float under = s2 * s2 - g * (g * x * x + 2f * y * s2);
+        if (under < 0f)
+        {
+            failReason = "discriminant<0 (speed too low or height gap too large)";
+            return false;
+        }
 
-        // 根號判斷：<0 無解
-        float underSqrt = s2 * s2 - g * (g * x * x + 2f * y * s2);
-        if (underSqrt < 0f) return false;
+        float sqrt = Mathf.Sqrt(under);
 
-        float sqrt = Mathf.Sqrt(underSqrt);
+        // 兩個解：高拋(+)、低拋(-)
+        bool haveAny = false;
+        Vector3 candidateV0High = Vector3.zero;
+        float pitchHigh = float.MaxValue;
+        Vector3 candidateV0Low = Vector3.zero;
+        float pitchLow = float.MaxValue;
 
-        // tanθ = (s^2 ± sqrt) / (g * x)
-        // 注意：g 為負值
-        float tanTheta = (preferHighArc ? (s2 + sqrt) : (s2 - sqrt)) / (-g * x);
+        // helper：由 tanθ 算向量與 pitch
+        bool BuildCandidate(float tan, out Vector3 v0, out float pitchDeg)
+        {
+            float cos = 1f / Mathf.Sqrt(1f + tan * tan);
+            float sin = tan * cos;
+            Vector3 dirXZ = toXZ / x;
+            v0 = dirXZ * (speed * cos) + Vector3.up * (speed * sin);
 
-        float cosTheta = 1f / Mathf.Sqrt(1f + tanTheta * tanTheta);
-        float sinTheta = tanTheta * cosTheta;
+            float horizMag = (speed * cos);
+            pitchDeg = Mathf.Rad2Deg * Mathf.Atan2(speed * sin, Mathf.Max(1e-5f, horizMag));
+            return true;
+        }
 
-        Vector3 dirXZ = (x > 1e-4f) ? (toTargetXZ / x) : Vector3.forward; // 地面方向單位向量
-        v0 = dirXZ * (speed * cosTheta) + Vector3.up * (speed * sinTheta);
+        // g < 0，所以分母取 (-g * x)
+        float tanHigh = (s2 + sqrt) / (-g * x);
+        float tanLow = (s2 - sqrt) / (-g * x);
+
+        BuildCandidate(tanHigh, out candidateV0High, out pitchHigh);
+        BuildCandidate(tanLow, out candidateV0Low, out pitchLow);
+
+        // 先嘗試選擇「pitch <= 上限」中較小的那個；都超過就失敗（交給外面 fallback）
+        bool highOk = pitchHigh <= maxPitchDeg;
+        bool lowOk = pitchLow <= maxPitchDeg;
+
+        if (lowOk && (!highOk || pitchLow <= pitchHigh))
+        {
+            bestV0 = candidateV0Low;
+            bestPitchDeg = pitchLow;
+            haveAny = true;
+        }
+        else if (highOk)
+        {
+            bestV0 = candidateV0High;
+            bestPitchDeg = pitchHigh;
+            haveAny = true;
+        }
+
+        if (!haveAny)
+        {
+            failReason = $"both pitches too steep (low={pitchLow:F1}°, high={pitchHigh:F1}° > {maxPitchDeg}°)";
+            return false;
+        }
+
         return true;
     }
 }

@@ -20,7 +20,7 @@ public class Targetable : MonoBehaviour
         return b.center;
     }
 
-    public void SetHighlighted(bool on)
+   public void SetHighlighted(bool on)
     {
         if (highlightable) highlightable.SetHighlighted(on);
     }

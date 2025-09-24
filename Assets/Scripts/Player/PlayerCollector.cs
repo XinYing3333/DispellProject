@@ -1,565 +1,123 @@
-using System.Collections.Generic;
+// PlayerCollector.cs
 using UnityEngine;
-using DG.Tweening;
 
 public class PlayerCollector : MonoBehaviour
 {
-    // ===== Inspector =====
-    [Header("Detect")]
-    public float collectRadius = 1f;
-    [Range(1f, 180f)] public float collectAngle = 90f;
+    [Header("Detect (前方錐形)")]
+    public Transform center;            // 通常是玩家的 collectPoint/胸口
+    public Transform forwardRef;        // 通常用相機或玩家 forward
     public LayerMask interactionMask;
-    public Transform collectPoint;
-
-    [Header("FX")]
-    [SerializeField] private ParticleSystem captureParticle;
-    [SerializeField] private ParticleSystem captureParticle2;
-    [SerializeField] private ParticleSystem collectParticle;
-
-    [Header("Tween Settings")]
-    public float pullSpeed = 6f;
-    public float minDuration = 0.55f;
-    public float maxDuration = 1.2f;
-    public Ease  pullEase = Ease.OutCubic;
-    public float shakeStrength = 0.1f;
-    public int   shakeVibrato = 20;
-
-    [Header("Arrival Tuning")]
-    [SerializeField] private float preCollectOffset = 0.65f;
-    [SerializeField] private float hoverTime       = 0.18f;
-    [SerializeField] private float finalSnapTime   = 0.10f;
-    [SerializeField] private Ease  finalSnapEase   = Ease.OutQuad;
-    [SerializeField] private bool  offsetAlongForward = true;
-
-    [Header("Magnet Mode")]
-    [SerializeField] private bool  collectOnCancel   = true;
-    [SerializeField] private float magnetRingRadius  = 0.25f;
-    [SerializeField] private float magnetHeightOffset = 0f;
-
-    // ===== Types =====
-    private class MagnetInfo
-    {
-        public Rigidbody rb;
-        public Transform originalParent;
-        public bool origKinematic, origUseGravity, origDetect;
-        public ThoughtCollectible tc;
-
-        public RigidbodyConstraints prevConstraints;
-        public RigidbodyInterpolation prevInterp;
-        public Collider[] cols;
-        public bool[]    prevColEnabled;
-    }
-
-    private class BodyState
-    {
-        public bool kinematic, useGravity, detect;
-        public RigidbodyConstraints constraints;
-        public RigidbodyInterpolation interp;
-        public Collider[] cols;
-        public bool[]     prevColEnabled;
-    }
+    public float radius = 2.0f;
+    [Range(1f,180f)] public float angle = 90f;
     
-    // 單一目標控制
-    private Rigidbody _currentTarget;  // 正在「拉動中」的那一顆
-    private Rigidbody _heldRb;         // 已吸附在 collectPoint 的那一顆（不可收集）
-    private bool IsBusy => _currentTarget != null || _heldRb != null;
+    // ---- 放在 PlayerCollector 欄位區 ----
+    [Header("Gizmos")]
+    [SerializeField] private bool drawGizmos = true;
+    [SerializeField] private Color gizmoColor = new Color(0f, 0.85f, 1f, 0.35f); // 青藍半透明
+    [SerializeField] private float gizmoRayLen = 2f; // 錐角兩側射線長度（視覺參考）
 
+    private readonly Collider[] _hits = new Collider[64];
+    private float _cosHalf;
 
-    // ===== Runtime / Caches =====
-    private readonly Collider[] _overlapBuffer = new Collider[64];
+    // 與控制器溝通（由上層注入）
+    private System.Func<bool> _isBusy;
+    private System.Action<Rigidbody, bool> _onPulledResult;
 
-    private readonly List<MagnetInfo> _magnetized = new List<MagnetInfo>();
-    private readonly HashSet<Rigidbody> _magnetizedSet = new HashSet<Rigidbody>();
-    private readonly HashSet<Highlightable> _proxActive = new HashSet<Highlightable>();
+    void OnValidate() => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
+    void Awake()      => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
 
-    private readonly HashSet<Rigidbody> _attracting = new HashSet<Rigidbody>();
-    private readonly Dictionary<Rigidbody, Tween> _tweens = new Dictionary<Rigidbody, Tween>();
-    private readonly Dictionary<Rigidbody, ThoughtCollectible> _tcCache = new Dictionary<Rigidbody, ThoughtCollectible>();
-    private readonly Dictionary<Rigidbody, BodyState> _flightStates = new Dictionary<Rigidbody, BodyState>();
+    public void SetBusyChecker(System.Func<bool> f) => _isBusy = f;
+    public void SetOnPulledResult(System.Action<Rigidbody, bool> cb) => _onPulledResult = cb;
 
-    private float _cosThreshold;
-    private float _proxScanTimer;
-    public  float proximityScanInterval = 0.15f;
-
-    private bool isCollecting;
-    private bool hasStartedLoopSFX;
-    private Coroutine _scanRoutine;
-    
-    // === 新增：讓上層能控制/接收結果 ===
-    private System.Func<bool> _isBusy; // true 表示現在不能吸
-    private System.Action<Rigidbody, bool> _onPulledResult; 
-// 回報： (rb, wasCollected)；若已入庫 wasCollected=true，rb 可給 null
-
-    public void SetBusyChecker(System.Func<bool> busyChecker) => _isBusy = busyChecker;
-    public void SetOnPulledResult(System.Action<Rigidbody, bool> callback) => _onPulledResult = callback;
-
-
-    // ===== Unity =====
-    private void Start()
+    // 最小版核心：**立即**處理最近的一個（不做拉動/吸附動畫）
+    public void TryAbsorbOnce()
     {
-        CollectionSystem.LoadCollection();
-        _cosThreshold = Mathf.Cos(Mathf.Deg2Rad * (collectAngle * 0.5f));
-    }
+        if (!center) return;
+        if (_isBusy != null && _isBusy()) return;
 
-    private void OnValidate()
-    {
-        _cosThreshold = Mathf.Cos(Mathf.Deg2Rad * (collectAngle * 0.5f));
-    }
+        int n = Physics.OverlapSphereNonAlloc(center.position, radius, _hits, interactionMask, QueryTriggerInteraction.Ignore);
 
-    private void Update()
-    {
-        _proxScanTimer += Time.deltaTime;
-        if (_proxScanTimer >= proximityScanInterval)
-        {
-            _proxScanTimer = 0f;
-            ProximityScanAndHighlight();
-        }
+        Transform bestT = null;
+        float bestScore = float.MinValue;
 
-        if (isCollecting && !hasStartedLoopSFX)
-        {
-            AudioManager.Instance.PlaySFXLoop(SFXType.Inhale);
-            hasStartedLoopSFX = true;
-            ToggleInhaleVFX(true);
-            if (_scanRoutine == null) _scanRoutine = StartCoroutine(ScanLoop());
-        }
-        else if (!isCollecting && hasStartedLoopSFX)
-        {
-            StopLoopSFXIfIdle();
-            ToggleInhaleVFX(false);
-            if (_scanRoutine != null) { StopCoroutine(_scanRoutine); _scanRoutine = null; }
-        }
-    }
-
-    private void OnDisable()
-    {
-        foreach (var h in _proxActive) if (h) h.SetProximityHighlight(false);
-        _proxActive.Clear();
-    }
-
-    // ===== Highlighting =====
-    private void ProximityScanAndHighlight()
-    {
-        if (collectPoint == null) return;
-
-        int count = Physics.OverlapSphereNonAlloc(
-            collectPoint.position, collectRadius, _overlapBuffer,
-            interactionMask, QueryTriggerInteraction.Ignore
-        );
-
-        Vector3 forward = collectPoint.forward;
-        var newSet = new HashSet<Highlightable>();
-
-        for (int i = 0; i < count; i++)
-        {
-            var col = _overlapBuffer[i];
-            if (!col) continue;
-
-            Vector3 to = col.transform.position - collectPoint.position;
-            float d2 = to.sqrMagnitude;
-            if (d2 < 1e-6f) continue;
-            to /= Mathf.Sqrt(d2);
-
-            if (Vector3.Dot(forward, to) < _cosThreshold) continue;
-
-            var h = col.GetComponentInParent<Highlightable>();
-            if (!h) continue;
-
-            bool isInteractable = col.GetComponentInParent<Collectible>() ||
-                                  col.GetComponentInParent<Targetable>();
-            if (!isInteractable) continue;
-
-            newSet.Add(h);
-        }
-
-        foreach (var h in _proxActive)
-            if (h && !newSet.Contains(h))
-                h.SetProximityHighlight(false);
-
-        foreach (var h in newSet)
-            if (!_proxActive.Contains(h))
-                h.SetProximityHighlight(true);
-
-        _proxActive.Clear();
-        foreach (var h in newSet) _proxActive.Add(h);
-    }
-
-    private void ToggleInhaleVFX(bool on)
-    {
-        if (captureParticle)
-        {
-            var e = captureParticle.emission;
-            e.enabled = on;
-            if (on && !captureParticle.isPlaying) captureParticle.Play();
-        }
-        if (captureParticle2)
-        {
-            var e2 = captureParticle2.emission;
-            e2.enabled = on;
-            if (on && !captureParticle2.isPlaying) captureParticle2.Play();
-        }
-        if (!on)
-        {
-            captureParticle?.Stop();
-            captureParticle2?.Stop();
-        }
-    }
-
-    // ===== Input Entrypoints =====
-    public void OnCollectCollectibles()
-    {
-        isCollecting = true;
-    }
-
-    public void OnCancelCollect()
-    {
-        isCollecting = false;
-
-        // 停掉所有正在拉動的 tween（不觸發 OnComplete）
-        var keys = new List<Rigidbody>(_tweens.Keys);
-        for (int i = 0; i < keys.Count; i++)
-        {
-            var rbKey = keys[i];
-            if (_tweens.TryGetValue(rbKey, out var tw) && tw.IsActive()) tw.Kill(false);
-            if (rbKey) rbKey.isKinematic = false;
-        }
-        _tweens.Clear();
-        _attracting.Clear();
-
-        // 釋放或收集吸附中的物件，並完整還原
-        for (int i = 0; i < _magnetized.Count; i++)
-        {
-            var m = _magnetized[i];
-            if (m == null || !m.rb) continue;
-
-            m.rb.transform.SetParent(m.originalParent, true);
-
-            if (collectOnCancel && m.tc != null)
-            {
-                m.tc.Collect();
-                collectParticle?.Play();
-                AudioManager.Instance.PlaySFX(SFXType.Collect);
-            }
-            else
-            {
-                RestoreRigidbody(m.rb, m.origKinematic, m.origUseGravity, m.origDetect, m.prevInterp, m.prevConstraints);
-                RestoreColliders(m.cols, m.prevColEnabled);
-            }
-        }
-        
-        _magnetized.Clear();
-        _magnetizedSet.Clear();
-        _tcCache.Clear();
-        
-        _heldRb = null;              // ★ 放下後可再次吸取
-        _currentTarget = null;       // ★ 保險：清除當前目標
-    }
-
-    // ===== Collect Scan / Tween =====
-    // ScanLoop
-    private System.Collections.IEnumerator ScanLoop()
-    {
-        var wait = new WaitForSeconds(0.12f);
-        while (isCollecting)
-        {
-            if (!IsBusy) ScanAndBeginAttract(); // ★ 忙碌就跳過掃描
-            yield return wait;
-        }
-        _scanRoutine = null;
-    }
-
-
-    private void ScanAndBeginAttract()
-    {
-        if (!collectPoint || IsBusy) return; // ★ 忙碌直接返回
-        
-        int count = Physics.OverlapSphereNonAlloc(
-            collectPoint.position, collectRadius, _overlapBuffer, interactionMask
-        );
-
-        var forward = collectPoint.forward;
-
-        for (int i = 0; i < count; i++)
-        {
-            var col = _overlapBuffer[i];
-            if (!col) continue;
-
-            Vector3 dir = col.transform.position - collectPoint.position;
-            float d2 = dir.sqrMagnitude;
-            if (d2 < 1e-6f) continue;
-            dir /= Mathf.Sqrt(d2);
-
-            if (Vector3.Dot(forward, dir) < _cosThreshold) continue;
-
-            if (!col.TryGetComponent(out Rigidbody rb)) continue;
-            if (_magnetizedSet.Contains(rb)) continue;
-            if (_attracting.Contains(rb)) continue;
-
-            col.TryGetComponent(out ThoughtCollectible tc);
-            bool canCollect    = tc != null && TryIsCollectable(col.transform);
-            bool canMagnetOnly = tc == null && col.GetComponentInParent<MagnetAttachable>() != null;
-            if (!canCollect && !canMagnetOnly) continue;
-
-            _attracting.Add(rb);
-            if (tc != null) _tcCache[rb] = tc;
-
-            BeginAttract(rb);
-        }
-    }
-
-    private void AttachToMagnet(Rigidbody rb)
-    {
-        if (!rb) return;
-
-        var info = new MagnetInfo
-        {
-            rb = rb,
-            originalParent = rb.transform.parent,
-            tc = _tcCache.TryGetValue(rb, out var cachedTc) ? cachedTc : rb.GetComponent<ThoughtCollectible>()
-        };
-
-        // 若從飛行進來，沿用飛行前的原狀態；否則即時快照
-        if (_flightStates.TryGetValue(rb, out var bs))
-        {
-            info.origKinematic   = bs.kinematic;
-            info.origUseGravity  = bs.useGravity;
-            info.origDetect      = bs.detect;
-            info.prevConstraints = bs.constraints;
-            info.prevInterp      = bs.interp;
-            info.cols            = bs.cols;
-            info.prevColEnabled  = bs.prevColEnabled;
-            _flightStates.Remove(rb);
-        }
-        else
-        {
-            SnapshotColliders(rb, out info.cols, out info.prevColEnabled);
-            info.origKinematic   = rb.isKinematic;
-            info.origUseGravity  = rb.useGravity;
-            info.origDetect      = rb.detectCollisions;
-            info.prevConstraints = rb.constraints;
-            info.prevInterp      = rb.interpolation;
-            SetCollidersEnabled(info.cols, false);
-        }
-
-        // 殺掉殘留 tween、凍結、掛到收集點
-        DOTween.Kill(rb, false);
-        DOTween.Kill(rb.transform, false);
-        ClearMotion(rb);
-        rb.isKinematic      = true;
-        rb.useGravity       = false;
-        rb.detectCollisions = false;
-        rb.interpolation    = RigidbodyInterpolation.None;
-        rb.constraints      = RigidbodyConstraints.FreezeAll;
-
-        rb.transform.SetParent(collectPoint, false);
-
-        _magnetized.Add(info);
-        _magnetizedSet.Add(rb);
-        ArrangeMagnetized();
-    }
-
-    private void ArrangeMagnetized()
-    {
-        int n = _magnetized.Count;
-        if (n == 0) return;
+        Vector3 fwd = forwardRef ? forwardRef.forward : transform.forward;
 
         for (int i = 0; i < n; i++)
         {
-            var info = _magnetized[i];
-            if (info == null || !info.rb) continue;
+            var c = _hits[i];
+            if (!c) continue;
 
-            float ang = (360f / n) * i;
-            Vector3 localPos = Quaternion.Euler(0f, ang, 0f) * (Vector3.forward * magnetRingRadius);
-            localPos.y += magnetHeightOffset;
+            Vector3 to = c.transform.position - center.position;
+            float d2 = to.sqrMagnitude;
+            if (d2 < 1e-6f) continue;
+            float invd = 1f / Mathf.Sqrt(d2);
+            Vector3 toN = to * invd;
 
-            info.rb.transform.localPosition = localPos;
-            info.rb.transform.localRotation = Quaternion.identity;
-        }
-    }
+            if (Vector3.Dot(fwd, toN) < _cosHalf) continue;
 
-    private bool TryIsCollectable(Transform t)
-    {
-        var thoughtObj = t.GetComponent<ThoughtObject>();
-        return thoughtObj != null && thoughtObj.isCollectable;
-    }
+            float dist = 1f / Mathf.Max(0.0001f, Mathf.Sqrt(d2));
+            float score = dist; // 越近越好（先簡單）
 
-    private void BeginAttract(Rigidbody rb)
-    {
-        if (!rb) return;
-
-        _currentTarget = rb; // ★ 標記目前拉動目標
-
-        // 起飛前快照 + 關碰撞（避免推玩家）
-        var bs = new BodyState
-        {
-            kinematic   = rb.isKinematic,
-            useGravity  = rb.useGravity,
-            detect      = rb.detectCollisions,
-            constraints = rb.constraints,
-            interp      = rb.interpolation
-        };
-        SnapshotColliders(rb, out bs.cols, out bs.prevColEnabled);
-        SetCollidersEnabled(bs.cols, false);
-        _flightStates[rb] = bs;
-
-        ClearMotion(rb);
-        rb.isKinematic      = true;
-        rb.useGravity       = false;
-        rb.detectCollisions = false;
-        rb.interpolation    = RigidbodyInterpolation.None;
-
-        if (_tweens.TryGetValue(rb, out var oldTween))
-        {
-            if (oldTween.IsActive()) oldTween.Kill(false);
-            _tweens.Remove(rb);
-        }
-
-        Vector3 cpPos = collectPoint.position;
-        Vector3 cpFwd = collectPoint.forward;
-        Vector3 midTarget = offsetAlongForward ? cpPos - cpFwd * preCollectOffset : cpPos;
-
-        float distToMid = Vector3.Distance(rb.position, midTarget);
-        float d1 = Mathf.Clamp(distToMid / Mathf.Max(0.007f, pullSpeed), minDuration, maxDuration);
-
-        var seq = DOTween.Sequence().SetUpdate(UpdateType.Fixed);
-
-        seq.Append(rb.DOMove(midTarget, d1).SetEase(pullEase));
-
-        if (hoverTime > 0.001f)
-        {
-            if (shakeStrength > 0f)
-                seq.Join(rb.transform.DOShakePosition(d1, shakeStrength, shakeVibrato, 90, false, true).SetUpdate(UpdateType.Fixed));
-            seq.AppendInterval(hoverTime);
-        }
-
-        if (offsetAlongForward)
-            seq.Append(rb.DOMove(cpPos, finalSnapTime).SetEase(finalSnapEase));
-        
-        seq.OnComplete(() =>
-        {
-            _tweens.Remove(rb);
-            _attracting.Remove(rb);
-
-            // 可收集：直接收進庫存 → 解除忙碌
-            if (_tcCache.TryGetValue(rb, out var tc) && tc != null)
+            if (score > bestScore)
             {
-                tc.Collect();
-                collectParticle?.Play();
-                AudioManager.Instance.PlaySFX(SFXType.Collect);
-
-                _tcCache.Remove(rb);
-                _flightStates.Remove(rb);
-                _magnetizedSet.Remove(rb);
-
-                if (_currentTarget == rb) _currentTarget = null; // ★ 清掉目標
-                return;
+                bestScore = score;
+                bestT = c.transform;
             }
+        }
 
-            // 不可收集：吸附在手上 → 期間禁止再吸其他
-            AttachToMagnet(rb);
-            _tcCache.Remove(rb);
-            _heldRb = rb;                 // ★ 標記手上這顆
-            if (_currentTarget == rb) _currentTarget = null; // ★ 拉動結束
-        });
+        if (!bestT) return;
 
-
-        seq.OnKill(() =>
+        // 語意決定：可收集 → Collect；否則若有 Rigidbody → 交給上層放手上
+        //var collect = bestT.GetComponentInParent<ICollectable>();
+        /*if (collect != null)
         {
-            if (rb && _flightStates.TryGetValue(rb, out var s))
-            {
-                RestoreRigidbody(rb, s.kinematic, s.useGravity, s.detect, s.interp, s.constraints);
-                RestoreColliders(s.cols, s.prevColEnabled);
-                _flightStates.Remove(rb);
-            }
-            _tweens.Remove(rb);
-            _attracting.Remove(rb);
-            _tcCache.Remove(rb);
+            collect.Collect();
+            _onPulledResult?.Invoke(null, true); // 已收進背包
+            return;
+        }*/
 
-            if (_currentTarget == rb) _currentTarget = null; // ★ 清掉目標
-        });
-
-
-        seq.SetLink(rb.gameObject, LinkBehaviour.KillOnDestroy);
-        _tweens[rb] = seq;
-    }
-
-    private void StopLoopSFXIfIdle()
-    {
-        if (hasStartedLoopSFX)
+        var rb = bestT.GetComponentInParent<Rigidbody>();
+        if (rb)
         {
-            AudioManager.Instance.StopSFXLoop();
-            hasStartedLoopSFX = false;
+            _onPulledResult?.Invoke(rb, false);  // 交給上層放手上
         }
     }
-
-    // ===== Utilities =====
-    private static void ClearMotion(Rigidbody rb)
-    {
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-    }
-
-    private static void SnapshotColliders(Component root, out Collider[] cols, out bool[] wasEnabled)
-    {
-        cols = root.GetComponentsInChildren<Collider>(true);
-        wasEnabled = new bool[cols.Length];
-        for (int i = 0; i < cols.Length; i++)
-        {
-            if (!cols[i]) continue;
-            wasEnabled[i] = cols[i].enabled;
-        }
-    }
-
-    private static void SetCollidersEnabled(Collider[] cols, bool enabled)
-    {
-        if (cols == null) return;
-        for (int i = 0; i < cols.Length; i++)
-            if (cols[i]) cols[i].enabled = enabled;
-    }
-
-    private static void RestoreColliders(Collider[] cols, bool[] prev)
-    {
-        if (cols == null) return;
-        for (int i = 0; i < cols.Length; i++)
-            if (cols[i]) cols[i].enabled = (prev != null && i < prev.Length) ? prev[i] : true;
-    }
-
-    private static void RestoreRigidbody(
-        Rigidbody rb,
-        bool kinematic, bool useGravity, bool detect,
-        RigidbodyInterpolation interp, RigidbodyConstraints constraints)
-    {
-        rb.isKinematic      = kinematic;
-        rb.useGravity       = useGravity;
-        rb.detectCollisions = detect;
-        rb.interpolation    = interp;
-        rb.constraints      = constraints;
-        ClearMotion(rb);
-    }
-
-#if UNITY_EDITOR
+    
     private void OnDrawGizmosSelected()
     {
-        if (!collectPoint) return;
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(collectPoint.position, collectPoint.position + collectPoint.forward * 2f);
+        if (!drawGizmos || !center) return;
 
-        Gizmos.color = Color.green;
-        DrawViewCone(collectPoint.position, collectPoint.forward, collectAngle * 0.5f, 2f);
-    }
+        // 半徑球
+        Gizmos.color = gizmoColor;
+        Gizmos.DrawWireSphere(center.position, radius);
 
-    private void DrawViewCone(Vector3 origin, Vector3 forward, float halfAngle, float distance)
-    {
-        int segments = 20;
-        float step = (halfAngle * 2f) / segments;
-        Vector3 prev = origin + Quaternion.Euler(0, -halfAngle, 0) * forward * distance;
+        // 前方錐形（水平角度）
+        Vector3 origin = center.position;
+        Vector3 forward = (forwardRef ? forwardRef.forward : transform.forward);
+        float half = angle * 0.5f;
+
+        // 畫兩條邊界射線（水平面）
+        Gizmos.color = Color.cyan;
+        Vector3 leftDir  = Quaternion.AngleAxis(-half, Vector3.up) * forward;
+        Vector3 rightDir = Quaternion.AngleAxis(+half, Vector3.up) * forward;
+        Gizmos.DrawRay(origin, leftDir  * gizmoRayLen);
+        Gizmos.DrawRay(origin, rightDir * gizmoRayLen);
+
+        // 畫前向參考線
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(origin, forward * gizmoRayLen);
+
+        // 也給錐形一個扇面近似（選擇性）
+        int segments = 24;
+        float step = angle / segments;
+        Vector3 prev = origin + (Quaternion.AngleAxis(-half, Vector3.up) * forward) * gizmoRayLen;
+        Gizmos.color = new Color(0f, 1f, 1f, 0.5f);
         for (int i = 1; i <= segments; i++)
         {
-            float ang = -halfAngle + step * i;
-            Vector3 next = origin + Quaternion.Euler(0, ang, 0) * forward * distance;
-            Gizmos.DrawLine(origin, next);
+            float a = -half + step * i;
+            Vector3 next = origin + (Quaternion.AngleAxis(a, Vector3.up) * forward) * gizmoRayLen;
             Gizmos.DrawLine(prev, next);
             prev = next;
         }
     }
-#endif
 }

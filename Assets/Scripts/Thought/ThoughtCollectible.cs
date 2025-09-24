@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using Player.InteractionSystem;
+using UnityEngine;
 
-public class ThoughtCollectible : MonoBehaviour
+public class  ThoughtCollectible : MonoBehaviour, ICollectable
 {
     private string _spawnId;
     private ThoughPlacer _owner;
