@@ -4,7 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent, RequireComponent(typeof(Collider))]
 public class Collectible : MonoBehaviour
 {
-    [Tooltip("可選：給你們現有收集系統用的ID/類型")]
+    [Tooltip("收集系統用的ID/類型")]
     public string id;
 
     // 若你已有現成收集流程，就在外部呼叫它
