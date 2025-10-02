@@ -106,7 +106,7 @@ public class TargetFocusSystem : MonoBehaviour
         if (freeLook != null)
         {
             if (restoreLookAtOnStop) freeLook.LookAt = _origLookAt;
-            if (restoreFollowOnStop) freeLook.Follow = _origFollow;
+           // if (restoreFollowOnStop) freeLook.Follow = _origFollow;
         }
     }
     
@@ -194,7 +194,7 @@ public class TargetFocusSystem : MonoBehaviour
 
         // 🔁 還原 LookAt / Follow
         if (restoreLookAtOnStop) freeLook.LookAt = _origLookAt;
-        if (restoreFollowOnStop) freeLook.Follow = _origFollow;
+        //if (restoreFollowOnStop) freeLook.Follow = _origFollow;
 
         if (markerUI) markerUI.gameObject.SetActive(false);
     }
