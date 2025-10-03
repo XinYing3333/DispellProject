@@ -8,6 +8,7 @@ using UnityEngine.VFX;
 public class PlayerMovement : MonoBehaviour
 {
     public Animator anim;
+    [SerializeField] private Animator pangolinAnim;
     public Transform cameraTransform;
     
     private PlayerInputHandler input;
@@ -242,6 +243,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (_rawInputMovement.magnitude > 0.1f)
         {
+            pangolinAnim.SetBool("isWalk",true);
             Quaternion targetRotation = Quaternion.LookRotation(_rawInputMovement);
             
             _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
@@ -252,6 +254,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
+            
             //未移動時慢速 Recenter
             mainCam.m_RecenterToTargetHeading.m_WaitTime = 5f;
             mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 2.5f;

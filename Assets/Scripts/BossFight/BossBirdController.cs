@@ -405,9 +405,4 @@ namespace BossFight
                     12f * Time.deltaTime);
         }
     }
-
-    public interface IDamageable
-    {
-        void TakeDamage(int amount);
-    }
 }

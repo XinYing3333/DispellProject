@@ -1,8 +1,7 @@
+using UnityEngine;
+
 namespace Player.InteractionSystem
 {
-    // InteractionContracts.cs
-    using UnityEngine;
-
     public interface ICollectable
     {
         // 吸收到玩家時呼叫（自行決定存檔、加分…）
