@@ -31,7 +31,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Texture2D:
-        m_Texture: {fileID: 2800000, guid: 37639fb43f1ee9649aad1cae03d97e8f, type: 3}
+        m_Texture: {fileID: 2800000, guid: e3499048bff7e3f48bc641497a8fc79f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _WindVertexDisplacementSubGraph_5f54dfadb5694df981c2efc3c861fd38_NoiseTexture_3733225736_Texture2D:
@@ -54,37 +54,37 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _BillboardSize: 0
+    - _BillboardSize: 1
     - _Blend: 0
     - _BlendModePreserveSpecular: 0
     - _CastShadows: 0
     - _Cull: 0
     - _DstBlend: 10
-    - _EmissionPower: 1.28
-    - _Inflate: -0.98
+    - _EmissionPower: 0
+    - _Inflate: -4.9
     - _JitterScale: 16.3
-    - _PositionScale: 1.83
+    - _PositionScale: 10.4
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 0
     - _RotationScale: 78.58
     - _RotationScrollSpeed: 4.98
     - _RotationSpeed: 3.83
-    - _RotationStrengh: 82.25
+    - _RotationStrengh: 84.22
     - _Smoothness: 0
     - _SrcBlend: 5
     - _Surface: 1
-    - _TextureSize: 3.63
-    - _WindJitter: -0.07
-    - _WindScale: -0.04
-    - _WindScroll: 0.43
+    - _TextureSize: 0.96
+    - _WindJitter: 0.03
+    - _WindScale: 0.44
+    - _WindScroll: 0.09
     - _WorkflowMode: 0
     - _ZTest: 4
     - _ZWrite: 0
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 1, g: 0.08287293, b: 0, a: 0.454902}
-    - _EmissionColor: {r: 0.64705884, g: 0.33565778, b: 0, a: 0}
+    - _Color: {r: 1, g: 1, b: 1, a: 0.454902}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5373710250384104421

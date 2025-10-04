@@ -115,11 +115,13 @@ public class PlayerCollector : MonoBehaviour
         }
     }
 
+    /*
     private void OnDisable()
     {
         foreach (var h in _proxActive) if (h) h.SetProximityHighlight(false);
         _proxActive.Clear();
     }
+    */
 
     // ===== Highlighting =====
     private void ProximityScanAndHighlight()
@@ -149,23 +151,23 @@ public class PlayerCollector : MonoBehaviour
             var h = col.GetComponentInParent<Highlightable>();
             if (!h) continue;
 
-            bool isInteractable = col.GetComponentInParent<Collectible>() ||
+            /*bool isInteractable = col.GetComponentInParent<Collectible>() ||
                                   col.GetComponentInParent<Targetable>();
-            if (!isInteractable) continue;
+            if (!isInteractable) continue;*/
 
             newSet.Add(h);
         }
 
-        foreach (var h in _proxActive)
+        /*foreach (var h in _proxActive)
             if (h && !newSet.Contains(h))
                 h.SetProximityHighlight(false);
 
         foreach (var h in newSet)
             if (!_proxActive.Contains(h))
-                h.SetProximityHighlight(true);
+                h.SetProximityHighlight(true);*/
 
-        _proxActive.Clear();
-        foreach (var h in newSet) _proxActive.Add(h);
+        /*_proxActive.Clear();
+        foreach (var h in newSet) _proxActive.Add(h);*/
     }
 
     private void ToggleInhaleVFX(bool on)
@@ -276,8 +278,9 @@ public class PlayerCollector : MonoBehaviour
 
             col.TryGetComponent(out ThoughtCollectible tc);
             bool canCollect    = tc != null && TryIsCollectable(col.transform);
-            bool canMagnetOnly = tc == null && col.GetComponentInParent<MagnetAttachable>() != null;
+            /*bool canMagnetOnly = tc == null && col.GetComponentInParent<MagnetAttachable>() != null;
             if (!canCollect && !canMagnetOnly) continue;
+            */
 
             _attracting.Add(rb);
             if (tc != null) _tcCache[rb] = tc;
