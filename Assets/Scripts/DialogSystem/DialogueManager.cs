@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace.EventBus.Events.Dialog;
 using UnityEngine;
 using TMPro;
 using Ink.Runtime;
@@ -52,16 +53,15 @@ public class DialogueManager : MonoBehaviour
     private DialogueVariables dialogueVariables;
     private InkExternalFunctions inkExternalFunctions;
     
-    private float submitLockUntil = 0f; // 鎖到什麼時刻為止（unscaled time）
-    private bool SubmitPressedNow =>
-        Time.unscaledTime >= submitLockUntil &&
-        PlayerInputHandler.Instance.InteractPressed;
+    private float submitLockTimer = 0f; // 倒數用
+    private bool SubmitPressedNow => submitLockTimer <= 0f && PlayerInputHandler.Instance.InteractPressed;
 
 // 小工具：鎖住提交若干秒（預設 0.08 秒足夠跨過同一幀）
     private void LockSubmit(float seconds = 0.08f)
     {
-        submitLockUntil = Time.unscaledTime + seconds;
+        submitLockTimer = Mathf.Max(submitLockTimer, seconds);
     }
+
 
     private void Awake() 
     {
@@ -132,8 +132,7 @@ public class DialogueManager : MonoBehaviour
 
         // 沒有選項：按下提交才繼續
         if (canContinueToNextLine 
-            && currentStory.currentChoices.Count == 0 
-            && SubmitPressedNow)
+            && currentStory.currentChoices.Count == 0 && PlayerInputHandler.Instance.InteractPressed)
         {
             ContinueStory();
             return;
@@ -141,14 +140,25 @@ public class DialogueManager : MonoBehaviour
 
         // 有選項：按下提交則送出目前選到的選項
         if (canContinueToNextLine
-            && currentStory.currentChoices.Count > 0
-            && SubmitPressedNow)
+            && currentStory.currentChoices.Count > 0 && PlayerInputHandler.Instance.InteractPressed)
         {
             int idx = GetSelectedChoiceIndex();
             if (idx < 0) idx = 0;
             MakeChoice(idx);
             return;
         }
+        
+        if (submitLockTimer > 0f)
+        {
+            submitLockTimer -= Time.unscaledDeltaTime;
+            if (submitLockTimer <= 0f)
+                submitLockTimer = 0f;
+
+            // Debug 可視化（可選）
+            if (submitLockTimer > 0f)
+                Debug.Log(submitLockTimer);
+        }
+
     }
 
     /*private void Update() 
@@ -192,6 +202,8 @@ public class DialogueManager : MonoBehaviour
     public void EnterDialogueMode(TextAsset inkJSON, Animator emoteAnimator) 
     {
         PlayerInputHandler.Instance.cannotMove = true;
+        EventBus<OnDialogueStarted>.Raise(new OnDialogueStarted());
+        
         currentStory = new Story(inkJSON.text);
         dialogueIsPlaying = true;
         dialoguePanel.SetActive(true);
@@ -204,7 +216,6 @@ public class DialogueManager : MonoBehaviour
         portraitAnimator.Play("default");
         layoutAnimator.Play("right");
 
-        LockSubmit(0.12f); // ← 關鍵：避免「開啟對話那一按」馬上被當成提交
         ContinueStory();
     }
 
@@ -213,6 +224,7 @@ public class DialogueManager : MonoBehaviour
         yield return new WaitForSeconds(0.2f);
 
         PlayerInputHandler.Instance.cannotMove = false;
+        EventBus<OnDialogueEnded>.Raise(new OnDialogueEnded());
 
         dialogueVariables.StopListening(currentStory);
         inkExternalFunctions.Unbind(currentStory);
@@ -255,55 +267,56 @@ public class DialogueManager : MonoBehaviour
             StartCoroutine(ExitDialogueMode());
         }
     }
-
-    private IEnumerator DisplayLine(string line) 
+    
+    private IEnumerator DisplayLine(string line)
     {
-        // set the text to the full line, but set the visible characters to 0
+        // 先配置 UI 狀態
         dialogueText.text = line;
         dialogueText.maxVisibleCharacters = 0;
-        // hide items while text is typing
         continueIcon.SetActive(false);
         HideChoices();
-
         canContinueToNextLine = false;
+
+        LockSubmit(0.05f);               
+        //yield return null;
 
         bool isAddingRichTextTag = false;
 
-        // display each letter one at a time
-        foreach (char letter in line.ToCharArray())
+        for (int i = 0; i < line.Length; )
         {
-            // 若按了提交（Interact）就跳到完整行，但同時鎖住提交幾十毫秒
-            /*if (PlayerInputHandler.Instance.InteractPressed)
+            if (SubmitPressedNow)
             {
                 dialogueText.maxVisibleCharacters = line.Length;
-                LockSubmit(0.10f); // ← 關鍵：吃掉這次按下，避免立刻觸發 Continue/MakeChoice
+                //LockSubmit(0.08f);
                 break;
-            }*/
+            }
 
-            // check for rich text tag, if found, add it without waiting
-            if (letter == '<' || isAddingRichTextTag) 
+            char c = line[i];
+
+            // 富文本標籤：不等待，直接灌
+            if (c == '<' || isAddingRichTextTag)
             {
                 isAddingRichTextTag = true;
-                if (letter == '>')
-                {
-                    isAddingRichTextTag = false;
-                }
+                i++;
+                dialogueText.maxVisibleCharacters = i;
+                if (c == '>') isAddingRichTextTag = false;
+                continue;
             }
-            // if not rich text, add the next letter and wait a small time
-            else 
-            {
-                PlayDialogueSound(dialogueText.maxVisibleCharacters, dialogueText.text[dialogueText.maxVisibleCharacters]);
-                dialogueText.maxVisibleCharacters++;
-                yield return new WaitForSeconds(typingSpeed);
-            }
+
+            // 一般字元：逐字 + 音效 + 等待
+            PlayDialogueSound(dialogueText.maxVisibleCharacters, c);
+            i++;
+            dialogueText.maxVisibleCharacters = i;
+            yield return new WaitForSeconds(typingSpeed);
         }
-        
-        yield return null; 
-        // actions to take after the entire line has finished displaying
+
+        // === 3) 行尾：顯示選項/提示，允許進入下一步；再小鎖一下避免連觸 ===
         continueIcon.SetActive(true);
         DisplayChoices();
         canContinueToNextLine = true;
+        //LockSubmit(0.08f);
     }
+
 
     private void PlayDialogueSound(int currentDisplayedCharacterCount, char currentCharacter)
     {
@@ -469,5 +482,4 @@ public class DialogueManager : MonoBehaviour
     {
         dialogueVariables.SaveVariables();
     }
-
 }

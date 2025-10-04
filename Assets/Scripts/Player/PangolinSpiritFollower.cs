@@ -81,7 +81,18 @@ public class PangolinSpiritFollow : MonoBehaviour
 
     private void Update()
     {
-        if (isWalk)return;
+        if(isWalk)return;
+        /*if (isWalk)
+        {
+            sideWobble = 0.5f;
+            breatheAmp = 0.5f;
+            return;
+        }
+        else
+        {
+            sideWobble = 0.08f;
+            breatheAmp = 0.08f;
+        }*/
         timer -= Time.deltaTime;
         if (timer <= 0f)
         {

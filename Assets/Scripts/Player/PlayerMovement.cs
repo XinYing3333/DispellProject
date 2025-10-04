@@ -8,7 +8,6 @@ using UnityEngine.VFX;
 public class PlayerMovement : MonoBehaviour
 {
     public Animator anim;
-    [SerializeField] private Animator pangolinAnim;
     public Transform cameraTransform;
     
     private PlayerInputHandler input;
@@ -243,7 +242,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (_rawInputMovement.magnitude > 0.1f)
         {
-            pangolinAnim.SetBool("isWalk",true);
             Quaternion targetRotation = Quaternion.LookRotation(_rawInputMovement);
             
             _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
