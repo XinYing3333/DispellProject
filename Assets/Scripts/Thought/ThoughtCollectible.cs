@@ -8,7 +8,7 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
 
     public Animator anim;
     public string idleSubSM = "IdlePool";  // 子狀態機名稱
-    public int idleCount = 4;
+    public int idleCount = 2;//動畫總數，animator clips 命名排列以 0 開始
     public float minGap = 1.8f, maxGap = 4.0f;
     public float crossFade = 0.12f;
 
@@ -22,7 +22,6 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
         if (timer <= 0f)
         {
             int idx = Random.Range(0, idleCount);
-            // 直接切換，不需要在 Animator 畫線
             anim.CrossFade($"{idleSubSM}.Idle_{idx}", crossFade, 0, 0f);
             timer = Random.Range(minGap, maxGap);
         }

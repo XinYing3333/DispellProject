@@ -1,5 +1,4 @@
-﻿// AimAssist.cs
-using UnityEngine;
+﻿using UnityEngine;
 
 public class AimAssist : MonoBehaviour
 {
@@ -15,14 +14,17 @@ public class AimAssist : MonoBehaviour
 
     [Header("Gizmos")]
     public bool drawGizmos = true;
-    public Color detectColor = new Color(1f, 0.85f, 0f, 0.25f); // 金黃半透明
+    public Color detectColor = new Color(1f, 0.85f, 0f, 0.25f);
     public Color fovColor = Color.yellow;
     public Color forwardColor = Color.white;
     public Color targetLineColor = Color.green;
-    
+
     private readonly Collider[] _hits = new Collider[128];
     private Targetable _current;
 
+    // 新增：掃描開關（公開唯讀，對外用 SetScanning 控制）
+    public bool Scanning { get; private set; } = false;
+    
     public Targetable CurrentTarget => _current;
 
     void Reset()
@@ -32,8 +34,34 @@ public class AimAssist : MonoBehaviour
 
     void Update()
     {
-        _current = FindBestTarget();
-        if(_current)_current.SetHighlighted(true);
+        if (!Scanning) return;                    // ← 關掉就不掃描
+        var next = FindBestTarget();
+
+        if (!ReferenceEquals(next, _current))
+        {
+            if (_current) _current.SetAimActive(false);
+            _current = next;
+            if (_current) _current.SetAimActive(true);
+        }
+    }
+
+    void OnDisable()
+    {
+        if (_current) _current.SetAimActive(false);
+        _current = null;
+        Scanning = false;
+    }
+
+    public void SetScanning(bool on)
+    {
+        if (Scanning == on) return;
+        Scanning = on;
+        if (!on)
+        {
+            // 關閉時確保清掉殘留高亮
+            if (_current) _current.SetAimActive(false);
+            _current = null;
+        }
     }
     
     public Vector3 GetAimDirection()
@@ -56,7 +84,9 @@ public class AimAssist : MonoBehaviour
         Targetable best = null;
 
         int n = Physics.OverlapSphereNonAlloc(origin, detectRadius, _hits, interactionMask, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < n && i < maxHits; i++)
+        int limit = Mathf.Min(n, Mathf.Min(maxHits, _hits.Length));
+
+        for (int i = 0; i < limit; i++)
         {
             var c = _hits[i];
             if (!c) continue;
@@ -67,18 +97,18 @@ public class AimAssist : MonoBehaviour
             float dist = to.magnitude;
             if (dist <= 0.0001f) continue;
 
-            float angle = Vector3.Angle(forward, to);
-            if (angle > maxAngle) continue;
+            float ang = Vector3.Angle(forward, to);
+            if (ang > maxAngle) continue;
 
+            // 距離越近、角度越小分數越高（各 0.5 權重）
             float score = Mathf.InverseLerp(detectRadius, 0f, dist) * 0.5f +
-                          Mathf.InverseLerp(maxAngle, 0f, angle) * 0.5f;
+                          Mathf.InverseLerp(maxAngle, 0f, ang) * 0.5f;
 
             if (score > bestScore) { bestScore = score; best = t; }
         }
         return best;
     }
-    
-    // ---- 放在 AimAssist 類別結尾 ----
+
     private void OnDrawGizmosSelected()
     {
         if (!drawGizmos) return;
@@ -86,22 +116,18 @@ public class AimAssist : MonoBehaviour
         Vector3 origin = cameraTransform ? cameraTransform.position : transform.position;
         Vector3 forward = cameraTransform ? cameraTransform.forward : transform.forward;
 
-        // 偵測半徑
         Gizmos.color = detectColor;
         Gizmos.DrawWireSphere(origin, detectRadius);
 
-        // 前向參考
         Gizmos.color = forwardColor;
         Gizmos.DrawRay(origin, forward * Mathf.Min(2f, detectRadius));
 
-        // 視野夾角兩邊
         Gizmos.color = fovColor;
         var rotL = Quaternion.AngleAxis(-maxAngle, Vector3.up);
         var rotR = Quaternion.AngleAxis(+maxAngle, Vector3.up);
         Gizmos.DrawRay(origin, rotL * forward * Mathf.Min(2f, detectRadius));
         Gizmos.DrawRay(origin, rotR * forward * Mathf.Min(2f, detectRadius));
 
-        // 目前目標的指向線
         if (CurrentTarget)
         {
             Gizmos.color = targetLineColor;

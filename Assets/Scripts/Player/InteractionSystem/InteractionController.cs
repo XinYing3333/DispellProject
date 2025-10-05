@@ -26,6 +26,7 @@ public class InteractionController : MonoBehaviour
     private ThrowingSystem _thrower;
     private Coroutine _absorbRoutine;
     private bool _isAbsorbHeld;
+    private bool _prevHasItem;
 
     void Awake()
     {
@@ -40,10 +41,26 @@ public class InteractionController : MonoBehaviour
         };
 
         // 注入溝通：手上有東西視為忙碌，Collector 就不會再吸
-        if (collector)
+        if (!collector) return;
+        collector.SetBusyChecker(() => handSlot.HasItem);
+        collector.SetOnPulledResult(OnAbsorbResult);
+        
+        // 初始化 AimAssist 掃描狀態
+        _prevHasItem = handSlot && handSlot.HasItem;
+        if (aimAssist) aimAssist.SetScanning(_prevHasItem); // 有物才掃描
+    }
+    
+    void Update()
+    {
+        // 最小改動的輪詢：偵測手上物變化
+        if (handSlot && aimAssist)
         {
-            collector.SetBusyChecker(() => handSlot.HasItem);
-            collector.SetOnPulledResult(OnAbsorbResult);
+            bool has = handSlot.HasItem;
+            if (has != _prevHasItem)
+            {
+                aimAssist.SetScanning(has);
+                _prevHasItem = has;
+            }
         }
     }
 
@@ -90,6 +107,7 @@ public class InteractionController : MonoBehaviour
     {
         // 規則：只有「手上有物」時才能投擲
         if (!handSlot.HasItem) return;
+        _isAbsorbHeld = false;
 
         var rb = handSlot.Take();
         if (!rb) { State = InteractState.Idle; return; }
@@ -102,6 +120,7 @@ public class InteractionController : MonoBehaviour
     public void Input_Drop()
     {
         if (!handSlot.HasItem) return;
+        _isAbsorbHeld = false;
         handSlot.Detach(); // 不加速度，直接放地上
         State = InteractState.Idle;
     }

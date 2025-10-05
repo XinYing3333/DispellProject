@@ -49,7 +49,7 @@ public class PangolinSpiritFollow : MonoBehaviour
 
     private float timer;
     private string idleSubSM = "PangolinIdlePool";  // 子狀態機名稱
-    private int idleCount = 4; //idle動畫數量
+    private int idleCount = 2; //idle動畫數量
     private float minGap = 1.8f, maxGap = 4.0f;
     private float crossFade = 0.12f;
     private bool isWalk = false;
@@ -96,9 +96,21 @@ public class PangolinSpiritFollow : MonoBehaviour
         timer -= Time.deltaTime;
         if (timer <= 0f)
         {
-            int idx = Random.Range(0, idleCount);
-            // 直接切換，不需要在 Animator 畫線
-            animator.CrossFade($"{idleSubSM}.PIdle_{idx}", crossFade, 0, 0f);
+            int idx = Random.Range(0, idleCount); // 上限對 int 是「不含」idleCount，OK
+            string statePath = $"Base Layer.{idleSubSM}.PIdle_{idx}";
+            int stateHash = Animator.StringToHash(statePath);
+
+            if (animator.HasState(0, stateHash))
+            {
+                animator.CrossFade(stateHash, crossFade, 0, 0f);
+            }
+            else
+            {
+                Debug.LogWarning($"[PangolinSpiritFollow] Idle state not found: {statePath}");
+                // 可選：回退到安全狀態
+                // animator.CrossFade(Animator.StringToHash($"Base Layer.{idleSubSM}.PIdle_0"), crossFade, 0, 0f);
+            }
+
             timer = Random.Range(minGap, maxGap);
         }
     }

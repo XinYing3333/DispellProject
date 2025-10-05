@@ -1,3 +1,4 @@
+using DefaultNamespace.Thought;
 using UnityEngine;
 
 namespace Player.InteractionSystem
@@ -20,5 +21,8 @@ namespace Player.InteractionSystem
         // 被拋前通知（可在這裡開啟重力/碰撞等）
         void OnBeforeThrow();
     }
-
+    public interface IHitReceiver
+    {
+        void OnHit(ThoughtPayloadSO payload);
+    }
 }

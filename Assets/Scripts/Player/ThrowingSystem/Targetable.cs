@@ -1,14 +1,20 @@
-﻿// Targetable.cs —— 可被瞄準/射擊
-using UnityEngine;
+﻿using UnityEngine;
 
 [DisallowMultipleComponent]
 public class Targetable : MonoBehaviour
 {
-    [Tooltip("瞄準點用的主碰撞器；不填則綜合所有Collider的Bounds中心")]
+    [Tooltip("瞄準點用的主碰撞器；不填則綜合所有 Collider 的 Bounds 中心")]
     public Collider mainCollider;
 
-    [Tooltip("可選：高亮控制（若你已有 Highlightable 就拖進來）")]
-    public Highlightable highlightable;
+    [Header("描邊 / 高亮節點")] [SerializeField] private Outline outlineScript; // 可放 Outline、或任何繼承Behaviour的效果腳本
+    [SerializeField] private GameObject outlineObject; // 若你只是用一個外框子物件
+
+    private bool _aimActive;
+
+    private void Awake()
+    {
+        SetHighLightEnabled(false);
+    }
 
     public Vector3 GetAimPoint()
     {
@@ -20,8 +26,22 @@ public class Targetable : MonoBehaviour
         return b.center;
     }
 
-   public void SetHighlighted(bool on)
+    public void SetAimActive(bool on)
     {
-        if (highlightable) highlightable.SetHighlighted(on);
+        if (_aimActive == on) return;
+        _aimActive = on;
+
+        SetHighLightEnabled(on);
+    }
+
+    private void SetHighLightEnabled(bool on)
+    {
+        if (outlineScript) outlineScript.enabled = on;
+        if (outlineObject) outlineObject.SetActive(on);
+    }
+
+    private void OnDisable()
+    {
+        SetHighLightEnabled(false);
     }
 }

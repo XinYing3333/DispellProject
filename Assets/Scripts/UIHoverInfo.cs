@@ -1,37 +1,29 @@
-using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIHoverInfo : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class UIHoverOrSelectInfo : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] private GameObject hoverShow;
-    private Animator animator;
-    private Toggle toggle;
+    [SerializeField] private GameObject infoPanel;
 
-    private bool alreadyDo;
     private bool isHovered = false;
+    private Selectable selectable;
 
-    private void Start()
+    private void Awake()
     {
-        animator = GetComponent<Animator>();
-        toggle = GetComponent<Toggle>();
+        selectable = GetComponent<Selectable>();
+        infoPanel.SetActive(false);
     }
 
     private void Update()
     {
-        bool isSelected = EventSystem.current.currentSelectedGameObject == gameObject;
-        hoverShow.SetActive(isHovered || isSelected);
-        if (toggle.isOn && !alreadyDo)
-        {
-            animator.SetTrigger("Normal");
-            alreadyDo = true;
-        }
+        InputDetector.UpdateInputMode();
 
-        if (!isSelected)
-        {
-            alreadyDo = false;
-        }
+        bool show =
+            (InputDetector.CurrentInputMode == InputMode.Gamepad && EventSystem.current.currentSelectedGameObject == gameObject) ||
+            (InputDetector.CurrentInputMode == InputMode.Mouse && isHovered);
+
+        infoPanel.SetActive(show);
     }
 
     public void OnPointerEnter(PointerEventData eventData)

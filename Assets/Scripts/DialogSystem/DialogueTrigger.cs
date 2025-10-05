@@ -26,8 +26,9 @@ public class DialogueTrigger : MonoBehaviour, IInteractable, IFocusable
     public float cooldown = 0.5f;
     
     [Header("觸發模式")]
-    public TriggerMode mode = TriggerMode.InteractPress;
-    public enum TriggerMode
+    [SerializeField]private TriggerMode mode = TriggerMode.InteractPress;
+
+    private enum TriggerMode
     {
         InteractPress,   // 需要按 E
         AutoOnEnter,     // 進入碰撞區自動

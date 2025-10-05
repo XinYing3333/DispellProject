@@ -1,90 +1,26 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using Player.InteractionSystem;
+using UnityEngine;
 
 [DisallowMultipleComponent]
-public class Highlightable : MonoBehaviour
+public class Highlightable : MonoBehaviour, IFocusable
 {
-    [Header("通用外框（兩路共用）")]
-    [SerializeField]private GameObject outlineChild;
-    private Outline outlineScript;
-
-    [Header("材質疊加（可不用）")]
-    public bool useMaterialSwitch = false;
-    public Material aimOutlineMat;       // 瞄準時材質（可為同一張）
-    public Material proximityOutlineMat; // 近距離時材質
-
-    private readonly List<Renderer> _renderers = new();
-    private readonly List<Material[]> _originalMats = new();
-
-    // 兩路「開關」；任一路 true 就是亮著
-    private bool _aimOn, _proxOn;
-    private bool _initialized;
+    [Header("描邊 / 高亮節點")]
+    [SerializeField] private Outline outlineScript; // 可放 Outline、或任何繼承Behaviour的效果腳本
+    [SerializeField] private GameObject outlineObject; // 若你只是用一個外框子物件
 
     void Awake()
     {
-        _renderers.AddRange(GetComponentsInChildren<Renderer>(true));
-        foreach (var r in _renderers) _originalMats.Add(r.sharedMaterials);
-        if (outlineChild) outlineScript = outlineChild.GetComponent<Outline>();
-        outlineScript.enabled = false;
-        _initialized = true;
+        SetEnabled(false);
     }
 
-    // 兼容舊 API：視為 Aim 通道
-    public void SetHighlighted(bool on) => SetAimHighlight(on);
+    public void OnFocusGained() => SetEnabled(true);
+    public void OnFocusLost()  => SetEnabled(false);
 
-    public void SetAimHighlight(bool on)
+    private void SetEnabled(bool on)
     {
-        _aimOn = on;
-        Apply();
+        if (outlineScript) outlineScript.enabled = on;
+        if (outlineObject) outlineObject.SetActive(on);
     }
 
-    public void SetProximityHighlight(bool on)
-    {
-        _proxOn = on;
-        Apply();
-    }
-
-    private void Apply()
-    {
-        if (!_initialized) Awake();
-
-        bool any = _aimOn || _proxOn;
-
-        // 方案 A：子物件外框
-        if (outlineChild) outlineScript.enabled = any;
-
-        // 方案 B：材質切換
-        if (useMaterialSwitch)
-        {
-            // 先還原
-            for (int i = 0; i < _renderers.Count; i++)
-                _renderers[i].sharedMaterials = _originalMats[i];
-
-            if (any)
-            {
-                var matToUse = _aimOn && aimOutlineMat ? aimOutlineMat
-                              : (_proxOn && proximityOutlineMat ? proximityOutlineMat : aimOutlineMat);
-
-                if (matToUse)
-                {
-                    for (int i = 0; i < _renderers.Count; i++)
-                    {
-                        var list = new List<Material>(_originalMats[i]);
-                        if (!list.Contains(matToUse))
-                        {
-                            list.Add(matToUse);
-                            _renderers[i].sharedMaterials = list.ToArray();
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void OnDisable()
-    {
-        // 保險：物件隱藏時關掉
-        _aimOn = _proxOn = false;
-        Apply();
-    }
+    void OnDisable() => SetEnabled(false);
 }

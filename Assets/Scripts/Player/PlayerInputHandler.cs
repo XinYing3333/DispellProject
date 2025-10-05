@@ -130,7 +130,9 @@ namespace Player
         {
             IsCollecting = false;
             if (interaction == null) return;
-            interaction.Input_StopAbsorbHold();
+            // interaction.Input_StopAbsorbHold();
+            interaction.Input_Drop();
+
         }
 
         // ===== 其他 =====
