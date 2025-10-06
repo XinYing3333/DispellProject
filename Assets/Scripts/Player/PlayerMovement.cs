@@ -117,6 +117,16 @@ public class PlayerMovement : MonoBehaviour
     
     void FixedUpdate()
     {
+        if (PlayerInputHandler.Instance.cannotMove)
+        {
+            anim.SetFloat("Speed", 0f);
+            anim.SetBool("IsWalking", false);
+            anim.SetBool("Jump", false);
+            anim.SetBool("IsDoubleJump", false); 
+            anim.SetBool("IsDashing", false); 
+            return;
+        }
+        
         if (!isGrabbing)
         {
             OnMovement();

@@ -1,108 +1,105 @@
 using System.Collections;
-using System.Collections.Generic;
-using DialogSystem;
 using Player;
 using Player.InteractionSystem;
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
 
-public class DialogueTrigger : MonoBehaviour, IInteractable, IFocusable
+namespace DialogSystem
 {
-    [Header("KeyE")] [SerializeField] private GameObject keyE;
+    public class DialogueTrigger : MonoBehaviour, IInteractable, IFocusable
+    {
+        [Header("KeyE")] [SerializeField] private GameObject keyE;
 
-    /*[Header("SceneSwitcher")]
+        /*[Header("SceneSwitcher")]
     [SerializeField] private SceneSwitcher sceneSwitcher;*/
-    [Header("Emote Animator")] [SerializeField]
-    private Animator emoteAnimator;
+        [Header("Emote Animator")] [SerializeField]
+        private Animator emoteAnimator;
 
-    [Header("Ink JSON")] [SerializeField] private TextAsset inkJSON;
+        [Header("Ink JSON")] [SerializeField] private TextAsset inkJSON;
 
-    private PlayerInputHandler _playerInputHandler;
-    public bool playerIsClose;
-
-    [Header("互動設定")] public string prompt = "按 E 對話";
-    public bool oneShot = false;
-    public float cooldown = 0.5f;
+        [Header("互動設定")] public string prompt = "按 E 對話";
+        public bool oneShot = false;
+        public float cooldown = 0.5f;
     
-    [Header("觸發模式")]
-    [SerializeField]private TriggerMode mode = TriggerMode.InteractPress;
+        [Header("觸發模式")]
+        [SerializeField]private TriggerMode mode = TriggerMode.InteractPress;
 
-    private enum TriggerMode
-    {
-        InteractPress,   // 需要按 E
-        AutoOnEnter,     // 進入碰撞區自動
-        AutoOnStart,     // ★ 場景開始時自動
-        ExternalOnly     // 外部呼叫
-    }
-
-    float _lastTime = -999f;
-    bool _consumed;
-
-    public string Prompt => prompt;
-
-    public void OnFocusGained()
-    {
-        if (keyE) keyE.SetActive(true);
-    }
-
-    public void OnFocusLost()
-    {
-        if (keyE) keyE.SetActive(false);
-    }
-
-    public void Interact()
-    {
-        if (_consumed) return;
-        if (Time.time - _lastTime < cooldown) return;
-        if (DialogueManager.GetInstance().dialogueIsPlaying) return;
-
-        _lastTime = Time.time;
-
-        DialogueManager.GetInstance().EnterDialogueMode(inkJSON, emoteAnimator);
-
-        //GameEvents.DialogueStarted?.Invoke();
-        if (oneShot) _consumed = true;
-    }
-
-    void OnDialogueEnd()
-    {
-        //GameEvents.DialogueEnded?.Invoke();
-    }
-
-    void Awake()
-    {
-        keyE.SetActive(false);
-        emoteAnimator = transform.GetChild(0).GetComponent<Animator>();
-        _playerInputHandler = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerInputHandler>();
-    }
-    
-    private void Start()
-    {
-        // ★ 場景一開始自動播放對話
-        if (mode == TriggerMode.AutoOnStart)
+        private enum TriggerMode
         {
-            // 為避免其他系統（相機/玩家初始化）尚未完成，可稍微延遲一幀
-            StartCoroutine(PlayDialogueAfterFrame());
+            InteractPress,   // 需要按 E
+            AutoOnEnter,     // 進入碰撞區自動
+            AutoOnStart,     // ★ 場景開始時自動
+            ExternalOnly     // 外部呼叫
         }
-    }
 
-    private IEnumerator PlayDialogueAfterFrame()
-    {
-        yield return null; // 等待 1 frame
-        Interact();
-    }
+        float _lastTime = -999f;
+        bool _consumed;
+
+        public string Prompt => prompt;
+
+        public void OnFocusGained()
+        {
+            if (mode != TriggerMode.InteractPress) return;
+            if (keyE) keyE.SetActive(true);
+        }
+
+        public void OnFocusLost()
+        {
+            if (mode != TriggerMode.InteractPress) return;
+            if (keyE) keyE.SetActive(false);
+        }
+
+        public void Interact()
+        {
+            if (_consumed) return;
+            if (Time.time - _lastTime < cooldown) return;
+            if (DialogueManager.GetInstance().dialogueIsPlaying) return;
+
+            _lastTime = Time.time;
+
+            DialogueManager.GetInstance().EnterDialogueMode(inkJSON, emoteAnimator);
+
+            //GameEvents.DialogueStarted?.Invoke();
+            if (oneShot) _consumed = true;
+        }
+
+        void OnDialogueEnd()
+        {
+            //GameEvents.DialogueEnded?.Invoke();
+        }
+
+        void Awake()
+        {
+            keyE.SetActive(false);
+            emoteAnimator = transform.GetChild(0).GetComponent<Animator>();
+        }
     
-    private void OnTriggerEnter(Collider other)
-    {
-        if (mode != TriggerMode.AutoOnEnter) return;
-        if (!other.CompareTag("Player")) return;
-        Interact(); // 直接觸發
-    }
+        private void Start()
+        {
+            // ★ 場景一開始自動播放對話
+            if (mode == TriggerMode.AutoOnStart)
+            {
+                // 為避免其他系統（相機/玩家初始化）尚未完成，可稍微延遲一幀
+                StartCoroutine(PlayDialogueAfterFrame());
+            }
+        }
+
+        private IEnumerator PlayDialogueAfterFrame()
+        {
+            yield return null; // 等待 1 frame
+            Interact();
+        }
+    
+        private void OnTriggerEnter(Collider other)
+        {
+            if (mode != TriggerMode.AutoOnEnter) return;
+            if (!other.CompareTag("Player")) return;
+            Interact(); // 直接觸發
+        }
 
 // 劇情/任務系統呼叫
-    public void TriggerExternally()
-    {
-        if (mode == TriggerMode.ExternalOnly) Interact();
+        public void TriggerExternally()
+        {
+            if (mode == TriggerMode.ExternalOnly) Interact();
+        }
     }
 }

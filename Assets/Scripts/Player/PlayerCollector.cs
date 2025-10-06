@@ -1,4 +1,6 @@
 // PlayerCollector.cs
+
+using Player.InteractionSystem;
 using UnityEngine;
 
 public class PlayerCollector : MonoBehaviour
@@ -68,13 +70,13 @@ public class PlayerCollector : MonoBehaviour
         if (!bestT) return;
 
         // 語意決定：可收集 → Collect；否則若有 Rigidbody → 交給上層放手上
-        //var collect = bestT.GetComponentInParent<ICollectable>();
-        /*if (collect != null)
+        var collect = bestT.GetComponentInParent<ICollectable>();
+        if (collect != null)
         {
             collect.Collect();
             _onPulledResult?.Invoke(null, true); // 已收進背包
             return;
-        }*/
+        }
 
         var rb = bestT.GetComponentInParent<Rigidbody>();
         if (rb)

@@ -78,7 +78,6 @@ GameObject:
   - component: {fileID: 9165629142308398503}
   - component: {fileID: 3305903404511905607}
   - component: {fileID: 817204144342643422}
-  - component: {fileID: 565717469823576011}
   - component: {fileID: 5053679841200452982}
   - component: {fileID: 6132482211437129219}
   - component: {fileID: 1863769368042349058}
@@ -395,31 +394,9 @@ MonoBehaviour:
   inputScript: {fileID: 2222260344463854279}
   movementScripts:
   - {fileID: 9165629142308398503}
-  - {fileID: 565717469823576011}
+  - {fileID: 0}
   - {fileID: 5053679841200452982}
   rb: {fileID: 1863769368042349058}
---- !u!114 &565717469823576011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 172986323484736848}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97a84d8fb0377384b9294126cb66fc8e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  center: {fileID: 0}
-  forwardRef: {fileID: 0}
-  interactionMask:
-    serializedVersion: 2
-    m_Bits: 1024
-  radius: 2
-  angle: 90
-  drawGizmos: 1
-  gizmoColor: {r: 0, g: 0.85, b: 1, a: 0.35}
-  gizmoRayLen: 2
 --- !u!114 &5053679841200452982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2587,6 +2564,10 @@ MonoBehaviour:
   arcMode: 1
   preferHighArc: 1
   fixedAngle: 35
+  spellPrefab: {fileID: 0}
+  allowSpellWhenEmpty: 1
+  spellCooldown: 0.2
+  scanWhenEmptyForSpell: 1
   absorbTickInterval: 0.05
 --- !u!114 &1415846195955950961
 MonoBehaviour:

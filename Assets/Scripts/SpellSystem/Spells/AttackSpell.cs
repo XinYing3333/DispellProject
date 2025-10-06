@@ -1,10 +1,11 @@
+/*
 using UnityEngine;
 
 public class AttackSpell : ISpellEffect
 {
     public void ApplyEffect(ThoughtObject target)
     {
-        /*switch (target.spawnType)
+        switch (target.spawnType)
         {
             case SpawnType.Enemy:
                 Debug.Log($"{target.name} is attacked...！");
@@ -20,6 +21,7 @@ public class AttackSpell : ISpellEffect
                 break;
 
 
-        }*/
+        }
     }
 }
+*/

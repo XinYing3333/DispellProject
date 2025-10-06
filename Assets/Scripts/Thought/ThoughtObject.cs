@@ -1,3 +1,4 @@
+/*
 using UnityEngine;
 
 public class ThoughtObject : MonoBehaviour
@@ -18,3 +19,4 @@ public class ThoughtObject : MonoBehaviour
         }
     }
 }
+*/
