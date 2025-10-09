@@ -188,13 +188,14 @@ public class DialogueManager : MonoBehaviour
         
         EventBus<OnDialogueStarted>.Raise(new OnDialogueStarted());
         
-        currentStory = new Story(inkJSON.text);
+        currentStory = new Story(inkJSON.text);     
+        inkExternalFunctions.Bind(currentStory, emoteAnimator);
+
         dialogueIsPlaying = true;
         dialoguePanel.SetActive(true);
         isAutoDisplay = autoDisplay;
 
         dialogueVariables.StartListening(currentStory);
-        if(layoutAnimator)inkExternalFunctions.Bind(currentStory, emoteAnimator);
 
         // reset portrait, layout, and speaker
         displayNameText.text = "???";
@@ -207,12 +208,13 @@ public class DialogueManager : MonoBehaviour
     private IEnumerator ExitDialogueMode() 
     {
         yield return new WaitForSeconds(0.2f);
-
+        
+        inkExternalFunctions.Unbind(currentStory);
+        Debug.Log("Exiting dialogue mode");
         PlayerInputHandler.Instance.cannotMove = false;
         EventBus<OnDialogueEnded>.Raise(new OnDialogueEnded());
 
         dialogueVariables.StopListening(currentStory);
-        if(layoutAnimator)inkExternalFunctions.Unbind(currentStory);
 
         dialogueVariables.SaveVariables();
         
@@ -388,10 +390,10 @@ public class DialogueManager : MonoBehaviour
                     displayNameText.text = tagValue;
                     break;
                 case PORTRAIT_TAG:
-                    portraitAnimator.Play(tagValue);
+                    if (portraitAnimator) portraitAnimator.Play(tagValue);
                     break;
                 case LAYOUT_TAG:
-                    layoutAnimator.Play(tagValue);
+                    if (layoutAnimator) layoutAnimator.Play(tagValue);
                     break;
                 case AUDIO_TAG: 
                     SetCurrentAudioInfo(tagValue);

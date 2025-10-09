@@ -100,18 +100,6 @@ public class InteractionController : MonoBehaviour
         if (!handSlot.HasItem) return;
         handSlot.Detach(); // 不加速度，直接放地上
     }
-    
-    public void Input_StopAbsorbHold()
-    {
-        _isAbsorbHeld = false;
-        if (_absorbRoutine != null)
-        {
-            StopCoroutine(_absorbRoutine);
-            _absorbRoutine = null;
-        }
-        // 放開後狀態：有持有物 → ReadyToThrow，否則 Idle
-        State = handSlot.HasItem ? InteractState.ReadyToThrow : InteractState.Idle;
-    }
 
     private System.Collections.IEnumerator AbsorbHoldLoop()
     {
