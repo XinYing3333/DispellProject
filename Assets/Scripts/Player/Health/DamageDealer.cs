@@ -1,6 +1,9 @@
 ﻿// DamageDealer.cs
+
+using System.Collections.Generic;
 using UnityEngine;
 using Player;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(Collider))]
 public class DamageDealer : MonoBehaviour
@@ -12,13 +15,18 @@ public class DamageDealer : MonoBehaviour
     public bool useHitForward = true;        // 方向用我自己的forward
     public Transform directionRef;           // 若指定，方向從這裡取
 
+    public bool _lockDamage = false;
     private float _nextTickTime;
+    
+    public UnityEvent onInvoke;
+
 
     private void OnTriggerEnter(Collider other) { TryHit(other); }
     private void OnTriggerStay(Collider other)  { if (continuous && Time.time >= _nextTickTime) TryHit(other); }
 
     void TryHit(Collider other)
     {
+        if(_lockDamage)return;
         if (!other.CompareTag("Player")) return;
         if (!other.TryGetComponent<Health>(out var hp)) return;
 
@@ -26,7 +34,9 @@ public class DamageDealer : MonoBehaviour
         if (useHitForward) dir = (directionRef ? directionRef.forward : transform.forward);
         else dir = (other.transform.position - transform.position).normalized;
         var info = new DamageInfo(damage, dir, knockbackForce);
-
+        
+        onInvoke?.Invoke();
+        
         hp.ApplyDamage(info);
         _nextTickTime = Time.time + tickInterval;
     }

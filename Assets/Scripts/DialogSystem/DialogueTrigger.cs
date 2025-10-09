@@ -11,14 +11,20 @@ namespace DialogSystem
 
         /*[Header("SceneSwitcher")]
     [SerializeField] private SceneSwitcher sceneSwitcher;*/
+        [Tooltip("角色模型動畫")]
         [Header("Emote Animator")] [SerializeField]
         private Animator emoteAnimator;
 
         [Header("Ink JSON")] [SerializeField] private TextAsset inkJSON;
 
         [Header("互動設定")] public string prompt = "按 E 對話";
+        [Tooltip("是否只播放一次")]
         public bool oneShot = false;
+        [Tooltip("對話冷卻")]
         public float cooldown = 0.5f;
+        [Tooltip("是否自動播放對話")]
+        public bool autoDisplay = false;
+        public bool lockMovement = true;
     
         [Header("觸發模式")]
         [SerializeField]private TriggerMode mode = TriggerMode.InteractPress;
@@ -56,7 +62,7 @@ namespace DialogSystem
 
             _lastTime = Time.time;
 
-            DialogueManager.GetInstance().EnterDialogueMode(inkJSON, emoteAnimator);
+            DialogueManager.GetInstance().EnterDialogueMode(inkJSON, emoteAnimator,autoDisplay,lockMovement);
 
             //GameEvents.DialogueStarted?.Invoke();
             if (oneShot) _consumed = true;

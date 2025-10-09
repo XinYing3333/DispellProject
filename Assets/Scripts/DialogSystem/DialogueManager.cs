@@ -22,7 +22,7 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private TextMeshProUGUI displayNameText;
     [SerializeField] private Animator portraitAnimator;
-    private Animator layoutAnimator;
+    [SerializeField]private Animator layoutAnimator;
 
     [Header("Choices UI")]
     [SerializeField] private GameObject[] choices;
@@ -52,6 +52,8 @@ public class DialogueManager : MonoBehaviour
 
     private DialogueVariables dialogueVariables;
     private InkExternalFunctions inkExternalFunctions;
+
+    private bool isAutoDisplay;
     
     private float submitLockTimer = 0f; // 倒數用
     private bool SubmitPressedNow => submitLockTimer <= 0f && PlayerInputHandler.Instance.InteractPressed;
@@ -87,9 +89,6 @@ public class DialogueManager : MonoBehaviour
     {
         dialogueIsPlaying = false;
         dialoguePanel.SetActive(false);
-
-        // get the layout animator
-        layoutAnimator = dialoguePanel.GetComponent<Animator>();
 
         // get all of the choices text 
         choicesText = new TextMeshProUGUI[choices.Length];
@@ -137,6 +136,12 @@ public class DialogueManager : MonoBehaviour
             ContinueStory();
             return;
         }
+        if (canContinueToNextLine 
+                 && currentStory.currentChoices.Count == 0 && isAutoDisplay)
+        {
+            ContinueStory();
+            return;
+        }
 
         // 有選項：按下提交則送出目前選到的選項
         if (canContinueToNextLine
@@ -153,31 +158,9 @@ public class DialogueManager : MonoBehaviour
             submitLockTimer -= Time.unscaledDeltaTime;
             if (submitLockTimer <= 0f)
                 submitLockTimer = 0f;
-
-            // Debug 可視化（可選）
-            if (submitLockTimer > 0f)
-                Debug.Log(submitLockTimer);
         }
 
     }
-
-    /*private void Update() 
-    {
-        // return right away if dialogue isn't playing
-        if (!dialogueIsPlaying) 
-        {
-            return;
-        }
-
-        // handle continuing to the next line in the dialogue when submit is pressed
-        // NOTE: The 'currentStory.currentChoiecs.Count == 0' part was to fix a bug after the Youtube video was made
-        if (canContinueToNextLine 
-            && currentStory.currentChoices.Count == 0 
-            && PlayerInputHandler.Instance.InteractPressed)
-        {
-            ContinueStory();
-        }
-    }*/
     
     /// <summary>
     /// 回傳目前 EventSystem 選到的選項在 choices[] 的索引，找不到回傳 -1
@@ -199,22 +182,24 @@ public class DialogueManager : MonoBehaviour
         return -1;
     }
 
-    public void EnterDialogueMode(TextAsset inkJSON, Animator emoteAnimator) 
+    public void EnterDialogueMode(TextAsset inkJSON, Animator emoteAnimator = null, bool autoDisplay = false, bool lockMovement = true) 
     {
-        PlayerInputHandler.Instance.cannotMove = true;
+        if (lockMovement) PlayerInputHandler.Instance.cannotMove = true;
+        
         EventBus<OnDialogueStarted>.Raise(new OnDialogueStarted());
         
         currentStory = new Story(inkJSON.text);
         dialogueIsPlaying = true;
         dialoguePanel.SetActive(true);
+        isAutoDisplay = autoDisplay;
 
         dialogueVariables.StartListening(currentStory);
-        inkExternalFunctions.Bind(currentStory, emoteAnimator);
+        if(layoutAnimator)inkExternalFunctions.Bind(currentStory, emoteAnimator);
 
         // reset portrait, layout, and speaker
         displayNameText.text = "???";
         portraitAnimator.Play("default");
-        layoutAnimator.Play("right");
+        layoutAnimator.Play("layout1");
 
         ContinueStory();
     }
@@ -227,7 +212,7 @@ public class DialogueManager : MonoBehaviour
         EventBus<OnDialogueEnded>.Raise(new OnDialogueEnded());
 
         dialogueVariables.StopListening(currentStory);
-        inkExternalFunctions.Unbind(currentStory);
+        if(layoutAnimator)inkExternalFunctions.Unbind(currentStory);
 
         dialogueVariables.SaveVariables();
         
@@ -310,6 +295,7 @@ public class DialogueManager : MonoBehaviour
             yield return new WaitForSeconds(typingSpeed);
         }
 
+        if(isAutoDisplay)yield return new WaitForSeconds(1f);
         // === 3) 行尾：顯示選項/提示，允許進入下一步；再小鎖一下避免連觸 ===
         continueIcon.SetActive(true);
         DisplayChoices();

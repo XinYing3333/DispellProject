@@ -453,13 +453,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnCollisionEnter(Collision other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        var isInGroundMask = (groundLayer.value & (1 << other.gameObject.layer)) != 0;
+
+        if (isInGroundMask)
         {
             isOnGround = true;
 
             anim.SetBool("Jump", false);
             anim.SetBool("IsDoubleJump", false);
-
             currentJumpCount = 0;
         }
         if (other.gameObject.layer == LayerMask.NameToLayer("Ledge"))
@@ -498,7 +499,9 @@ public class PlayerMovement : MonoBehaviour
     
     private void OnCollisionExit(Collision other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        var isInGroundMask = (groundLayer.value & (1 << other.gameObject.layer)) != 0;
+
+        if (isInGroundMask)
         {
             isOnGround = false;
         }

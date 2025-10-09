@@ -129,7 +129,7 @@ namespace Player
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
             IsCollecting = false;
-            if (interaction == null) return;
+            if (cannotMove || interaction == null) return;
             // interaction.Input_StopAbsorbHold();
             interaction.Input_Drop();
 

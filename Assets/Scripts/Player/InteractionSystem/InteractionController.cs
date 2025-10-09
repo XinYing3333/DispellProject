@@ -90,6 +90,17 @@ public class InteractionController : MonoBehaviour
             _absorbRoutine = StartCoroutine(AbsorbHoldLoop());
     }
 
+    public void Input_Drop()
+    {
+        particleVFX.ForEach(particle => particle.Stop());
+
+        _isAbsorbHeld = false;
+        State = InteractState.Idle;
+        
+        if (!handSlot.HasItem) return;
+        handSlot.Detach(); // 不加速度，直接放地上
+    }
+    
     public void Input_StopAbsorbHold()
     {
         _isAbsorbHeld = false;
@@ -143,17 +154,6 @@ public class InteractionController : MonoBehaviour
             State = InteractState.Idle;
         }
         // else: 沒有 spellPrefab 或未允許，就什麼都不做
-    }
-
-
-    public void Input_Drop()
-    {
-        particleVFX.ForEach(particle => particle.Stop());
-
-        if (!handSlot.HasItem) return;
-        _isAbsorbHeld = false;
-        handSlot.Detach(); // 不加速度，直接放地上
-        State = InteractState.Idle;
     }
 
     // ====== 由 Collector 回報的吸收結果 ======

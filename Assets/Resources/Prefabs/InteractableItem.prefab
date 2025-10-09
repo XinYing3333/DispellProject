@@ -144,7 +144,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6109542765322232450}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 190
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -187,10 +187,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bccac03680040b8b801277703fdf7d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outlineChild: {fileID: 7223018181604204659}
-  useMaterialSwitch: 0
-  aimOutlineMat: {fileID: 0}
-  proximityOutlineMat: {fileID: 0}
+  outlineScript: {fileID: 0}
+  outlineObject: {fileID: 0}
 --- !u!1 &7223018181604204659
 GameObject:
   m_ObjectHideFlags: 0
