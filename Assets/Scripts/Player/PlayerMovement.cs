@@ -256,16 +256,17 @@ public class PlayerMovement : MonoBehaviour
             
             _rb.rotation = Quaternion.Slerp(_rb.rotation, targetRotation, turnSpeed * Time.deltaTime);
             
+            mainCam.m_RecenterToTargetHeading.m_enabled = true;
             //移動時快速 Recenter
             mainCam.m_RecenterToTargetHeading.m_WaitTime = 0.5f;
             mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 0.8f;
         }
         else
         {
-            
-            //未移動時慢速 Recenter
+            mainCam.m_RecenterToTargetHeading.m_enabled = false;
+            /*//未移動時慢速 Recenter
             mainCam.m_RecenterToTargetHeading.m_WaitTime = 5f;
-            mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 2.5f;
+            mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 2.5f;*/
         }
     }
     
