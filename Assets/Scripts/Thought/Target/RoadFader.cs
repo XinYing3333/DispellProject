@@ -40,6 +40,8 @@ public class RoadFader : MonoBehaviour
             _mpbs.Add(mpb);
             _colorProps.Add(prop);
         }
+
+        SetInstant(hiddenAlpha);
     }
 
     public System.Collections.IEnumerator FadeIn(float duration)

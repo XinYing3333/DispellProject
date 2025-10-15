@@ -31,6 +31,9 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 1f)] public float bgmVolume = 1f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
     
+    [Header("Testing on start")]
+    public BGMType testBGM;
+    
     private void Awake()
     {
         if (Instance == null)
@@ -51,6 +54,8 @@ public class AudioManager : MonoBehaviour
     {
         LoadVolumePref();
         ApplyVolumes();
+        
+        PlayBGM(testBGM);
     }
 
     private void Update()

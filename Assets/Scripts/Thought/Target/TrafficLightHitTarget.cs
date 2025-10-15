@@ -10,9 +10,9 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
     public Collider crossRoad;            // 阻擋用碰撞器（有就用；沒有就忽略）
 
     [Header("Timing")]
-    public float fadeInTime  = 0.6f;
+    public float fadeInTime  = 1f;
     public float openSeconds = 6f;      // 倒數持續時間
-    public float fadeOutTime = 0.6f;
+    public float fadeOutTime = 1f;
 
     [Header("Options")]
     public bool oneAtATime = true;      // 防止重入
