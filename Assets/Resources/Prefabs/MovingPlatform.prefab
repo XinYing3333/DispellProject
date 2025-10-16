@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 2483817543860977622}
   - component: {fileID: 151241385366694661}
   - component: {fileID: 8814078565883014290}
-  - component: {fileID: 7241522882301869348}
   - component: {fileID: 5635376847434435647}
   - component: {fileID: 8838279219198086758}
   m_Layer: 6
@@ -91,20 +90,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &7241522882301869348
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1179046474272675230}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e82b34411dc4def41a0836c821e112bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isCollectable: 1
-  spawnType: 2
 --- !u!136 &5635376847434435647
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -232,6 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83975a8a1d5073e449630ec3ca03cac6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pathColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!1 &8731930207053638412
 GameObject:
   m_ObjectHideFlags: 0

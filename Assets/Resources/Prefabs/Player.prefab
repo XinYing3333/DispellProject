@@ -260,7 +260,7 @@ MonoBehaviour:
     m_ActionId: 8c90205b-b934-4e9d-b2bd-92775476517b
     m_ActionName: 'Player/Setting[/Keyboard/escape,/XInputControllerWindows/start]'
   m_NeverAutoSwitchControlSchemes: 0
-  m_DefaultControlScheme: 
+  m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
@@ -283,17 +283,6 @@ MonoBehaviour:
   markerUI: {fileID: 0}
   focusKey: 116
   focusHoldTime: 1.2
-  useLookAtHelper: 0
-  helperDistance: 6
-  helperHeight: 1.5
-  helperTargetBlend: 0.25
-  enableHeadingRecentering: 1
-  headingRecenteringTime: 0.35
-  headingRecenteringWait: 0
-  enableYAxisRecentering: 1
-  yRecenteringTime: 0.35
-  yRecenteringWait: 0
-  focusYHeight: 0.45
   smoothTurn: 1
   turnSpeedDegPerSec: 360
   turnEase: 0.18
@@ -303,8 +292,8 @@ MonoBehaviour:
   markerWorldOffset: {x: 0, y: 1.5, z: 0}
   screenEdgePadding: 24
   rotateOffscreenArrow: 1
-  restoreLookAtOnStop: 1
-  restoreFollowOnStop: 0
+  forceWorldBinding: 1
+  logAngles: 0
 --- !u!114 &1872362274397396953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2569,6 +2558,7 @@ MonoBehaviour:
   spellCooldown: 0.2
   scanWhenEmptyForSpell: 1
   absorbTickInterval: 0.05
+  particleVFX: []
 --- !u!114 &1415846195955950961
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2588,6 +2578,10 @@ MonoBehaviour:
     m_Bits: 1024
   radius: 2
   angle: 107
+  pullDuration: 0.35
+  frontOffset: 0.6
+  pullEase: 1
+  disablePhysicsDuringPull: 1
   drawGizmos: 1
   gizmoColor: {r: 0.9869062, g: 1, b: 0, a: 1}
   gizmoRayLen: 2

@@ -1,252 +1,290 @@
-﻿using System.Collections;
+﻿using System;
 using UnityEngine;
-using UnityEngine.InputSystem; // 若用舊 Input，移除這行並改成 KeyCode 判斷
 using Cinemachine;
-using UnityEngine.UI;
+using Player;
 
-// TODO：加入inputsystem
+[ExecuteAlways]
 public class TargetFocusSystem : MonoBehaviour
 {
     [Header("Refs")]
-    public CinemachineFreeLook freeLook;   // FreeLook 相機
-    public Transform player;               // 玩家
-    public Transform target;               // 聚焦目標
-    public Camera gameCamera;              // 主相機
-    public RectTransform markerUI;         // UI 圖示 (Image 的 RectTransform)
+    public CinemachineFreeLook freeLook;    // FreeLook 攝影機
+    public Transform target;                // 目標（外部點）
+    [Min(0f)] public float playerRadius = 2.0f; // 玩家周圍圓半徑（XZ 平面）
 
-    [Header("Focus Trigger")]
-    public KeyCode focusKey = KeyCode.T;   // 聚焦按鍵
-    public float focusHoldTime = 1.2f;     // 點按持續秒數（長按則持續）
-
-    [Header("Smooth Turn")]
-    public bool smoothTurn = true;
-    [Tooltip("最大平滑旋轉速度(度/秒)")]
-    public float turnSpeedDegPerSec = 360f;
-    [Tooltip("越小越柔順；0.15~0.30 常用")]
-    public float turnEase = 0.18f;
-    private float _xVel;
-
-    [Header("Smooth Y (可選)")]
-    public bool smoothY = true;
-    [Range(0f, 1f)] public float desiredYOnFocus = 0.45f; // 聚焦時 FreeLook 的 Y 軸值
-    public float ySmoothTime = 0.25f;
-    private float _yVel;
-
-    [Header("Marker UI")]
-    public Vector3 markerWorldOffset = new Vector3(0, 1.5f, 0);
-    [Range(8f, 48f)] public float screenEdgePadding = 24f;
-    public bool rotateOffscreenArrow = true;
-
-    [Header("Debug")]
-    public bool forceWorldBinding = true;   // 啟動時強制設成 WorldSpace/WorldForward
-    public bool logAngles = false;
+    [Header("Lock Settings")]
+    public float lockSeconds = 2.0f;        // 鎖定維持時間（秒）
+    [SerializeField] private float cameraOffset = 3f; // 相機在 B 點上方的高度
 
     // 狀態
-    private bool _focusing;
+    private Transform _tempFollow;                    // 暫時 pivot
+    private Transform _origFollow;                    // 原始 Follow
+    private Transform _origLookAt;                    // 原始 LookAt
+    private bool _locking;
     private float _timer;
+    private bool _hasPressedSinceLastLock;
 
-    // 備份 recenter（如果你平時有用）
-    private bool _origHeadEnable;
-    private float _origHeadTime, _origHeadWait;
-    private bool _origYEnable;
-    private float _origYTime, _origYWait;
+    // 備份 FreeLook 軸速度與 recenter
+    private float _origXSpeed, _origYSpeed;
+    private bool  _origHeadRecenteringEnabled;
+    private float _origHeadRecenteringTime, _origHeadWait;
+    private bool  _origYRecenteringEnabled;
+    private float _origYRecenteringTime, _origYWait;
+
+    // ★ 備份 Orbits(Height/Radius)
+    private float[] _origHeights = new float[3];
+    private float[] _origRadii   = new float[3];
+
+    // 除錯可視化
+    private bool _hasPoints;
+    private Vector3 _pointC;
+    private Vector3 _pointB;
+    private Vector3 _followVel;
+
 
     void Awake()
     {
-        if (!gameCamera) gameCamera = Camera.main;
-        if (markerUI) markerUI.gameObject.SetActive(false);
-
-        if (freeLook != null)
+        if (!freeLook) Debug.LogWarning("FreeLook 未指定！");
+        if (freeLook)
         {
-            // 備份 recenter 設定
-            _origHeadEnable = freeLook.m_RecenterToTargetHeading.m_enabled;
-            _origHeadTime   = freeLook.m_RecenterToTargetHeading.m_RecenteringTime;
-            _origHeadWait   = freeLook.m_RecenterToTargetHeading.m_WaitTime;
+            _origFollow = freeLook.Follow;
+            _origLookAt = freeLook.LookAt;
 
-            _origYEnable    = freeLook.m_YAxisRecentering.m_enabled;
-            _origYTime      = freeLook.m_YAxisRecentering.m_RecenteringTime;
-            _origYWait      = freeLook.m_YAxisRecentering.m_WaitTime;
+            _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
+            _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
 
-            // ✅ 強制把三個 Rig 都設為「WorldSpace / WorldForward」
-            if (forceWorldBinding)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    var rig = freeLook.GetRig(i);
-                    if (!rig) continue;
+            _origHeadRecenteringEnabled = freeLook.m_RecenterToTargetHeading.m_enabled;
+            _origHeadRecenteringTime    = freeLook.m_RecenterToTargetHeading.m_RecenteringTime;
+            _origHeadWait               = freeLook.m_RecenterToTargetHeading.m_WaitTime;
 
-                    var body = rig.GetCinemachineComponent<CinemachineOrbitalTransposer>();
-                    if (body != null)
-                    {
-                        body.m_BindingMode = CinemachineTransposer.BindingMode.WorldSpace;
-                        // Heading 定義為世界前方，X 軸值就能直接用世界角度控制
-                        body.m_Heading.m_Definition = CinemachineOrbitalTransposer.Heading.HeadingDefinition.WorldForward;
-                    }
-
-                    var aim = rig.GetCinemachineComponent<CinemachineComposer>();
-                    if (aim != null)
-                    {
-                        // 輕微阻尼讓轉向更柔
-                        aim.m_HorizontalDamping = Mathf.Max(aim.m_HorizontalDamping, 0.2f);
-                        aim.m_VerticalDamping   = Mathf.Max(aim.m_VerticalDamping,   0.2f);
-                    }
-                }
-
-                // 也建議在 FreeLook 上加 CinemachineCollider 擴充件（於 Inspector）
-                // 以避免穿牆：Avoid Obstacles=On, Pull Camera Forward=On, Damping=0.3~0.5
-            }
+            _origYRecenteringEnabled = freeLook.m_YAxisRecentering.m_enabled;
+            _origYRecenteringTime    = freeLook.m_YAxisRecentering.m_RecenteringTime;
+            _origYWait               = freeLook.m_YAxisRecentering.m_WaitTime;
         }
     }
 
     void OnDisable()
     {
-        if (_focusing) StopFocus();
-
-        // 還原 recenter（如果你平常有用）
-        if (freeLook != null)
-        {
-            freeLook.m_RecenterToTargetHeading.m_enabled = _origHeadEnable;
-            freeLook.m_RecenterToTargetHeading.m_RecenteringTime = _origHeadTime;
-            freeLook.m_RecenterToTargetHeading.m_WaitTime = _origHeadWait;
-
-            freeLook.m_YAxisRecentering.m_enabled = _origYEnable;
-            freeLook.m_YAxisRecentering.m_RecenteringTime = _origYTime;
-            freeLook.m_YAxisRecentering.m_WaitTime = _origYWait;
-        }
+        if (_locking) RestoreAll();
     }
 
     void Update()
     {
-        if (freeLook == null || player == null || target == null) return;
+        bool pressed = PlayerInputHandler.Instance.IsTargetPressed;
 
-        bool down = Input.GetKeyDown(focusKey);
-        bool held = Input.GetKey(focusKey);
-
-        if (down) StartFocus();
-
-        if (_focusing)
+        // 按下瞬間執行一次
+        if (pressed && !_locking && !_hasPressedSinceLastLock)
         {
-            if (!held)
-            {
-                _timer += Time.unscaledDeltaTime;
-                if (_timer >= focusHoldTime)
-                    StopFocus();
-            }
-
-            UpdateFocusRotation();
+            StartLock();
+            _hasPressedSinceLastLock = true;
+        }
+        else if (!pressed)
+        {
+            _hasPressedSinceLastLock = false;
         }
 
-        UpdateMarker();
-    }
-
-    void StartFocus()
-    {
-        _focusing = true;
-        _timer = 0f;
-
-        // 聚焦期間：明確關閉 recenter，避免它把相機拉去別的角度
-        freeLook.m_RecenterToTargetHeading.m_enabled = false;
-        freeLook.m_YAxisRecentering.m_enabled = false;
-
-        if (markerUI) markerUI.gameObject.SetActive(true);
-    }
-
-    void StopFocus()
-    {
-        _focusing = false;
-        if (markerUI) markerUI.gameObject.SetActive(false);
-
-        // 退出聚焦後是否要還原 recenter：這裡先不還原，交由 OnDisable 或你自己的流程決定
-        // 若你想立即還原，也可以解開下列註解：
-        /*
-        freeLook.m_RecenterToTargetHeading.m_enabled = _origHeadEnable;
-        freeLook.m_YAxisRecentering.m_enabled = _origYEnable;
-        */
-    }
-
-    // ✅ 平滑旋轉 FreeLook X / Y 軸
-    void UpdateFocusRotation()
-    {
-        if (smoothTurn) DriveFreeLookToTargetYaw();
-        if (smoothY)    DriveFreeLookY();
-    }
-
-    // 只讓相機繞玩家旋轉，面向「玩家->目標」的方向（不動 LookAt/Follow）
-    void DriveFreeLookToTargetYaw()
-    {
-        // 玩家 → 目標 的水平向量
-        Vector3 flat = Vector3.ProjectOnPlane(target.position - player.position, Vector3.up);
-        if (flat.sqrMagnitude < 0.0001f) return;
-
-        // 用「世界前方」作基準算出期望方位角（-180~180）
-        float worldYaw = Vector3.SignedAngle(Vector3.forward, flat.normalized, Vector3.up);
-
-        // 因為我們的 LookAt 是「玩家」，希望相機位在玩家的「反方向」軌道上，鏡頭就會看向目標
-        float desiredYaw = Mathf.DeltaAngle(0f, worldYaw + 180f); // 加 180 度取得相機應在的軌道角
-
-        // 當前 FreeLook 的 X 軸值（角度）
-        float currYaw = freeLook.m_XAxis.Value;
-
-        // 平滑靠近
-        float nextYaw = Mathf.SmoothDampAngle(
-            currYaw, desiredYaw, ref _xVel,
-            turnEase, turnSpeedDegPerSec, Time.unscaledDeltaTime
-        );
-
-        freeLook.m_XAxis.Value = nextYaw;
-
-        if (logAngles)
-            Debug.Log($"[Focus] worldYaw={worldYaw:F1}, desiredYaw={desiredYaw:F1}, currYaw={currYaw:F1} -> next={nextYaw:F1}");
-    }
-
-    // 平滑調整 FreeLook 的仰角 (Y Axis)
-    void DriveFreeLookY()
-    {
-        float curr = freeLook.m_YAxis.Value;
-        float next = Mathf.SmoothDamp(
-            curr, Mathf.Clamp01(desiredYOnFocus),
-            ref _yVel, ySmoothTime, Mathf.Infinity, Time.unscaledDeltaTime
-        );
-        freeLook.m_YAxis.Value = Mathf.Clamp01(next);
-    }
-
-    // 顯示目標指示 UI（在螢幕上或邊緣）
-    void UpdateMarker()
-    {
-        if (markerUI == null || target == null || gameCamera == null) return;
-
-        Vector3 world = target.position + markerWorldOffset;
-        Vector3 sp = gameCamera.WorldToScreenPoint(world);
-
-        bool isBehind = sp.z < 0f;
-        if (isBehind) sp *= -1f;
-
-        Vector2 screen = new Vector2(Screen.width, Screen.height);
-        Vector2 pos = sp;
-        bool onScreen = sp.z > 0f && sp.x > 0 && sp.x < screen.x && sp.y > 0 && sp.y < screen.y;
-
-        if (onScreen)
+        if (_locking)
         {
-            markerUI.position = pos;
-            if (rotateOffscreenArrow) markerUI.localEulerAngles = Vector3.zero;
+            _timer += Time.unscaledDeltaTime;
+            if (_timer >= lockSeconds)
+            {
+                EndLock();
+                return;
+            }
+
+            // 鎖定期間持續刷新相機位置
+            if (target != null && freeLook != null && _tempFollow != null)
+            {
+                _hasPoints = ComputeIntersectionsXZ(transform.position, target.position, playerRadius,
+                    out _pointC, out _pointB);
+                if (_hasPoints)
+                {
+                    Vector3 offsetPos = _pointB + Vector3.up * cameraOffset;
+                    _tempFollow.position = offsetPos; // FreeLook Orbits=0 → 鏡頭會貼這個點
+                }
+            }
         }
         else
         {
-            Vector2 center = screen * 0.5f;
-            Vector2 dir = ((Vector2)pos - center).normalized;
-            Vector2 edgePos = center + dir * 9999f;
-            edgePos.x = Mathf.Clamp(edgePos.x, screenEdgePadding, screen.x - screenEdgePadding);
-            edgePos.y = Mathf.Clamp(edgePos.y, screenEdgePadding, screen.y - screenEdgePadding);
-            markerUI.position = edgePos;
+            // 非鎖定時也計算（方便在編輯器預覽）
+            _hasPoints = ComputeIntersectionsXZ(transform.position,
+                target ? target.position : transform.position + Vector3.forward * 3f,
+                playerRadius, out _pointC, out _pointB);
+        }
+    }
 
-            if (rotateOffscreenArrow)
-            {
-                float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-                markerUI.localEulerAngles = new Vector3(0, 0, angle - 90f);
-            }
+    // ===== 進入鎖定 =====
+    void StartLock()
+    {
+        if (!target || !freeLook) return;
+        _locking = true;
+        _timer = 0f;
+
+        if (!ComputeIntersectionsXZ(transform.position, target.position, playerRadius,
+            out _pointC, out _pointB))
+            return;
+
+        // 建立暫時 pivot
+        if (_tempFollow == null)
+        {
+            var go = new GameObject("[CameraLockPivot]");
+            go.hideFlags = HideFlags.HideAndDontSave;
+            _tempFollow = go.transform;
         }
 
-        if (!_focusing && markerUI.gameObject.activeSelf) markerUI.gameObject.SetActive(false);
-        else if (_focusing && !markerUI.gameObject.activeSelf) markerUI.gameObject.SetActive(true);
+        _tempFollow.position = _pointB + Vector3.up * cameraOffset;
+
+        // ★ 備份並把三個 Orbits 清零（Height/Radius）
+        for (int i = 0; i < 3; i++)
+        {
+            var o = freeLook.m_Orbits[i];      // Orbit 是 struct，要用暫存再回寫
+            _origHeights[i] = o.m_Height;
+            _origRadii[i]   = o.m_Radius;
+            o.m_Height = 0f;
+            o.m_Radius = 0f;
+            freeLook.m_Orbits[i] = o;          // ← 回寫很重要，否則 Inspector 看不到變化
+        }
+
+        // 設置 Follow / LookAt
+        _origFollow = freeLook.Follow;
+        _origLookAt = freeLook.LookAt;
+        freeLook.Follow = _tempFollow;
+        freeLook.LookAt = target;
+
+        // 鎖住玩家相機輸入
+        _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
+        _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
+        freeLook.m_XAxis.m_MaxSpeed = 0f;
+        freeLook.m_YAxis.m_MaxSpeed = 0f;
+
+        // 關閉 recenter
+        _origHeadRecenteringEnabled = freeLook.m_RecenterToTargetHeading.m_enabled;
+        _origYRecenteringEnabled    = freeLook.m_YAxisRecentering.m_enabled;
+        freeLook.m_RecenterToTargetHeading.m_enabled = false;
+        freeLook.m_YAxisRecentering.m_enabled       = false;
+    }
+
+    // ===== 結束鎖定 =====
+    void EndLock()
+    {
+        _locking = false;
+        RestoreAll();
+    }
+
+    // ===== 還原所有 =====
+    void RestoreAll()
+    {
+        if (!freeLook) return;
+
+        // 還原 Follow / LookAt
+        freeLook.Follow = _origFollow;
+        freeLook.LookAt = _origLookAt;
+
+        // 還原軸速度
+        freeLook.m_XAxis.m_MaxSpeed = _origXSpeed;
+        freeLook.m_YAxis.m_MaxSpeed = _origYSpeed;
+
+        // 還原 recenter
+        freeLook.m_RecenterToTargetHeading.m_enabled = _origHeadRecenteringEnabled;
+        freeLook.m_RecenterToTargetHeading.m_RecenteringTime = _origHeadRecenteringTime;
+        freeLook.m_RecenterToTargetHeading.m_WaitTime        = _origHeadWait;
+
+        freeLook.m_YAxisRecentering.m_enabled = _origYRecenteringEnabled;
+        freeLook.m_YAxisRecentering.m_RecenteringTime = _origYRecenteringTime;
+        freeLook.m_YAxisRecentering.m_WaitTime        = _origYWait;
+
+        // ★ 還原 Orbits(Height/Radius)
+        for (int i = 0; i < 3; i++)
+        {
+            var o = freeLook.m_Orbits[i];
+            o.m_Height = _origHeights[i];
+            o.m_Radius = _origRadii[i];
+            freeLook.m_Orbits[i] = o;
+        }
+    }
+
+    // ======== 計算交點（XZ 平面） ========
+    static bool ComputeIntersectionsXZ(Vector3 playerPos3, Vector3 targetPos3, float r,
+        out Vector3 pointC, out Vector3 pointB)
+    {
+        Vector2 C = new Vector2(playerPos3.x, playerPos3.z);
+        Vector2 P0 = new Vector2(targetPos3.x, targetPos3.z);
+        Vector2 P1 = new Vector2(playerPos3.x, playerPos3.z);
+        Vector2 d = (P1 - P0);
+        float a = d.sqrMagnitude;
+
+        pointC = pointB = default;
+        if (a < 1e-10f) return false;
+
+        Vector2 f = P0 - C;
+        float b = 2f * Vector2.Dot(d, f);
+        float c = Vector2.Dot(f, f) - r * r;
+        float disc = b * b - 4f * a * c;
+        if (disc < 0f) return false;
+
+        float sqrtD = Mathf.Sqrt(Mathf.Max(0f, disc));
+        float t1 = (-b - sqrtD) / (2f * a);
+        float t2 = (-b + sqrtD) / (2f * a);
+
+        Vector2 I1 = P0 + t1 * d;
+        Vector2 I2 = P0 + t2 * d;
+        Vector2 Cxz, Bxz;
+        if (t1 < t2) { Cxz = I1; Bxz = I2; } else { Cxz = I2; Bxz = I1; }
+
+        float y = playerPos3.y;
+        pointC = new Vector3(Cxz.x, y, Cxz.y);
+        pointB = new Vector3(Bxz.x, y, Bxz.y);
+        return true;
+    }
+
+    // ======== Gizmos 可視化 ========
+    void OnDrawGizmos()
+    {
+        if (!_hasPoints) return;
+
+        Vector3 playerPos = transform.position;
+        Vector3 targetPos = target ? target.position : playerPos + Vector3.forward * 3f;
+
+        // 玩家範圍
+        Gizmos.color = new Color(1f, 0.85f, 0f, 0.8f);
+        Gizmos.DrawWireSphere(playerPos, playerRadius);
+
+        // 玩家 → 目標線
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(playerPos, targetPos);
+
+        // 目標點
+        Gizmos.color = Color.white;
+        Gizmos.DrawSphere(targetPos, 0.08f);
+
+        // Player
+        Gizmos.color = Color.gray;
+        Gizmos.DrawSphere(playerPos, 0.08f);
+
+        // PointC (靠近 target)
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(_pointC, 0.12f);
+
+        // PointB (另一側)
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawSphere(_pointB, 0.12f);
+
+        // B → 上方 offset
+        Vector3 bTop = _pointB + Vector3.up * cameraOffset;
+        Gizmos.color = new Color(0.6f, 0f, 1f, 0.8f);
+        Gizmos.DrawLine(_pointB, bTop);
+        Gizmos.DrawSphere(bTop, 0.12f);
+
+        // 連線 Target→C→B
+        Gizmos.color = new Color(0f, 1f, 0.3f, 0.6f);
+        Gizmos.DrawLine(targetPos, _pointC);
+        Gizmos.DrawLine(_pointC, _pointB);
+
+        // 若有攝影機 → 畫出 pivot 位置
+        if (freeLook && _tempFollow)
+        {
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawSphere(_tempFollow.position, 0.1f);
+            Gizmos.DrawLine(_pointB, _tempFollow.position);
+        }
     }
 }

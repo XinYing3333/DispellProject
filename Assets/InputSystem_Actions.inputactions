@@ -78,15 +78,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "SkillUI",
-                    "type": "Button",
-                    "id": "de578ec5-005a-48b6-8ca8-f15644730b51",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Setting",
                     "type": "Button",
                     "id": "8c90205b-b934-4e9d-b2bd-92775476517b",
@@ -99,6 +90,15 @@
                     "name": "Switch",
                     "type": "Button",
                     "id": "852140f2-7766-474d-8707-702459ba45f3",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Target",
+                    "type": "Button",
+                    "id": "b127d309-321e-4cd1-b938-32244eb8267e",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -393,28 +393,6 @@
                 },
                 {
                     "name": "",
-                    "id": "c7864541-395c-4785-8f3d-03bde6b2fe96",
-                    "path": "<Keyboard>/q",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Keyboard&Mouse",
-                    "action": "SkillUI",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "dbe6040a-6509-47ff-a116-abd59c2dd3cf",
-                    "path": "<Gamepad>/leftShoulder",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Gamepad",
-                    "action": "SkillUI",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "4ffba141-d955-4020-ba24-a932e8ea0aae",
                     "path": "<Keyboard>/escape",
                     "interactions": "",
@@ -586,6 +564,28 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Switch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a4631da7-b89c-4b2e-92d4-6351d489db1a",
+                    "path": "<Keyboard>/t",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Target",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4c37e2de-996b-4cdb-8f88-7a9c5b8a10fa",
+                    "path": "<Gamepad>/rightShoulder",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Target",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

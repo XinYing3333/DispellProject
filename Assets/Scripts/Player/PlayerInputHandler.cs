@@ -19,6 +19,7 @@ namespace Player
         public bool IsCollecting { get; private set; }
         public bool IsSkillUIOpen { get; private set; }
         public bool IsSettingPressed { get; private set; }
+        public bool IsTargetPressed { get; private set; }
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
 
@@ -27,11 +28,11 @@ namespace Player
         public event Action OnDash;
         public event Action OnSwitchThrow;
 
-        [Header("Core Interaction")]
-        [SerializeField] private InteractionController interaction;
+        [Header("Core Interaction")] [SerializeField]
+        private InteractionController interaction;
 
         private PlayerInput _playerInput;
-        private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim ,_skill;
+        private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim, _skill, _target;
         private InputAction _skillUI, _setting;
 
         void Awake()
@@ -41,6 +42,7 @@ namespace Player
                 Destroy(gameObject);
                 return;
             }
+
             Instance = this;
 
             _playerInput = GetComponent<PlayerInput>();
@@ -51,16 +53,17 @@ namespace Player
             }
 
             _movement = _playerInput.actions["Move"];
-            _run      = _playerInput.actions["Run"];
-            _jump     = _playerInput.actions["Jump"];
-            _shoot    = _playerInput.actions["Shoot"];    // 投擲
-            _collect  = _playerInput.actions["Collect"];  // 吸收（按住）
-            _dash     = _playerInput.actions["Dash"];
+            _run = _playerInput.actions["Run"];
+            _jump = _playerInput.actions["Jump"];
+            _shoot = _playerInput.actions["Shoot"]; // 投擲
+            _collect = _playerInput.actions["Collect"]; // 吸收（按住）
+            _dash = _playerInput.actions["Dash"];
             _interact = _playerInput.actions["Interact"]; // 丟下
-            _aim      = _playerInput.actions["Aim"];
-            _skill    = _playerInput.actions["Skill"];
-            _skillUI  = _playerInput.actions["SkillUI"];
-            _setting  = _playerInput.actions["Setting"];
+            _aim = _playerInput.actions["Aim"];
+            _skill = _playerInput.actions["Skill"];
+         //   _skillUI = _playerInput.actions["SkillUI"];
+            _setting = _playerInput.actions["Setting"];
+            _target = _playerInput.actions["Target"];
 
             if (!interaction)
             {
@@ -72,36 +75,38 @@ namespace Player
 
         private void OnEnable()
         {
-            _collect.started   += OnCollectStarted;
-            _collect.canceled  += OnCollectCanceled;
+            _collect.started += OnCollectStarted;
+            _collect.canceled += OnCollectCanceled;
 
-            _aim.started       += OnAimStarted;
-            _aim.canceled      += OnAimCanceled;
+            _aim.started += OnAimStarted;
+            _aim.canceled += OnAimCanceled;
 
-            _jump.performed    += OnJumpPerformed;
-            _dash.performed    += OnDashPerformed;
-            _shoot.performed   += OnShootPerformed;   // 投擲
-            _skill.performed   += OnSkillPerformed;
-            _skillUI.performed += OnSkillUIPerformed;
+            _jump.performed += OnJumpPerformed;
+            _dash.performed += OnDashPerformed;
+            _shoot.performed += OnShootPerformed; // 投擲
+            _skill.performed += OnSkillPerformed;
+         //   _skillUI.performed += OnSkillUIPerformed;
             _setting.performed += OnSettingPerformed;
-            _interact.performed+= OnInteractPerformed; // 丟下
+            _interact.performed += OnInteractPerformed; // 丟下
+            _target.performed += OnTargetPerformed;
         }
 
         private void OnDisable()
         {
-            _collect.started   -= OnCollectStarted;
-            _collect.canceled  -= OnCollectCanceled;
+            _collect.started -= OnCollectStarted;
+            _collect.canceled -= OnCollectCanceled;
 
-            _aim.started       -= OnAimStarted;
-            _aim.canceled      -= OnAimCanceled;
+            _aim.started -= OnAimStarted;
+            _aim.canceled -= OnAimCanceled;
 
-            _jump.performed    -= OnJumpPerformed;
-            _dash.performed    -= OnDashPerformed;
-            _shoot.performed   -= OnShootPerformed;
-            _skill.performed   -= OnSkillPerformed;
-            _skillUI.performed -= OnSkillUIPerformed;
+            _jump.performed -= OnJumpPerformed;
+            _dash.performed -= OnDashPerformed;
+            _shoot.performed -= OnShootPerformed;
+            _skill.performed -= OnSkillPerformed;
+         //   _skillUI.performed -= OnSkillUIPerformed;
             _setting.performed -= OnSettingPerformed;
-            _interact.performed-= OnInteractPerformed;
+            _interact.performed -= OnInteractPerformed;
+            _target.performed -= OnTargetPerformed;
         }
 
         void Update()
@@ -121,22 +126,22 @@ namespace Player
         // ===== 吸收（按住） =====
         private void OnCollectStarted(InputAction.CallbackContext ctx)
         {
-            IsCollecting = true;
             if (cannotMove || interaction == null) return;
+
+            IsCollecting = true;
             interaction.Input_StartAbsorbHold();
         }
 
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
-            IsCollecting = false;
             if (cannotMove || interaction == null) return;
-            // interaction.Input_StopAbsorbHold();
-            interaction.Input_Drop();
 
+            IsCollecting = false;
+            interaction.Input_Drop();
         }
 
         // ===== 其他 =====
-        private void OnAimStarted(InputAction.CallbackContext ctx)  => IsAiming = true;
+        private void OnAimStarted(InputAction.CallbackContext ctx) => IsAiming = true;
         private void OnAimCanceled(InputAction.CallbackContext ctx) => IsAiming = false;
 
         private void OnJumpPerformed(InputAction.CallbackContext ctx)
@@ -146,7 +151,7 @@ namespace Player
         }
 
         private void OnSkillPerformed(InputAction.CallbackContext ctx) => OnSkill?.Invoke();
-        private void OnSkillUIPerformed(InputAction.CallbackContext ctx) => IsSkillUIOpen = !IsSkillUIOpen;
+        //private void OnSkillUIPerformed(InputAction.CallbackContext ctx) => IsSkillUIOpen = !IsSkillUIOpen;
         private void OnSettingPerformed(InputAction.CallbackContext ctx) => IsSettingPressed = !IsSettingPressed;
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
@@ -158,8 +163,9 @@ namespace Player
         // 投擲（有持有物才會成功；會自動瞄準，沒有就直前）
         private void OnShootPerformed(InputAction.CallbackContext ctx)
         {
-            ShootPressed = true;
             if (cannotMove || interaction == null) return;
+
+            ShootPressed = true;
             interaction.Input_Throw();
             StartCoroutine(ClearShootFlagNextFrame());
         }
@@ -170,12 +176,19 @@ namespace Player
             if (cannotMove || interaction == null) return;
             interaction.Input_Drop();
         }
+        
+        private void OnTargetPerformed(InputAction.CallbackContext ctx)
+        {
+            if (cannotMove || interaction == null) return;
+            IsTargetPressed = !IsTargetPressed;
+        }
 
         private IEnumerator ClearShootFlagNextFrame()
         {
             yield return null;
             ShootPressed = false;
         }
+
         public void SetSpellType(SpellType newSpellType)
         {
             // 若未使用可留空或保留原設計
