@@ -1,24 +1,41 @@
 ﻿using System;
 using UnityEngine;
 using Cinemachine;
+using DefaultNamespace.EventBus.Events.UI;
 using Player;
 
 [ExecuteAlways]
 public class TargetFocusSystem : MonoBehaviour
 {
     [Header("Refs")]
-    public CinemachineFreeLook freeLook;    // FreeLook 攝影機
-    public Transform target;                // 目標（外部點）
-    [Min(0f)] public float playerRadius = 2.0f; // 玩家周圍圓半徑（XZ 平面）
+    public CinemachineFreeLook freeLook;    
+    public Transform target;                
+    [Min(0f)] public float playerRadius = 2.0f; 
 
     [Header("Lock Settings")]
-    public float lockSeconds = 2.0f;        // 鎖定維持時間（秒）
-    [SerializeField] private float cameraOffset = 3f; // 相機在 B 點上方的高度
+    public float lockSeconds = 2.0f;        
+    [SerializeField] private float cameraOffset = 3f; 
+    
+    [Header("UI Target Marker")]
+    [SerializeField] private RectTransform iconPrefab;
+    [SerializeField] private Canvas uiCanvas;
+    [SerializeField] private Vector3 uiWorldOffset = new Vector3(0, 1.5f, 0);
+    [SerializeField] private float screenEdgePadding = 24f;
 
+// 顯示時間 & 淡出時間
+    [SerializeField] private float uiShowDuration = 4f;
+    [SerializeField] private float uiFadeDuration = 0.6f;
+
+    private RectTransform _iconInstance;
+    private CanvasGroup _iconCanvasGroup;
+    private Camera _cam;
+    private float _uiTimer;
+    private bool _uiFading;
+    
     // 狀態
-    private Transform _tempFollow;                    // 暫時 pivot
-    private Transform _origFollow;                    // 原始 Follow
-    private Transform _origLookAt;                    // 原始 LookAt
+    private Transform _tempFollow;                    
+    private Transform _origFollow;                    
+    private Transform _origLookAt;                    
     private bool _locking;
     private float _timer;
     private bool _hasPressedSinceLastLock;
@@ -30,7 +47,6 @@ public class TargetFocusSystem : MonoBehaviour
     private bool  _origYRecenteringEnabled;
     private float _origYRecenteringTime, _origYWait;
 
-    // ★ 備份 Orbits(Height/Radius)
     private float[] _origHeights = new float[3];
     private float[] _origRadii   = new float[3];
 
@@ -66,12 +82,46 @@ public class TargetFocusSystem : MonoBehaviour
     {
         if (_locking) RestoreAll();
     }
+    
+    void Start()
+    {
+        if (!Application.isPlaying) return;
+
+        _cam = Camera.main;
+
+        if (iconPrefab && uiCanvas)
+        {
+            _iconInstance = Instantiate(iconPrefab, uiCanvas.transform);
+            _iconInstance.gameObject.SetActive(false);
+
+            // 加入 CanvasGroup 控制透明度
+            _iconCanvasGroup = _iconInstance.GetComponent<CanvasGroup>();
+            if (!_iconCanvasGroup)
+                _iconCanvasGroup = _iconInstance.gameObject.AddComponent<CanvasGroup>();
+            _iconCanvasGroup.alpha = 0f;
+        }
+    }
+
+
 
     void Update()
     {
-        bool pressed = PlayerInputHandler.Instance.IsTargetPressed;
+        // 🔒 在編輯器模式下，只更新 Gizmo 幾何資訊，不執行輸入邏輯
+        if (!Application.isPlaying)
+        {
+            _hasPoints = ComputeIntersectionsXZ(transform.position,
+                target ? target.position : transform.position + Vector3.forward * 3f,
+                playerRadius, out _pointC, out _pointB);
+            return;
+        }
+        
+        if (Application.isPlaying && _iconInstance && target)
+        {
+            UpdateTargetUI();
+        }
 
-        // 按下瞬間執行一次
+        bool pressed = PlayerInputHandler.Instance != null && PlayerInputHandler.Instance.IsTargetPressed;
+
         if (pressed && !_locking && !_hasPressedSinceLastLock)
         {
             StartLock();
@@ -91,7 +141,6 @@ public class TargetFocusSystem : MonoBehaviour
                 return;
             }
 
-            // 鎖定期間持續刷新相機位置
             if (target != null && freeLook != null && _tempFollow != null)
             {
                 _hasPoints = ComputeIntersectionsXZ(transform.position, target.position, playerRadius,
@@ -99,20 +148,18 @@ public class TargetFocusSystem : MonoBehaviour
                 if (_hasPoints)
                 {
                     Vector3 offsetPos = _pointB + Vector3.up * cameraOffset;
-                    _tempFollow.position = offsetPos; // FreeLook Orbits=0 → 鏡頭會貼這個點
+                    _tempFollow.position = offsetPos; 
                 }
             }
         }
-        else
+        // --- UI 顯示控制 ---
+        if (Application.isPlaying && _iconInstance && target)
         {
-            // 非鎖定時也計算（方便在編輯器預覽）
-            _hasPoints = ComputeIntersectionsXZ(transform.position,
-                target ? target.position : transform.position + Vector3.forward * 3f,
-                playerRadius, out _pointC, out _pointB);
+            UpdateTargetUI();
+            UpdateTargetUITimer();
         }
     }
 
-    // ===== 進入鎖定 =====
     void StartLock()
     {
         if (!target || !freeLook) return;
@@ -123,7 +170,6 @@ public class TargetFocusSystem : MonoBehaviour
             out _pointC, out _pointB))
             return;
 
-        // 建立暫時 pivot
         if (_tempFollow == null)
         {
             var go = new GameObject("[CameraLockPivot]");
@@ -133,57 +179,58 @@ public class TargetFocusSystem : MonoBehaviour
 
         _tempFollow.position = _pointB + Vector3.up * cameraOffset;
 
-        // ★ 備份並把三個 Orbits 清零（Height/Radius）
         for (int i = 0; i < 3; i++)
         {
-            var o = freeLook.m_Orbits[i];      // Orbit 是 struct，要用暫存再回寫
+            var o = freeLook.m_Orbits[i];
             _origHeights[i] = o.m_Height;
             _origRadii[i]   = o.m_Radius;
             o.m_Height = 0f;
             o.m_Radius = 0f;
-            freeLook.m_Orbits[i] = o;          // ← 回寫很重要，否則 Inspector 看不到變化
+            freeLook.m_Orbits[i] = o;
         }
 
-        // 設置 Follow / LookAt
         _origFollow = freeLook.Follow;
         _origLookAt = freeLook.LookAt;
         freeLook.Follow = _tempFollow;
         freeLook.LookAt = target;
 
-        // 鎖住玩家相機輸入
         _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
         _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
         freeLook.m_XAxis.m_MaxSpeed = 0f;
         freeLook.m_YAxis.m_MaxSpeed = 0f;
 
-        // 關閉 recenter
         _origHeadRecenteringEnabled = freeLook.m_RecenterToTargetHeading.m_enabled;
         _origYRecenteringEnabled    = freeLook.m_YAxisRecentering.m_enabled;
         freeLook.m_RecenterToTargetHeading.m_enabled = false;
         freeLook.m_YAxisRecentering.m_enabled       = false;
+        
+        // 顯示目標 UI
+        if (_iconInstance)
+        {
+            _uiTimer = 0f;
+            _uiFading = false;
+            _iconInstance.gameObject.SetActive(true);
+            _iconCanvasGroup.alpha = 1f; // 立刻顯示
+        }
+        EventBus<RevealObjective>.Raise(new RevealObjective());
     }
 
-    // ===== 結束鎖定 =====
     void EndLock()
     {
         _locking = false;
         RestoreAll();
     }
 
-    // ===== 還原所有 =====
     void RestoreAll()
     {
         if (!freeLook) return;
 
-        // 還原 Follow / LookAt
         freeLook.Follow = _origFollow;
         freeLook.LookAt = _origLookAt;
 
-        // 還原軸速度
         freeLook.m_XAxis.m_MaxSpeed = _origXSpeed;
         freeLook.m_YAxis.m_MaxSpeed = _origYSpeed;
 
-        // 還原 recenter
         freeLook.m_RecenterToTargetHeading.m_enabled = _origHeadRecenteringEnabled;
         freeLook.m_RecenterToTargetHeading.m_RecenteringTime = _origHeadRecenteringTime;
         freeLook.m_RecenterToTargetHeading.m_WaitTime        = _origHeadWait;
@@ -192,7 +239,6 @@ public class TargetFocusSystem : MonoBehaviour
         freeLook.m_YAxisRecentering.m_RecenteringTime = _origYRecenteringTime;
         freeLook.m_YAxisRecentering.m_WaitTime        = _origYWait;
 
-        // ★ 還原 Orbits(Height/Radius)
         for (int i = 0; i < 3; i++)
         {
             var o = freeLook.m_Orbits[i];
@@ -200,9 +246,63 @@ public class TargetFocusSystem : MonoBehaviour
             o.m_Radius = _origRadii[i];
             freeLook.m_Orbits[i] = o;
         }
+        EventBus<HideObjective>.Raise(new HideObjective());
+    }
+    
+    void UpdateTargetUI()
+    {
+        if (!_cam || !target || !_iconInstance) return;
+
+        Vector3 screenPos = _cam.WorldToScreenPoint(target.position);
+
+        // --- 如果目標在鏡頭後面 ---
+        if (screenPos.z < 0)
+        {
+            // 鏡射到前方（讓方向正確）
+            screenPos *= -1;
+            screenPos.z = 0;
+        }
+
+        // --- 限制 icon 不會超出螢幕邊界 ---
+        float edgeOffset = 50f; // 距離螢幕邊緣留白（可調）
+        screenPos.x = Mathf.Clamp(screenPos.x, edgeOffset, Screen.width - edgeOffset);
+        screenPos.y = Mathf.Clamp(screenPos.y, edgeOffset, Screen.height - edgeOffset);
+
+        // 套用到 RectTransform
+        _iconInstance.position = screenPos;
     }
 
-    // ======== 計算交點（XZ 平面） ========
+
+    void UpdateTargetUITimer()
+    {
+        if (_uiFading) return;
+
+        _uiTimer += Time.deltaTime;
+
+        if (_uiTimer >= uiShowDuration)
+        {
+            StartCoroutine(FadeOutIcon());
+            _uiFading = true;
+        }
+    }
+
+    System.Collections.IEnumerator FadeOutIcon()
+    {
+        float t = 0f;
+        float startAlpha = _iconCanvasGroup.alpha;
+
+        while (t < uiFadeDuration)
+        {
+            t += Time.deltaTime;
+            _iconCanvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, t / uiFadeDuration);
+            yield return null;
+        }
+
+        _iconCanvasGroup.alpha = 0f;
+        _iconInstance.gameObject.SetActive(false);
+    }
+
+
     static bool ComputeIntersectionsXZ(Vector3 playerPos3, Vector3 targetPos3, float r,
         out Vector3 pointC, out Vector3 pointB)
     {
@@ -236,7 +336,7 @@ public class TargetFocusSystem : MonoBehaviour
         return true;
     }
 
-    // ======== Gizmos 可視化 ========
+    // ✅ 可視化：即使在編輯模式也能看
     void OnDrawGizmos()
     {
         if (!_hasPoints) return;
@@ -244,42 +344,33 @@ public class TargetFocusSystem : MonoBehaviour
         Vector3 playerPos = transform.position;
         Vector3 targetPos = target ? target.position : playerPos + Vector3.forward * 3f;
 
-        // 玩家範圍
         Gizmos.color = new Color(1f, 0.85f, 0f, 0.8f);
         Gizmos.DrawWireSphere(playerPos, playerRadius);
 
-        // 玩家 → 目標線
         Gizmos.color = Color.red;
         Gizmos.DrawLine(playerPos, targetPos);
 
-        // 目標點
         Gizmos.color = Color.white;
         Gizmos.DrawSphere(targetPos, 0.08f);
 
-        // Player
         Gizmos.color = Color.gray;
         Gizmos.DrawSphere(playerPos, 0.08f);
 
-        // PointC (靠近 target)
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(_pointC, 0.12f);
 
-        // PointB (另一側)
         Gizmos.color = Color.cyan;
         Gizmos.DrawSphere(_pointB, 0.12f);
 
-        // B → 上方 offset
         Vector3 bTop = _pointB + Vector3.up * cameraOffset;
         Gizmos.color = new Color(0.6f, 0f, 1f, 0.8f);
         Gizmos.DrawLine(_pointB, bTop);
         Gizmos.DrawSphere(bTop, 0.12f);
 
-        // 連線 Target→C→B
         Gizmos.color = new Color(0f, 1f, 0.3f, 0.6f);
         Gizmos.DrawLine(targetPos, _pointC);
         Gizmos.DrawLine(_pointC, _pointB);
 
-        // 若有攝影機 → 畫出 pivot 位置
         if (freeLook && _tempFollow)
         {
             Gizmos.color = Color.magenta;
