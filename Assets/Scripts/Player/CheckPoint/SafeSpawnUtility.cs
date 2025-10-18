@@ -12,12 +12,12 @@ public static class SafeSpawnUtility
         out Vector3 finalPos,
         out Quaternion finalRot,
         LayerMask groundMask,
-        float rayDown = 4f,
+        float rayDown = 6f,
         float slopeLimitDeg = 45f,
-        float probeRadius = 0.25f,
-        float edgeProbeDist = 0.5f,
-        float safeInset = 0.35f,
-        int radialChecks = 8)
+        float probeRadius = 0.35f,
+        float edgeProbeDist = 0.7f,
+        float safeInset = 2f,
+        int radialChecks = 12)
     {
         finalPos = desiredPos;
         finalRot = desiredRot;

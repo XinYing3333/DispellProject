@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
-public class Checkpoint : MonoBehaviour
+public class CheckpointSetter : MonoBehaviour
 {
     [Header("ID（必填、唯一）")]
     public string id;

@@ -15,10 +15,6 @@ public class RespawnController : MonoBehaviour
     public float groundCheckDown = 5f;
     public LayerMask groundMask = ~0;
 
-    [Header("FX / UI（可選）")]
-    public CanvasGroup fadeCanvas;         // 可做黑屏淡入淡出
-    public float fadeTime = 0.25f;
-
     private Rigidbody _rb;
     private CharacterController _cc;
     
@@ -73,15 +69,7 @@ public class RespawnController : MonoBehaviour
 
     private void PlacePlayer(Vector3 pos, Quaternion rot)
     {
-        // 簡單黑屏（可選）
-        if (fadeCanvas) StartCoroutine(FadeRoutine(() =>
-        {
-            DoPlace(pos, rot);
-        }));
-        else
-        {
-            DoPlace(pos, rot);
-        }
+        DoPlace(pos, rot);
     }
 
     private void DoPlace(Vector3 pos, Quaternion rot)
@@ -96,8 +84,8 @@ public class RespawnController : MonoBehaviour
                 rayDown: 6f,
                 slopeLimitDeg: 45f,         // 跟玩家可站立坡度一致
                 probeRadius: 0.35f,
-                edgeProbeDist: 0.8f,
-                safeInset: 0.4f,
+                edgeProbeDist: 0.7f,
+                safeInset: 2f,
                 radialChecks: 12))
         {
             pos = safePos;
@@ -113,16 +101,5 @@ public class RespawnController : MonoBehaviour
 
         //if (_rb) _rb.isKinematic = false;
         if (_cc) _cc.enabled = ccEnabled;
-    }
-
-
-    private System.Collections.IEnumerator FadeRoutine(System.Action onMid)
-    {
-        float t = 0f;
-        while (t < fadeTime) { t += Time.deltaTime; fadeCanvas.alpha = Mathf.InverseLerp(0, fadeTime, t); yield return null; }
-        onMid?.Invoke();
-        t = 0f;
-        while (t < fadeTime) { t += Time.deltaTime; fadeCanvas.alpha = 1f - Mathf.InverseLerp(0, fadeTime, t); yield return null; }
-        fadeCanvas.alpha = 0f;
     }
 }

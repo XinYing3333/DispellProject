@@ -28,7 +28,7 @@ public class CheckpointManager : MonoBehaviour
         if (!_byScene.TryGetValue(scene, out var s)) return false;
 
         // 依 ID 尋找場景中的 Checkpoint
-        var cps = GameObject.FindObjectsOfType<Checkpoint>(true);
+        var cps = GameObject.FindObjectsOfType<CheckpointSetter>(true);
         foreach (var cp in cps)
         {
             if (cp.id == s.checkpointId)
