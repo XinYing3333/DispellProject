@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+/// <summary>
+/// 收集系統： 提供 Dictionary ， 可以記錄 string+int ，提供公開【收集】【判斷是否獲得】【獲得數量】【儲存與讀取】。
+/// </summary>
 public static class CollectionSystem
 {
     private static Dictionary<string, int> saved   = new Dictionary<string, int>();   // 已存檔

@@ -51,6 +51,17 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] public bool lockJumpInWalkOnly = false;
     [SerializeField] public bool lockDashInWalkOnly = false;
 
+    // 在 PlayerMovement 裡加入：
+    [Header("Safe Ground Tracker")]
+    [SerializeField] private float stableTimeThreshold = 0.2f;  // 站穩多久才算安全
+    [SerializeField] private float maxHorizontalSpeed = 7f;     // 移動太快不記錄
+    [SerializeField] private LayerMask safeGroundMask;          // 可踩的地面層（可用原 groundLayer）
+
+    private float stableTimer = 0f;
+    private bool hasSafeGround = false;
+    private Vector3 lastSafePos;
+    private Quaternion lastSafeRot;
+    
     // 狀態
     private bool isGrabbing;
     private bool isFinishClimb;
@@ -185,6 +196,7 @@ public class PlayerMovement : MonoBehaviour
             }
             _wasMoving = isMoving;
         }
+        TrackSafeGround();
     }
 
     // ====== FixedUpdate：物理唯一來源 ======
@@ -475,6 +487,39 @@ public class PlayerMovement : MonoBehaviour
             _rb.useGravity = true;
         }
         isGrabbing = false;
+    }
+    
+    private void TrackSafeGround()
+    {
+        // 確認是否踩地
+        if (!IsGrounded()) { stableTimer = 0f; return; }
+
+        // 判斷水平速度是否太快（例如跳或滑落邊緣）
+        Vector3 horizontalVel = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
+        if (horizontalVel.magnitude > maxHorizontalSpeed)
+        {
+            stableTimer = 0f;
+            return;
+        }
+
+        // 穩定計時
+        stableTimer += Time.deltaTime;
+        if (stableTimer >= stableTimeThreshold)
+        {
+            lastSafePos = transform.position;
+            lastSafeRot = Quaternion.Euler(0, transform.eulerAngles.y, 0);
+            hasSafeGround = true;
+        }
+    }
+
+    public bool TryGetLastSafeGround(out Vector3 pos, out Quaternion rot)
+    {
+        pos = default;
+        rot = default;
+        if (!hasSafeGround) return false;
+        pos = lastSafePos;
+        rot = lastSafeRot;
+        return true;
     }
 
     // ====== 碰撞處理（只做狀態切換；地面狀態以 Raycast 為準） ======

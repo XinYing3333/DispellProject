@@ -6,6 +6,9 @@ using UnityEngine;
 using System.Linq;
 using DG.Tweening;
 
+/// <summary>
+/// 吸收功能脚本：提供【吸收】和【通知收集】的公開方法。
+/// </summary>
 
 public class PlayerCollector : MonoBehaviour
 {

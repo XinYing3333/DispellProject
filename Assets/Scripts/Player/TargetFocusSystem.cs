@@ -4,6 +4,9 @@ using Cinemachine;
 using DefaultNamespace.EventBus.Events.UI;
 using Player;
 
+/// <summary>
+/// 目標點脚本： 攝影機聚焦場上目前目標，并顯示當前目標 UI（包括 Objective）。
+/// </summary>
 [ExecuteAlways]
 public class TargetFocusSystem : MonoBehaviour
 {

@@ -2,6 +2,9 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+/// <summary>
+/// 山神跟隨玩家的脚本。
+/// </summary>
 public class PangolinSpiritFollow : MonoBehaviour
 {
     [Header("References")]

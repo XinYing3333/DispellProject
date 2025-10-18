@@ -6,6 +6,9 @@ using Player.InteractionSystem;
 
 namespace Player
 {
+    /// <summary>
+    /// 場景互動點的互動脚本：對話通知、IFocusable互動。
+    /// </summary>
     public class PlayerInteractor : MonoBehaviour
     {
         [Header("Detection Settings")]
