@@ -1,6 +1,7 @@
 ﻿// DamageDealer.cs
 
 using System.Collections.Generic;
+using EventBus.Events.Health;
 using UnityEngine;
 using Player;
 using UnityEngine.Events;
@@ -34,6 +35,7 @@ public class DamageDealer : MonoBehaviour
         if (useHitForward) dir = (directionRef ? directionRef.forward : transform.forward);
         else dir = (other.transform.position - transform.position).normalized;
         var info = new DamageInfo(damage, dir, knockbackForce);
+        EventBus<OnPlayerDamaged>.Raise(new OnPlayerDamaged()); 
         
         onInvoke?.Invoke();
         

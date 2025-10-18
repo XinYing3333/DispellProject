@@ -3,6 +3,7 @@ using System.Collections;
 using Cinemachine;
 using Player;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.VFX;
 
 [RequireComponent(typeof(Rigidbody), typeof(Collider), typeof(Animator))]

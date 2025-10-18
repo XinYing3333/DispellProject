@@ -20,8 +20,9 @@ public class EnemyAI : MonoBehaviour, ICollectable
     public float stunTime = 2f;
     private bool _isStunned = false;
     public DamageDealer damageDealer;
-    [SerializeField]private Animator _stateUIAnimator; 
+    [SerializeField]private Animator _stateUIAnimator;
 
+    private bool isPlay;
     private NavMeshAgent agent;
 
     void Start()
@@ -43,13 +44,15 @@ public class EnemyAI : MonoBehaviour, ICollectable
             agent.isStopped = false;
             agent.destination = target.position;
             _stateUIAnimator.enabled = true;
-            _stateUIAnimator.Play("enemy-warning");
+            if(!isPlay)_stateUIAnimator.Play("enemy-warning");
+            isPlay = true;
         }
         else if (distanceToTarget > detectionRange && !_isStunned)
         {
         }
         else
         {
+            isPlay = false;
             //_stateUIAnimator.Play("enemy-none");
             agent.isStopped = true;
         }
@@ -59,8 +62,10 @@ public class EnemyAI : MonoBehaviour, ICollectable
 
     IEnumerator OnStun()
     {
+        
         _isStunned = true;
         agent.isStopped = true;
+        isPlay = false;
         _stateUIAnimator.Play("enemy-stunning");
 
         if (damageDealer) damageDealer._lockDamage = true;
