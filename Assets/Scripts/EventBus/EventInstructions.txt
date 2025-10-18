@@ -1,0 +1,44 @@
+
+
+新增事件(New Events)：
+
+Add a Script( OnEventCalled.cs )
+Name should be On + EventName + Past tense.
+(Ex: OnHealthChanged \ OnPlayerTriggered ...)
+
+public readonly struct OnHealthChanged : IEvent
+    {
+    // the parameters that you want to bring to the Subscribers.
+        public readonly GameObject target;
+        public readonly int current;
+        public readonly int max;
+        public OnHealthChanged(GameObject target, int current, int max)
+        { this.target = target; this.current = current; this.max = max; }
+    }
+
+
+發送端(Publisher)：
+
+EventBus<OnEventCalled>.Raise(new OnEventCalled(//add a parameter if needed));
+
+
+訂閲者(Subscriber)：
+
+private EventBinding<OnEventCalled> _binding;
+
+    private void OnEnable()
+    {
+        _binding = new EventBinding<OnEventCalled>(OnSomethingCalled);
+        EventBus<OnEventCalled>.Register(_binding);
+    } 
+    
+    private void OnDisable()
+    {
+        if (_binding == null) return; //Optional
+        EventBus<OnEventCalled>.Deregister(_binding);
+        _binding = null; //Optional
+    }
+    
+    OnSomethingCalled(){
+    //execute somethings.
+    }

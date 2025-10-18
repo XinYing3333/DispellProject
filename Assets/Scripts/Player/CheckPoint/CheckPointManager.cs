@@ -1,6 +1,7 @@
-﻿// CheckpointManager.cs
-using System;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-1000)]
 public class CheckpointManager : MonoBehaviour
@@ -11,69 +12,77 @@ public class CheckpointManager : MonoBehaviour
     public struct SaveStruct
     {
         public string scene;
-        public Vector3 pos;
-        public Vector3 euler; // 也可用 Quaternion（序列化較麻煩）
+        public string checkpointId;   // ⭐ 用ID更穩定
+        public Vector3 fallbackPos;   // 可選：當找不到ID時退而求其次
+        public Vector3 fallbackEuler;
     }
 
-    private const string PREFS_KEY = "LAST_CHECKPOINT";
+    private const string PREFS_KEY = "LAST_CHECKPOINT_V2";
 
-    public SaveStruct? LastCheckpoint { get; private set; }
+    // 每個場景一筆（如果你有多場景串接）
+    private readonly Dictionary<string, SaveStruct> _byScene = new();
+
+    public bool TryGetCheckpointSpawn(string scene, out Vector3 pos, out Quaternion rot)
+    {
+        pos = default; rot = default;
+        if (!_byScene.TryGetValue(scene, out var s)) return false;
+
+        // 依 ID 尋找場景中的 Checkpoint
+        var cps = GameObject.FindObjectsOfType<Checkpoint>(true);
+        foreach (var cp in cps)
+        {
+            if (cp.id == s.checkpointId)
+            {
+                var t = cp.GetSpawnTransform();
+                pos = t.position; rot = t.rotation;
+                return true;
+            }
+        }
+
+        // 找不到相符ID → 用 fallback（避免地圖改動時完全無法重生）
+        pos = s.fallbackPos;
+        rot = Quaternion.Euler(s.fallbackEuler);
+        return true;
+    }
+
+    public void SetActiveCheckpoint(string checkpointId, Transform spawn, bool saveToPrefs = true)
+    {
+        string scene = SceneManager.GetActiveScene().name;
+        var data = new SaveStruct
+        {
+            scene = scene,
+            checkpointId = checkpointId,
+            fallbackPos = spawn.position,
+            fallbackEuler = spawn.rotation.eulerAngles
+        };
+        _byScene[scene] = data;
+
+        if (saveToPrefs)
+        {
+            var json = JsonUtility.ToJson(data);
+            PlayerPrefs.SetString(PREFS_KEY, json);
+            PlayerPrefs.Save();
+        }
+        Debug.Log($"Saved checkpoint {checkpointId}");
+    }
+
+    public bool HasCheckpointForCurrentScene()
+    {
+        return _byScene.ContainsKey(SceneManager.GetActiveScene().name);
+    }
+
+    public void ClearCheckpoint(bool alsoPrefs = false)
+    {
+        _byScene.Clear();
+        if (alsoPrefs) PlayerPrefs.DeleteKey(PREFS_KEY);
+    }
 
     private void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        // 若想跨開遊戲也保留，用這行載回：
         LoadFromPrefsIfAny();
-    }
-
-    public void SetActiveCheckpoint(CheckpointData data, bool saveToPrefs = true)
-    {
-        LastCheckpoint = new SaveStruct
-        {
-            scene = data.SceneName,
-            pos = data.Position,
-            euler = data.Rotation.eulerAngles
-        };
-
-        if (saveToPrefs)
-        {
-            var json = JsonUtility.ToJson(LastCheckpoint.Value);
-            PlayerPrefs.SetString(PREFS_KEY, json);
-            PlayerPrefs.Save();
-        }
-    }
-
-    public bool HasCheckpointForCurrentScene()
-    {
-        if (LastCheckpoint is null) return false;
-        string current = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        return LastCheckpoint?.scene == current;
-    }
-
-    public bool TryGetRespawn(out Vector3 pos, out Quaternion rot)
-    {
-        pos = default; rot = default;
-        if (LastCheckpoint is null) return false;
-
-        var s = LastCheckpoint.Value;
-        string current = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        if (s.scene != current) return false;
-
-        pos = s.pos;
-        rot = Quaternion.Euler(s.euler);
-        return true;
-    }
-
-    public void ClearCheckpoint(bool alsoPrefs = false)
-    {
-        LastCheckpoint = null;
-        if (alsoPrefs)
-        {
-            PlayerPrefs.DeleteKey(PREFS_KEY);
-        }
     }
 
     private void LoadFromPrefsIfAny()
@@ -81,22 +90,9 @@ public class CheckpointManager : MonoBehaviour
         if (!PlayerPrefs.HasKey(PREFS_KEY)) return;
         try
         {
-            var json = PlayerPrefs.GetString(PREFS_KEY);
-            var s = JsonUtility.FromJson<SaveStruct>(json);
-            LastCheckpoint = s;
+            var s = JsonUtility.FromJson<SaveStruct>(PlayerPrefs.GetString(PREFS_KEY));
+            _byScene[s.scene] = s;
         }
-        catch { LastCheckpoint = null; }
-    }
-}
-
-public readonly struct CheckpointData
-{
-    public readonly string SceneName;
-    public readonly Vector3 Position;
-    public readonly Quaternion Rotation;
-
-    public CheckpointData(string sceneName, Vector3 position, Quaternion rotation)
-    {
-        SceneName = sceneName; Position = position; Rotation = rotation;
+        catch { /* ignore */ }
     }
 }

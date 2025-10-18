@@ -57,7 +57,7 @@ public static class EventBusUtil {
         foreach (var eventType in EventTypes) {
             var busType = typedef.MakeGenericType(eventType);
             eventBusTypes.Add(busType);
-            Debug.Log($"Initialized EventBus<{eventType.Name}>");
+            //Debug.Log($"Initialized EventBus<{eventType.Name}>");
         }
         
         return eventBusTypes;

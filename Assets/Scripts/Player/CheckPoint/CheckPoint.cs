@@ -1,43 +1,45 @@
-﻿// Checkpoint.cs
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
 public class Checkpoint : MonoBehaviour
 {
-    [Header("Optional override spawn transform (leave null = use this transform)")]
+    [Header("ID（必填、唯一）")]
+    public string id;
+
+    [Header("Optional override spawn transform")]
     public Transform spawnPointOverride;
 
     [Header("Visual")]
     public bool showGizmo = true;
-    public Color gizmoColor = new Color(0.2f, 0.8f, 1f, 0.4f);
+    public Color gizmoColor = new(0.2f, 0.8f, 1f, 0.4f);
 
     private void Reset()
     {
         var col = GetComponent<Collider>();
-        col.isTrigger = true; // 設成 Trigger
+        col.isTrigger = true;
+        if (string.IsNullOrEmpty(id)) id = gameObject.name; // 最起碼給個預設
+    }
+
+    public Transform GetSpawnTransform()
+    {
+        return spawnPointOverride ? spawnPointOverride : transform;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
+        var t = GetSpawnTransform();
+        CheckpointManager.Instance.SetActiveCheckpoint(id, t);
 
-        // 取得重生座標與朝向
-        Transform t = spawnPointOverride ? spawnPointOverride : transform;
-        var data = new CheckpointData(
-            sceneName: UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
-            position: t.position,
-            rotation: t.rotation
-        );
-
-        CheckpointManager.Instance.SetActiveCheckpoint(data);
-        // 你可以在這裡做個視覺提示（亮燈、音效）
+        // TODO: 視覺/音效反饋
+        // e.g., animator.SetTrigger("Activated"); audioSource.PlayOneShot(sfx);
     }
 
     private void OnDrawGizmos()
     {
         if (!showGizmo) return;
         Gizmos.color = gizmoColor;
-        var t = spawnPointOverride ? spawnPointOverride : transform;
+        var t = GetSpawnTransform();
         Gizmos.DrawSphere(t.position + Vector3.up * 0.2f, 0.25f);
         Gizmos.DrawRay(t.position, t.forward * 0.7f);
     }

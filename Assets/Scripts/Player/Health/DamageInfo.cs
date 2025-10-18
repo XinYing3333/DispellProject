@@ -9,13 +9,15 @@ namespace Player
         public Vector3 hitDirection;     // 擊退方向（世界座標）
         public float knockbackForce;     // 擊退力度
         public bool bypassIFrames;       // 是否忽略無敵時間（少用）
+        public bool RespawnSafePoint;       // 是否忽略無敵時間（少用）
 
-        public DamageInfo(int amount, Vector3 dir, float force, bool bypass = false)
+        public DamageInfo(int amount, Vector3 dir, float force, bool bypass = false, bool respawn = false)
         {
             this.amount = amount;
             hitDirection = dir;
             knockbackForce = force;
             bypassIFrames = bypass;
+            RespawnSafePoint = respawn;
         }
     }
 }

@@ -18,11 +18,11 @@ public class HeartsUI : MonoBehaviour
     private readonly List<Image> _pool = new();
 
     // 事件綁定（總線）
-    private EventBinding<HealthChanged> _binding;
+    private EventBinding<OnHealthChanged> _binding;
     void OnEnable()
     {
-        _binding = new EventBinding<HealthChanged>(OnHealthChanged);
-        EventBus<HealthChanged>.Register(_binding);
+        _binding = new EventBinding<OnHealthChanged>(OnHealthChanged);
+        EventBus<OnHealthChanged>.Register(_binding);
 
         if (target)
         {
@@ -33,11 +33,11 @@ public class HeartsUI : MonoBehaviour
     void OnDisable()
     {
         if (_binding == null) return;
-        EventBus<HealthChanged>.Deregister(_binding);
+        EventBus<OnHealthChanged>.Deregister(_binding);
         _binding = null;
     }
 
-    private void OnHealthChanged(HealthChanged e)
+    private void OnHealthChanged(OnHealthChanged e)
     {
         if (!target || e.target != target.gameObject) return;
         Refresh(e.current, e.max);

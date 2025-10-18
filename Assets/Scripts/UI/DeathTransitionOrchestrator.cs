@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using EventBus.Events.Health;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,24 +10,50 @@ using UnityEngine.SceneManagement;
 public class DeathTransitionOrchestrator : MonoBehaviour
 {
     [Header("Plug a concrete effect here")]
-    public TransitionEffect effect;     // 可替換：之後改成你的扭曲/手機關屏效果
+    public TransitionEffect effect; // 可替換：之後改成你的扭曲/手機關屏效果
+    public TransitionEffect effectToTransparent; // 可替換：之後改成你的扭曲/手機關屏效果
 
-    [Header("Flow Settings")]
-    [Tooltip("切黑之後停留多久，再重載場景")]
+    [Header("Flow Settings")] [Tooltip("切黑之後停留多久，再重載場景")]
     public float holdBlack = 0.3f;
-    [Tooltip("死亡瞬間是否做慢動作（TimeScale）")]
-    public bool slowMoOnDeath = true;
+
+    [Tooltip("死亡瞬間是否做慢動作（TimeScale）")] public bool slowMoOnDeath = true;
     [Range(0.05f, 1f)] public float slowMoScale = 0.2f;
 
-    [Header("Reload")]
-    public bool reloadSameScene = true;
+    [Header("Reload")] [SerializeField] private bool reloadSameScene = false;
     public string sceneNameOverride = ""; // 若不為空，將載入該場景
 
+    private EventBinding<OnPlayerDeath> _eventPlayerDeath;
+    private EventBinding<OnPlayerRespawn> _eventPlayerRespawn;
+    private Health playerHP;
+    RespawnController playerRespawn;
     bool _running;
+
+    private void Start()
+    {
+        reloadSameScene = false;
+        GameObject player = GameObject.FindWithTag("Player");
+        playerHP = player.GetComponent<Health>();
+        playerRespawn = player.GetComponent<RespawnController>();
+    }
+
+    private void OnEnable()
+    {
+        _eventPlayerDeath = new EventBinding<OnPlayerDeath>(OnPlayerDead);
+        _eventPlayerRespawn = new EventBinding<OnPlayerRespawn>(Play);
+
+        EventBus<OnPlayerDeath>.Register(_eventPlayerDeath);
+        EventBus<OnPlayerRespawn>.Register(_eventPlayerRespawn);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<OnPlayerDeath>.Deregister(_eventPlayerDeath);
+        EventBus<OnPlayerRespawn>.Deregister(_eventPlayerRespawn);
+    }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.P)) //Test
         {
             Play();
         }
@@ -34,8 +61,14 @@ public class DeathTransitionOrchestrator : MonoBehaviour
 
     public void Play()
     {
-        if (_running) return;
-        _running = true;
+        /*if (_running) return;
+        _running = true;*/
+        StartCoroutine(CoPlay());
+    }
+
+    public void OnPlayerDead()
+    {
+        reloadSameScene = true;
         StartCoroutine(CoPlay());
     }
 
@@ -53,15 +86,13 @@ public class DeathTransitionOrchestrator : MonoBehaviour
 
         // 還原時間
         Time.timeScale = originalScale;
-
-        // 重載場景
-        if (reloadSameScene || string.IsNullOrEmpty(sceneNameOverride))
+        if (reloadSameScene)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            Debug.Log("Reloading scene " + SceneManager.GetActiveScene().name);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            yield break;
         }
-        else
-        {
-            SceneManager.LoadScene(sceneNameOverride);
-        }
+        playerRespawn.RespawnAtLastSafe();
+        if (effectToTransparent) yield return effectToTransparent.Play();
     }
 }

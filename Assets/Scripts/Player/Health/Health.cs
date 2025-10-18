@@ -37,7 +37,7 @@ public class Health : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody>();
         current = Mathf.Clamp(current == 0 ? MaxTotal : current, 0, MaxTotal);
-        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
+        EventBus<OnHealthChanged>.Raise(new OnHealthChanged(gameObject, current, MaxTotal));
     }
 
     // === 對外 API ===
@@ -53,14 +53,14 @@ public class Health : MonoBehaviour
         {
             current = Mathf.Min(current + amount, MaxTotal);
             OnHealed?.Invoke(amount);
-            EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
+            EventBus<OnHealthChanged>.Raise(new OnHealthChanged(gameObject, current, MaxTotal));
         }
     }
 
     public void FullHeal()
     {
         current = MaxTotal;
-        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
+        EventBus<OnHealthChanged>.Raise(new OnHealthChanged(gameObject, current, MaxTotal));
     }
 
     public int GetCurrent() => current;
@@ -73,7 +73,7 @@ public class Health : MonoBehaviour
         if (_invuln && !info.bypassIFrames) return;
 
         current = Mathf.Max(0, current - Mathf.Max(1, info.amount));
-        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
+        EventBus<OnHealthChanged>.Raise(new OnHealthChanged(gameObject, current, MaxTotal));
         
         if (current <= 0)
         {
@@ -81,6 +81,11 @@ public class Health : MonoBehaviour
             return;
         }
 
+        if (info.RespawnSafePoint)
+        {
+            EventBus<OnPlayerRespawn>.Raise(new OnPlayerRespawn());
+        }
+        
         // 進入短暫無敵
         if (invulnDuration > 0f) StartCoroutine(CoInvuln(invulnDuration));
 
@@ -101,15 +106,12 @@ public class Health : MonoBehaviour
     // === 流程 ===
     void Die()
     {
-        OnDeath?.Invoke();
-        // 可在外部（訂閱OnDeath）呼叫你的 DeathTransitionOrchestrator.Play()
-        // 或者簡單點：這裡直接 broadcast
-        var orchestrator = FindObjectOfType<DeathTransitionOrchestrator>();
-        if (orchestrator) orchestrator.Play();
+        EventBus<OnPlayerDeath>.Raise(new OnPlayerDeath());
+        
         // 視需要暫時關玩家輸入/碰撞
-        var col = GetComponent<Collider>();
+        /*var col = GetComponent<Collider>();
         if (col) col.enabled = false;
-        enabled = false;
+        enabled = false;*/
     }
 
     IEnumerator CoInvuln(float d)
@@ -163,6 +165,6 @@ public class Health : MonoBehaviour
     void ClampAndNotify()
     {
         current = Mathf.Clamp(current, 0, MaxTotal);
-        EventBus<HealthChanged>.Raise(new HealthChanged(gameObject, current, MaxTotal));
+        EventBus<OnHealthChanged>.Raise(new OnHealthChanged(gameObject, current, MaxTotal));
     }
 }
