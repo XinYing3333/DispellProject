@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Easy Gradient 3
+  m_Name: MintGreenCut
   m_Shader: {fileID: -6465566751694194690, guid: 4023d386ca8ea43469f223cb128c7ece, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -87,9 +87,9 @@ Material:
     - _DstBlend: 0
     - _Emission: 1
     - _Float: 0.5
-    - _GroundDetails: 1.66
-    - _MossOffset: 1.55
-    - _OffsetDetails: 3.35
+    - _GroundDetails: -4.73
+    - _MossOffset: 1.09
+    - _OffsetDetails: -0.44
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -100,12 +100,12 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.9411851, g: 1, b: 0.9103774, a: 0}
-    - _Color2: {r: 0.70555913, g: 0.7264151, b: 0.6955767, a: 0}
-    - _Color3: {r: 0.50980395, g: 0.9254902, b: 1, a: 0}
+    - _Color: {r: 1, g: 0.4292453, b: 0.77779794, a: 0}
+    - _Color2: {r: 0.73376024, g: 1, b: 0.18431371, a: 0}
+    - _Color3: {r: 0.83332145, g: 0.9245283, b: 0.65850836, a: 1}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
-    - _OffsetMinMax: {r: -2.01, g: 1, b: 0, a: 0}
+    - _EmissionColor: {r: 0, g: 0.2, b: 0.05194211, a: 0}
+    - _OffsetMinMax: {r: -6.12, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

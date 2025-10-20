@@ -52,7 +52,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_dd62107e50954d3d9b4c175611b861fb_Texture_1_Texture2D:
-        m_Texture: {fileID: 2800000, guid: 31038209827531e4db15d2308f27eb03, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9abd093d52bcac044bf70bce08bdeae4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_f6bcbda4519145d79aa4c6898b061f1a_Texture_1_Texture2D:
@@ -85,6 +85,7 @@ Material:
     - _Cull: 0
     - _Details: -1.09
     - _DstBlend: 0
+    - _Emission: 1
     - _Float: 0.5
     - _GroundDetails: -1.69
     - _MossOffset: 2.25
@@ -99,10 +100,11 @@ Material:
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.50980395, g: 0.8392157, b: 0.3372549, a: 0}
-    - _Color2: {r: 0.5882353, g: 0.79607844, b: 0.7529412, a: 0}
-    - _Color3: {r: 0.50980395, g: 0.9254902, b: 1, a: 0}
+    - _Color: {r: 1, g: 1, b: 1, a: 0}
+    - _Color2: {r: 0.8207547, g: 0.8207547, b: 0.8207547, a: 0}
+    - _Color3: {r: 0.50980395, g: 1, b: 0.6130453, a: 0}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
     - _OffsetMinMax: {r: -1.55, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
