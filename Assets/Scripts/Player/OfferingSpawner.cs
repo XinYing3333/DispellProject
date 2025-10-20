@@ -1,8 +1,10 @@
 using System;
+using DefaultNamespace.Thought;
+using Player.InteractionSystem;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class OfferingSpawner : MonoBehaviour
+public class OfferingSpawner : MonoBehaviour ,IHitReceiver
 {
     [Header("Spawn")]
     [SerializeField] private int spawn = 3;
@@ -39,7 +41,7 @@ public class OfferingSpawner : MonoBehaviour
 
     
     // 以「總價值」生成，會自動聚合到有限顆數
-    public void SpawnTotalValue(int totalValue, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Regular)
+    public void SpawnTotalValue(int totalValue, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Though)
     {
         if (totalValue <= 0) return;
 
@@ -60,7 +62,7 @@ public class OfferingSpawner : MonoBehaviour
     }
 
     // 舊版等量生成（只在數量小時用）
-    public void SpawnPieces(int amount, int valuePerPiece = 1, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Regular)
+    public void SpawnPieces(int amount, int valuePerPiece = 1, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Though)
     {
         SpawnTotalValue(amount * valuePerPiece, type);
     }
@@ -130,5 +132,20 @@ public class OfferingSpawner : MonoBehaviour
             Gizmos.DrawLine(p0, p1);
             Gizmos.DrawLine(p1, c);
         }
+    }
+
+    public void OnHit(ThoughtPayloadSO payload)
+    {
+        SpawnPieces(spawn);
+    }
+
+    public void OnFocusGained()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnFocusLost()
+    {
+        throw new NotImplementedException();
     }
 }

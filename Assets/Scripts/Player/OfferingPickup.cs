@@ -5,7 +5,7 @@ using UnityEngine.Pool;
 [RequireComponent(typeof(Collider))]
 public class OfferingPickup : MonoBehaviour
 {
-    public CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Regular;
+    public CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Though;
     public int value = 1;
 
     [Header("Idle")]

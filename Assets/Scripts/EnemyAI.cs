@@ -89,7 +89,7 @@ public class EnemyAI : MonoBehaviour, ICollectable
     {
         if (!_isStunned) return;
         //LevelStateStore.Instance.MarkCollectedSession(_spawnId);
-        CollectionSystem.CollectItem(CollectionSystem.CollectedType.Regular, 1);
+        CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
         Destroy(gameObject);
         //_owner.ReturnThoughToPool(gameObject);
     }

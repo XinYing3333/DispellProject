@@ -277,23 +277,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   freeLook: {fileID: 0}
-  player: {fileID: 661257878903891946}
   target: {fileID: 0}
-  gameCamera: {fileID: 0}
-  markerUI: {fileID: 0}
-  focusKey: 116
-  focusHoldTime: 1.2
-  smoothTurn: 1
-  turnSpeedDegPerSec: 360
-  turnEase: 0.18
-  smoothY: 0
-  desiredYOnFocus: 0.45
-  ySmoothTime: 0.2
-  markerWorldOffset: {x: 0, y: 1.5, z: 0}
+  playerRadius: 2
+  lockSeconds: 2
+  cameraOffset: 3
+  iconPrefab: {fileID: 0}
+  uiCanvas: {fileID: 0}
+  uiWorldOffset: {x: 0, y: 1.5, z: 0}
   screenEdgePadding: 24
-  rotateOffscreenArrow: 1
-  forceWorldBinding: 1
-  logAngles: 0
+  uiShowDuration: 4
+  uiFadeDuration: 0.6
 --- !u!114 &1872362274397396953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -349,6 +342,11 @@ MonoBehaviour:
   isWalkOnly: 0
   lockJumpInWalkOnly: 0
   lockDashInWalkOnly: 0
+  stableTimeThreshold: 0.2
+  maxHorizontalSpeed: 7
+  safeGroundMask:
+    serializedVersion: 2
+    m_Bits: 0
   maxStepHeight: 0.3
   stepCheckDistance: 0.4
 --- !u!114 &3305903404511905607
@@ -446,7 +444,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!136 &1680932206411122352
 CapsuleCollider:
   m_ObjectHideFlags: 0
