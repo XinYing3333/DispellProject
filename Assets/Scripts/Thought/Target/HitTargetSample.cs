@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace Thought
 {
-    public class HitTarget : MonoBehaviour, IHitReceiver
+    public class HitTargetSample : MonoBehaviour, IHitReceiver
     {
         public ThoughtPayloadSO requiredPayload; // 空=任何念頭都可
         //public UnityEvent onHit;

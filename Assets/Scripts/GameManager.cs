@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
     
     private void Start()
     {
-        IncenseCollectionSystem.LoadIncense(); // 開始時加載存檔
+        
     }
     
     public void DestroyObject(GameObject obj, float delay = 0f)

@@ -54,8 +54,4 @@ public class ObjectiveUISetter : MonoBehaviour
         animator.ResetTrigger(ShowHash);
         animator.SetTrigger(CloseHash);
     }
-
-    // 仍保留直接 API（可選）
-    public void ShowObjectiveNow() => Reveal();
-    public void CloseObjectiveNow() => Hide();
 }

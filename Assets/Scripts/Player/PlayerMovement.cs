@@ -150,7 +150,7 @@ public class PlayerMovement : MonoBehaviour
         anim.SetFloat("Speed", _animSpeedParam);
 
         // 觸發行為（只下指令，不直接動 Rigidbody）
-        if (!PlayerInputHandler.Instance.cannotMove && !isGrabbing)
+        if (!PlayerInputHandler.Instance.InputLock && !isGrabbing)
         {
             if (!isWalkOnly || (isWalkOnly && !lockJumpInWalkOnly))
             {
@@ -203,7 +203,7 @@ public class PlayerMovement : MonoBehaviour
     // ====== FixedUpdate：物理唯一來源 ======
     private void FixedUpdate()
     {
-        if (PlayerInputHandler.Instance.cannotMove)
+        if (PlayerInputHandler.Instance.InputLock)
         {
             // 清理運動狀態
             _rb.linearVelocity = new Vector3(0, _rb.linearVelocity.y, 0);

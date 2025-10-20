@@ -184,7 +184,7 @@ public class DialogueManager : MonoBehaviour
 
     public void EnterDialogueMode(TextAsset inkJSON, Animator emoteAnimator = null, bool autoDisplay = false, bool lockMovement = true) 
     {
-        if (lockMovement) PlayerInputHandler.Instance.cannotMove = true;
+        if (lockMovement) PlayerInputHandler.Instance.SetLockMovement(true);
         
         EventBus<OnDialogueStarted>.Raise(new OnDialogueStarted());
         
@@ -211,7 +211,7 @@ public class DialogueManager : MonoBehaviour
         
         inkExternalFunctions.Unbind(currentStory);
         Debug.Log("Exiting dialogue mode");
-        PlayerInputHandler.Instance.cannotMove = false;
+        PlayerInputHandler.Instance.SetLockMovement(true);
         EventBus<OnDialogueEnded>.Raise(new OnDialogueEnded());
 
         dialogueVariables.StopListening(currentStory);

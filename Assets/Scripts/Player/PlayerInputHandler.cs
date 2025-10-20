@@ -8,7 +8,7 @@ namespace Player
     public class PlayerInputHandler : MonoBehaviour, IPlayerInputSource
     {
         public static PlayerInputHandler Instance { get; private set; }
-        public bool cannotMove;
+        public bool InputLock { get; private set; }
 
         public Vector2 MoveInput { get; private set; }
         public float MoveSpeedMultiplier { get; private set; } = 1f;
@@ -111,7 +111,7 @@ namespace Player
 
         void Update()
         {
-            if (cannotMove) return;
+            if (InputLock) return;
 
             MoveInput = _movement.ReadValue<Vector2>();
             string controlScheme = _playerInput.currentControlScheme;
@@ -120,13 +120,18 @@ namespace Player
                 : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
         }
 
+        public void SetLockMovement(bool lockMovement)
+        {
+            InputLock = lockMovement;
+        }
+
         public void ResetJump() => JumpPressed = false;
         public void ResetDash() => DashPressed = false;
 
         // ===== 吸收（按住） =====
         private void OnCollectStarted(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
 
             IsCollecting = true;
             interaction.Input_StartAbsorbHold();
@@ -134,7 +139,7 @@ namespace Player
 
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
 
             IsCollecting = false;
             interaction.Input_Drop();
@@ -163,7 +168,7 @@ namespace Player
         // 投擲（有持有物才會成功；會自動瞄準，沒有就直前）
         private void OnShootPerformed(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
 
             ShootPressed = true;
             interaction.Input_Throw();
@@ -173,13 +178,13 @@ namespace Player
         // 丟下（不投擲）
         private void OnInteractPerformed(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
             interaction.Input_Drop();
         }
         
         private void OnTargetPerformed(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
             IsTargetPressed = !IsTargetPressed;
         }
 

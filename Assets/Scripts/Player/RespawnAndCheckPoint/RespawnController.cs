@@ -16,7 +16,6 @@ public class RespawnController : MonoBehaviour
     public LayerMask groundMask = ~0;
 
     private Rigidbody _rb;
-    private CharacterController _cc;
     
     void Awake()
     {
@@ -30,7 +29,6 @@ public class RespawnController : MonoBehaviour
         }
 
         _rb = GetComponent<Rigidbody>();
-        _cc = GetComponent<CharacterController>();
     }
     
     // 掉崖、陷阱：先扣血，再回最近安全點；若無 → 回 checkpoint；再無 → 預設點
@@ -93,13 +91,11 @@ public class RespawnController : MonoBehaviour
         }
 
         // 暫時關掉控制器
-        bool ccEnabled = false;
-        if (_cc) { ccEnabled = _cc.enabled; _cc.enabled = false; }
+        PlayerInputHandler.Instance.SetLockMovement(false); 
         //if (_rb) { _rb.isKinematic = true; _rb.linearVelocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
         
         transform.SetPositionAndRotation(pos, rot);
 
         //if (_rb) _rb.isKinematic = false;
-        if (_cc) _cc.enabled = ccEnabled;
     }
 }

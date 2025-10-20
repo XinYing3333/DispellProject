@@ -9,7 +9,7 @@ namespace Player
     /// <summary>
     /// 場景互動點的互動脚本：對話通知、IFocusable互動。
     /// </summary>
-    public class PlayerInteractor : MonoBehaviour
+    public class PlayerFocusController : MonoBehaviour
     {
         [Header("Detection Settings")]
         [SerializeField] private Transform origin;
@@ -84,7 +84,6 @@ namespace Player
             if (_previous is IFocusable oldF) oldF.OnFocusLost();
             _previous = null;
             _current  = null;
-            // UI_InteractHint.Show(null); // 若有 HUD 提示，這裡順便關掉
         }
 
         private IInteractable FindInteractable()
