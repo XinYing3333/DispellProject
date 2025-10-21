@@ -15,7 +15,6 @@ public class PlayerMovement : MonoBehaviour
 
     private PlayerInputHandler input;
     private Rigidbody _rb;
-    private Collider _col;
 
     [Header("Camera Settings")]
     [SerializeField] private CinemachineFreeLook mainCam;
@@ -103,7 +102,6 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        _col = GetComponent<Collider>();
         anim = GetComponent<Animator>();
 
         // 建議的物理設定，讓視覺更順
@@ -126,7 +124,11 @@ public class PlayerMovement : MonoBehaviour
     // ====== Update：輸入、動畫、相機切換 ======
     private void Update()
     {
-        if (input == null) return;
+        if (input.InputLock)
+        {
+            anim.Play("idle");
+            return;
+        }
 
         // 讀輸入 -> 算相機相對方向（只算目標，不做物理）
         Vector2 moveInput = input.MoveInput;

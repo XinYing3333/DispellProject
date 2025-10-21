@@ -38,7 +38,6 @@ public class TargetFocusSystem : MonoBehaviour
     // 狀態
     private Transform _tempFollow;                    
     private Transform _origFollow;                    
-    private Transform _origLookAt;                    
     private bool _locking;
     private float _timer;
     private bool _hasPressedSinceLastLock;
@@ -66,7 +65,6 @@ public class TargetFocusSystem : MonoBehaviour
         if (freeLook)
         {
             _origFollow = freeLook.Follow;
-            _origLookAt = freeLook.LookAt;
 
             _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
             _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
@@ -193,9 +191,7 @@ public class TargetFocusSystem : MonoBehaviour
         }
 
         _origFollow = freeLook.Follow;
-        _origLookAt = freeLook.LookAt;
         freeLook.Follow = _tempFollow;
-        freeLook.LookAt = target;
 
         _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
         _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
@@ -229,7 +225,6 @@ public class TargetFocusSystem : MonoBehaviour
         if (!freeLook) return;
 
         freeLook.Follow = _origFollow;
-        freeLook.LookAt = _origLookAt;
 
         freeLook.m_XAxis.m_MaxSpeed = _origXSpeed;
         freeLook.m_YAxis.m_MaxSpeed = _origYSpeed;
