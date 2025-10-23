@@ -184,21 +184,21 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // 相機 recentring 只在「移動/停止」切換時調一次
-        bool isMoving = _rawInputMovement.sqrMagnitude > 0.01f;
-        if (isMoving != _wasMoving)
-        {
-            if (isMoving)
-            {
-                mainCam.m_RecenterToTargetHeading.m_enabled = true;
-                mainCam.m_RecenterToTargetHeading.m_WaitTime = 0.5f;
-                mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 0.8f;
-            }
-            else
-            {
-                mainCam.m_RecenterToTargetHeading.m_enabled = false;
-            }
-            _wasMoving = isMoving;
-        }
+        // bool isMoving = _rawInputMovement.sqrMagnitude > 0.01f;
+        // if (isMoving != _wasMoving)
+        // {
+        //     if (isMoving)
+        //     {
+        //         mainCam.m_RecenterToTargetHeading.m_enabled = true;
+        //         mainCam.m_RecenterToTargetHeading.m_WaitTime = 0.5f;
+        //         mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 0.8f;
+        //     }
+        //     else
+        //     {
+        //         mainCam.m_RecenterToTargetHeading.m_enabled = false;
+        //     }
+        //     _wasMoving = isMoving;
+        // }
         TrackSafeGround();
     }
 

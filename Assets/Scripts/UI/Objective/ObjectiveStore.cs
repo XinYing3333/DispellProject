@@ -38,6 +38,5 @@ public class ObjectiveStore : MonoBehaviour, IObjectiveProvider
     private void OnSet(SetObjective e)
     {
         currentText = e.Text;
-        // 需要的話這裡也可 Raise 一個 ObjectiveChanged 事件（UI 有即時需求時）
     }
 }

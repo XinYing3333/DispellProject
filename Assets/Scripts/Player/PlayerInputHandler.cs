@@ -18,7 +18,7 @@ namespace Player
         public bool ShootPressed { get; private set; }
         public bool IsCollecting { get; private set; }
         public bool IsSkillUIOpen { get; private set; }
-        public bool IsSettingPressed { get; private set; }
+        public bool IsSettingPressed => _setting.WasPressedThisFrame();
         public bool IsTargetPressed { get; private set; }
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
@@ -86,7 +86,7 @@ namespace Player
             _shoot.performed += OnShootPerformed; // 投擲
             _skill.performed += OnSkillPerformed;
          //   _skillUI.performed += OnSkillUIPerformed;
-            _setting.performed += OnSettingPerformed;
+          //  _setting.performed += OnSettingPerformed;
             _interact.performed += OnInteractPerformed; // 丟下
             _target.performed += OnTargetPerformed;
         }
@@ -104,7 +104,7 @@ namespace Player
             _shoot.performed -= OnShootPerformed;
             _skill.performed -= OnSkillPerformed;
          //   _skillUI.performed -= OnSkillUIPerformed;
-            _setting.performed -= OnSettingPerformed;
+            //_setting.performed -= OnSettingPerformed;
             _interact.performed -= OnInteractPerformed;
             _target.performed -= OnTargetPerformed;
         }
@@ -157,7 +157,7 @@ namespace Player
 
         private void OnSkillPerformed(InputAction.CallbackContext ctx) => OnSkill?.Invoke();
         //private void OnSkillUIPerformed(InputAction.CallbackContext ctx) => IsSkillUIOpen = !IsSkillUIOpen;
-        private void OnSettingPerformed(InputAction.CallbackContext ctx) => IsSettingPressed = !IsSettingPressed;
+        // private void OnSettingPerformed(InputAction.CallbackContext ctx) => IsSettingPressed = !IsSettingPressed;
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
         {

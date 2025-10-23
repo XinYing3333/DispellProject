@@ -244,7 +244,6 @@ public class TargetFocusSystem : MonoBehaviour
             o.m_Radius = _origRadii[i];
             freeLook.m_Orbits[i] = o;
         }
-        EventBus<HideObjective>.Raise(new HideObjective());
     }
     
     void UpdateTargetUI()

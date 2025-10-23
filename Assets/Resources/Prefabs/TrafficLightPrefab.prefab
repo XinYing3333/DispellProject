@@ -162,6 +162,9 @@ MonoBehaviour:
   fadeInTime: 1
   openSeconds: 8
   fadeOutTime: 1
+  onFirstHit:
+    m_PersistentCalls:
+      m_Calls: []
   oneAtATime: 1
 --- !u!1 &3918732364914903914
 GameObject:
@@ -559,7 +562,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 5d6e3add54be8e041a9d74f1f044c1b8, type: 2}
+  - {fileID: 2100000, guid: b018abd6729cd764c82ec0b4c345cc44, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -600,7 +603,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4541882709640066757, guid: 024cd3f43c7dfc5418fedbb09d3c8850, type: 3}
 --- !u!114 &9039810728538816637
@@ -617,8 +620,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   renderers:
   - {fileID: 2100993987556915074}
-  hiddenAlpha: 0
-  shownAlpha: 1
+  propertyName: _visble_amount
+  hiddenAmount: 1
+  shownAmount: 0.1
+  dissolveRate: 0.05
+  refreshRate: 0.02
 --- !u!1 &8224867284144705098
 GameObject:
   m_ObjectHideFlags: 0

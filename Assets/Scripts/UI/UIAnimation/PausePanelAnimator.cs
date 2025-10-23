@@ -4,6 +4,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine.EventSystems;
 using System.Collections;
+using Player;
 
 public class PausePanelAnimator : MonoBehaviour
 {
@@ -166,7 +167,6 @@ public class PausePanelAnimator : MonoBehaviour
     private void OnMenuYesClicked()
     {
         Debug.Log("回到首頁");
-        // 這裡以後可以換成場景切換或其他功能
     }
 
     private void InitializeYesNoQuitButton_Quit(Button btn, out TextMeshProUGUI btnText, out Vector3 initialPos,
@@ -184,8 +184,7 @@ public class PausePanelAnimator : MonoBehaviour
             btn.onClick.AddListener(() =>
             {
                 Debug.Log("退出遊戲");
-                CloseQuitPanel(); // 收回 QuitPanel
-                // Application.Quit(); // 遊戲發佈時啟用
+                CloseQuitPanel(); 
             });
         }
         else if (btn == noButton_Quit)
@@ -277,7 +276,7 @@ public class PausePanelAnimator : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (PlayerInputHandler.Instance.IsSettingPressed)
         {
             if (isPauseOpen)
             {

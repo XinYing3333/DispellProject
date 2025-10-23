@@ -1,4 +1,5 @@
-﻿using DefaultNamespace.Thought;
+﻿using System.Collections;
+using DefaultNamespace.Thought;
 using Player.InteractionSystem;
 using UnityEngine;
 using UnityEngine.Events;
@@ -29,12 +30,13 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
         StartCoroutine(RunCycle());
     }
 
-    private System.Collections.IEnumerator RunCycle()
+    IEnumerator RunCycle()
     {
         _busy = true;
 
         // 1) 漸入顯示
         if (road) yield return road.FadeIn(fadeInTime);
+        
 
         if (!_consumed) NotifyHit();
         
@@ -45,10 +47,12 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
         yield return new WaitForSeconds(openSeconds);
 
         // 4) 關路（恢復阻擋）
-        if (crossRoad) crossRoad.enabled = false;
 
         // 5) 漸隱
         if (road) yield return road.FadeOut(fadeOutTime);
+        
+        if (crossRoad) crossRoad.enabled = false;
+
 
         _busy = false;
     }

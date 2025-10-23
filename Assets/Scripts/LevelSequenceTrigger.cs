@@ -23,6 +23,15 @@ public class LevelSequenceTrigger : MonoBehaviour
     [Header("Steps (依序執行)")]
     public List<Step> steps = new();
 
+    // ---------------- Gizmo 設定 ----------------
+    [Header("Gizmo Settings")]
+    [Tooltip("是否顯示觸發區範圍 (SceneView)")]
+    public bool showGizmo = true;
+    public Color onceGizmoColor = new Color(1f, 0.6f, 0.2f, 0.25f);
+    public Color onceGizmoWireColor = new Color(1f, 0.6f, 0.2f, 0.9f);
+    public Color gizmoColor = new Color(1f, 0.6f, 0.2f, 0.25f);
+    public Color gizmoWireColor = new Color(1f, 0.6f, 0.2f, 0.9f);
+    
     // --- runtime ---
     private float _lastTime = -999f;
     private bool _playedThisSession;
@@ -158,5 +167,52 @@ public class LevelSequenceTrigger : MonoBehaviour
     {
         if (string.IsNullOrEmpty(persistId)) return;
         PlayerPrefs.SetInt($"seq_played_{persistId}", 1);
+    }
+    
+    // ---------------- Gizmo 繪製 ----------------
+    private void OnDrawGizmos()
+    {
+        if (!playOnEnter || !showGizmo) return;
+
+        var col = GetComponent<Collider>();
+        if (!col) return;
+
+        Gizmos.color = gizmoColor;
+
+        // 根據 collider 類型畫不同形狀
+        if (col is BoxCollider box)
+        {
+            var m = Matrix4x4.TRS(transform.TransformPoint(box.center), transform.rotation, transform.lossyScale);
+            using (new GizmosMatrixScope(m))
+            {
+                if (onlyOnce)
+                {
+                    Gizmos.color = onceGizmoColor;
+                    Gizmos.DrawCube(Vector3.zero, box.size);
+                    Gizmos.color = onceGizmoWireColor;
+                }
+                else
+                {
+                    Gizmos.color = gizmoColor;
+                    Gizmos.DrawCube(Vector3.zero, box.size);
+                    Gizmos.color = gizmoWireColor;
+                }
+
+                Gizmos.DrawWireCube(Vector3.zero, box.size);
+            }
+        }
+    }
+    /// <summary>
+    /// 用於在 Gizmos 畫多層次物件時安全恢復矩陣的輔助類。
+    /// </summary>
+    private readonly struct GizmosMatrixScope : System.IDisposable
+    {
+        private readonly Matrix4x4 _old;
+        public GizmosMatrixScope(Matrix4x4 m)
+        {
+            _old = Gizmos.matrix;
+            Gizmos.matrix = m;
+        }
+        public void Dispose() => Gizmos.matrix = _old;
     }
 }
