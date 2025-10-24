@@ -78,7 +78,7 @@ public class TutorialPlayer : MonoBehaviour
         if (closeButton != null)
             closeButton.gameObject.SetActive(false);
 
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSecondsRealtime(delay);
 
         if (closeButton != null)
             closeButton.gameObject.SetActive(true);
