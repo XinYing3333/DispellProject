@@ -102,7 +102,7 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        anim = GetComponent<Animator>();
+        //anim = GetComponent<Animator>();
 
         // 建議的物理設定，讓視覺更順
         _rb.interpolation = RigidbodyInterpolation.Interpolate;
@@ -127,6 +127,7 @@ public class PlayerMovement : MonoBehaviour
         if (input.InputLock)
         {
             anim.Play("idle");
+            AudioManager.Instance.StopSFXLoop();
             return;
         }
 
@@ -578,13 +579,13 @@ public class PlayerMovement : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Vector3 rayStart = transform.position + Vector3.up * grabDetectionHeight;
-        Vector3 rayDir = transform.forward;
-        Gizmos.DrawLine(rayStart, rayStart + rayDir * ledgeCheckDistance);
-        Gizmos.DrawWireSphere(rayStart + rayDir * ledgeCheckDistance + Vector3.up * 0.5f, 0.2f);
-    }
+    // private void OnDrawGizmosSelected()
+    // {
+    //     Gizmos.color = Color.red;
+    //     Vector3 rayStart = transform.position + Vector3.up * grabDetectionHeight;
+    //     Vector3 rayDir = transform.forward;
+    //     Gizmos.DrawLine(rayStart, rayStart + rayDir * ledgeCheckDistance);
+    //     Gizmos.DrawWireSphere(rayStart + rayDir * ledgeCheckDistance + Vector3.up * 0.5f, 0.2f);
+    // }
 #endif
 }

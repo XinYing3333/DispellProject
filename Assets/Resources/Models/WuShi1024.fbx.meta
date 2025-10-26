@@ -7,13 +7,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Default_Material
+    second: {fileID: 2100000, guid: 62890944a3cc8744c87267291dcbd87c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: M_WuShi_01
-    second: {fileID: 2100000, guid: 40f11a4a98ec27241b37537823045db2, type: 2}
+    second: {fileID: 2100000, guid: 62890944a3cc8744c87267291dcbd87c, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: M_WuShi_02
-    second: {fileID: -1656453461193688636, guid: 56a8ac18615b56044a2bf0b4b5a351c4, type: 3}
+    second: {fileID: 2100000, guid: e2186282e1eb77b4f9c6cc3d5db045df, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -40,7 +45,7 @@ ModelImporter:
     extraExposedTransformPaths: []
     extraUserProperties: []
     clipAnimations: []
-    isReadable: 0
+    isReadable: 1
   meshes:
     lODScreenPercentages: []
     globalScale: 1

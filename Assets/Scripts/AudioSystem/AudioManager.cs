@@ -66,8 +66,8 @@ public class AudioManager : MonoBehaviour
     public void OnSceneLoaded()
     {
         // 重新找到當前場景的 Slider（根據名稱或 Tag）
-        bgmSlider = GameObject.FindGameObjectWithTag("BGMSlider").GetComponent<Slider>();
-        sfxSlider = GameObject.FindGameObjectWithTag("SFXSlider").GetComponent<Slider>();
+        //bgmSlider = GameObject.FindGameObjectWithTag("BGMSlider").GetComponent<Slider>();
+        //sfxSlider = GameObject.FindGameObjectWithTag("SFXSlider").GetComponent<Slider>();
 
         if (bgmSlider != null)
         {

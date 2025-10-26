@@ -13,7 +13,7 @@ public class StepDrawer : PropertyDrawer
         EditorGUI.BeginProperty(position, label, property);
 
         float spacing = EditorGUIUtility.standardVerticalSpacing;
-        float line    = EditorGUIUtility.singleLineHeight;
+        float line = EditorGUIUtility.singleLineHeight;
 
         // 外框
         var box = new Rect(position.x, position.y, position.width, GetPropertyHeight(property, label));
@@ -39,7 +39,8 @@ public class StepDrawer : PropertyDrawer
         {
             var p = property.FindPropertyRelative(name);
             float h = EditorGUI.GetPropertyHeight(p, includeChildren);
-            EditorGUI.PropertyField(new Rect(x, y, w, h), p, new GUIContent(display ?? ObjectNames.NicifyVariableName(name)), includeChildren);
+            EditorGUI.PropertyField(new Rect(x, y, w, h), p,
+                new GUIContent(display ?? ObjectNames.NicifyVariableName(name)), includeChildren);
             y += h + spacing;
         }
 
@@ -84,6 +85,9 @@ public class StepDrawer : PropertyDrawer
                 Draw("clipOverride", "Clip Override (optional)", false);
                 Draw("volume", "Volume", false);
                 break;
+            case StepKind.PlayTutorial:
+                Draw("clip", "Clip", false);
+                break;
         }
 
         EditorGUI.EndProperty();
@@ -91,9 +95,9 @@ public class StepDrawer : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        float total   = 0f;
+        float total = 0f;
         float spacing = EditorGUIUtility.standardVerticalSpacing;
-        float line    = EditorGUIUtility.singleLineHeight;
+        float line = EditorGUIUtility.singleLineHeight;
 
         // 外框內的 padding + 標題 + kind 行
         total += 6f;
@@ -111,28 +115,39 @@ public class StepDrawer : PropertyDrawer
         switch (kind)
         {
             case StepKind.LockMovement:
-                total += H("boolValue", false); break;
+                total += H("boolValue", false);
+                break;
 
             case StepKind.Wait:
-                total += H("seconds", false); break;
+                total += H("seconds", false);
+                break;
 
             case StepKind.SetObjective:
-                total += H("text", true); break;
+                total += H("text", true);
+                break;
 
             case StepKind.ToggleObject:
-                total += H("targetGO", false) + H("boolValue", false); break;
+                total += H("targetGO", false) + H("boolValue", false);
+                break;
 
             case StepKind.SetFlag:
-                total += H("flagKey", false) + H("boolValue", false); break;
+                total += H("flagKey", false) + H("boolValue", false);
+                break;
 
             case StepKind.StartDialogue:
-                total += H("inkJSON", false) + H("emoteAnimator", false) + H("lockMoveDuringDialogue", false); break;
+                total += H("inkJSON", false) + H("emoteAnimator", false) + H("lockMoveDuringDialogue", false);
+                break;
 
             case StepKind.PlayCutscene:
-                total += H("director", false) + H("vcam", false) + H("skippable", false); break;
+                total += H("director", false) + H("vcam", false) + H("skippable", false);
+                break;
 
             case StepKind.PlaySFX:
-                total += H("audioSource", false) + H("clipOverride", false) + H("volume", false); break;
+                total += H("audioSource", false) + H("clipOverride", false) + H("volume", false);
+                break;
+            case StepKind.PlayTutorial:
+                total += H("clip", false);
+                break;
         }
 
         total += 6f; // 底部 padding

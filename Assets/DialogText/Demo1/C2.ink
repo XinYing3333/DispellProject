@@ -1,23 +1,23 @@
 //EXTERNAL playEmote(emoteName) 
 「——！？」#speaker:鄔詩 
-「恐怕衹能出此下策……」#speaker:??? #portrait:wushi-default #layout:layout2 #audio:default
+「恐怕衹能出此下策……」#speaker:??? #portrait:wushi-default #layout:layout2 #audio:god
 「那我全部吞掉了。」
 「等等，好像有人的氣息！住手——」
 //
-「哎呦！」#speaker:鄔詩 #portrait:wushi-palm #layout:layout1
+「哎呦！」#speaker:鄔詩 #portrait:wushi-palm #layout:layout1 #audio:default
 「到底是誰在……」#portrait:wushi-scorn
 //
 ？#speaker:??? #portrait:god-1 #layout:layout2
 ？#speaker:??? #portrait:god-2 
 ？？#speaker:鄔詩 #portrait:god-1 #layout:layout1
-「居然有<color=\#FAFF24>人類靈媒</color>在，來的正好。」#speaker:白 #portrait:god-1
+「居然有<color=\#FAFF24>人類靈媒</color>在，來的正好。」#speaker:白 #portrait:god-1 #audio:god
 //~playEmote("pangolin-WALK")
 「唉!差一點釀成大錯，果然直接吞噬太過冒進。」#speaker:黑 #portrait:god-1 #layout:layout1
 「凭我的反應速度不會有事的。」
 「應該要把她趕出去，再試一次。」#speaker:白 #portrait:god-2
 「不可再冒險，這樣<color=\#FF2424>容易波及現實世界</color>……」#speaker:黑 #portrait:god-1
 //
-「...喂！」#speaker:鄔詩 #portrait:wushi-scorn
+「...喂！」#speaker:鄔詩 #portrait:wushi-scorn #audio:default
 「？」#speaker:白、黑 #portrait:god-1
 「你們是什麼東西」#speaker:鄔詩 #portrait:wushi-palm
 「這異常空間是你們搞出來的嗎？」#portrait:wushi-default

@@ -1977,6 +1977,37 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.0009810328, y: -0.37047747, z: -0.10154265}
     m_Extent: {x: 0.6057295, y: 0.7725799, z: 0.46053833}
   m_DirtyAABB: 0
+--- !u!1 &4561820736374877462
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6922837973161271449}
+  m_Layer: 0
+  m_Name: Anchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6922837973161271449
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4561820736374877462}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0, y: -0, z: -0.094}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6551334739737705199}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &4689172367084452003
 GameObject:
   m_ObjectHideFlags: 0
@@ -2433,6 +2464,7 @@ Transform:
   - {fileID: 4922685370934598292}
   - {fileID: 7534041146685429582}
   - {fileID: 6457458379288819767}
+  - {fileID: 6922837973161271449}
   m_Father: {fileID: 661257878903891946}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &995065226724918517
@@ -2448,6 +2480,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   anchor: {fileID: 6551334739737705199}
+  alignRotationToForward: 1
+  ignoreTriggerColliders: 1
+  holdPadding: 0.05
+  kinematicWhileHolding: 1
+  stabilizeAnchorWhileHolding: 0
 --- !u!1 &5838306040506386531
 GameObject:
   m_ObjectHideFlags: 0

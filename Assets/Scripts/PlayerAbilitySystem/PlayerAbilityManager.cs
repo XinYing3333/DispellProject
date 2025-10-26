@@ -27,9 +27,9 @@ namespace AbilitySystem
             elephantPrefab.SetActive(false);
 
 
-            var humanPrefab = Resources.Load<GameObject>("Prefabs/Ability/ClonePrefab");
-            AddAbility(AbilityType.HumanThought, new HumanAbility(humanPrefab, transform));
-            SwitchAbility(AbilityType.HumanThought);
+            // var humanPrefab = Resources.Load<GameObject>("Prefabs/Ability/ClonePrefab");
+            // AddAbility(AbilityType.HumanThought, new HumanAbility(humanPrefab, transform));
+            // SwitchAbility(AbilityType.HumanThought);
 
             AddAbility(AbilityType.BirdThought, new GlideAbility(birdPrefab, transform.GetComponent<Rigidbody>()));
             //SwitchAbility(AbilityType.BirdThought);
@@ -45,13 +45,13 @@ namespace AbilitySystem
             currentAbility?.Tick();
 
             //================ 測試用記得改 ============================
-            if (Input.GetKeyDown(KeyCode.Q))
+            if (PlayerInputHandler.Instance.SkillPressed)
             {
                 switch (currentAbilityType)
                 {
-                    case AbilityType.HumanThought:
-                        SwitchAbility(AbilityType.BirdThought);
-                        break;
+                    // case AbilityType.HumanThought:
+                    //     SwitchAbility(AbilityType.BirdThought);
+                    //     break;
                     case AbilityType.BirdThought:
                         SwitchAbility(AbilityType.ElephantThought);
                         break;

@@ -154,6 +154,11 @@ public class LevelSequenceTrigger : MonoBehaviour
                 }
                 yield break;
             }
+            case StepKind.PlayTutorial:
+            {
+                TutorialPlayer.Instance.PlayTutorial(s.clip);
+                yield break;
+            }
         }
     }
 
