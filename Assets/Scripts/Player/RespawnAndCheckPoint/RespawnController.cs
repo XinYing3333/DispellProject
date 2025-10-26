@@ -1,8 +1,5 @@
-using System;
-using EventBus.Events.Health;
 using Player;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(100)]
 public class RespawnController : MonoBehaviour
@@ -16,86 +13,75 @@ public class RespawnController : MonoBehaviour
     public LayerMask groundMask = ~0;
 
     private Rigidbody _rb;
-    
-    void Awake()
-    {
-        if (playerMovement.TryGetLastSafeGround(out var pos, out var rot))
-        {
-            PlacePlayer(pos, rot);
-        }
-        else
-        {
-            RespawnAtCheckpoint();
-        }
 
+    private void Awake()
+    {
         _rb = GetComponent<Rigidbody>();
+        // ⚠️ 不在這裡移動玩家，入場初始放置交給 SpawnOnSceneLoaded
     }
-    
-    // 掉崖、陷阱：先扣血，再回最近安全點；若無 → 回 checkpoint；再無 → 預設點
-    public void RespawnAtLastSafe()
+
+    // 掉崖/陷阱：先扣血 → 回最近安全點；若無 → 回最近 checkpoint → 再無 → 用外部提供的 default（場景邏輯決定）
+    public void RespawnAtLastSafe(Vector3 fallbackPos, Quaternion fallbackRot)
     {
         if (playerMovement && playerMovement.TryGetLastSafeGround(out var pos, out var rot))
         {
-            PlacePlayer(pos, rot);
+            PlaceAt(pos, rot);
+            return;
         }
-        else
-        {
-            Debug.Log("Can't find Last Safe Ground");
 
-            RespawnAtCheckpoint(); // 退而求其次
+        // 回 checkpoint
+        if (CheckpointManager.Instance.TryLoadSavedCheckpoint(out var data) &&
+            data.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)
+        {
+            if (TryFindCheckpointSpawn(data.checkpointId, out var cpos, out var crot))
+            {
+                PlaceAt(cpos, crot); 
+                return;
+            }
+            PlaceAt(data.fallbackPos, Quaternion.Euler(data.fallbackEuler));
+            return;
         }
+
+        // 最後用傳入的 fallback（通常是場景 defaultSpawnPoint）
+        PlaceAt(fallbackPos, fallbackRot);
     }
 
-    // 關卡入口/讀檔/手動返回 checkpoint
-    public void RespawnAtCheckpoint()
+    public void PlaceAt(Vector3 pos, Quaternion rot)
     {
-        var scene = SceneManager.GetActiveScene().name;
-        
-        if (CheckpointManager.Instance && CheckpointManager.Instance.TryGetCheckpointSpawn(scene, out var pos, out var rot))
-        {
-            PlacePlayer(pos, rot);
-        }
-        else
-        {
-            // 找不到 → 嘗試場景內的 SpawnOnSceneLoaded 預設出生點
-            Debug.Log("Can't find checkpoint spawn");
-            var fallback = GameObject.FindObjectOfType<SpawnOnSceneLoaded>();
-            if (fallback && fallback.defaultSpawnPoint)
-                PlacePlayer(fallback.defaultSpawnPoint.position, fallback.defaultSpawnPoint.rotation);
-        }
-    }
-
-    private void PlacePlayer(Vector3 pos, Quaternion rot)
-    {
-        DoPlace(pos, rot);
-    }
-
-    private void DoPlace(Vector3 pos, Quaternion rot)
-    {
-        // 在放置前修正重生位置
+        // 位置安全修正
         if (SafeSpawnUtility.EnsureSafeSpawn(
-                desiredPos: pos,
-                desiredRot: rot,
-                finalPos: out var safePos,
-                finalRot: out var safeRot,
-                groundMask: groundMask,     // 你已有的 LayerMask
-                rayDown: 6f,
-                slopeLimitDeg: 45f,         // 跟玩家可站立坡度一致
-                probeRadius: 0.35f,
-                edgeProbeDist: 0.7f,
-                safeInset: 2f,
-                radialChecks: 12))
+            pos, rot, out var safePos, out var safeRot,
+            groundMask, 6f, 45f, 0.35f, 0.7f, 2f, 12))
         {
-            pos = safePos;
-            rot = safeRot;
+            pos = safePos; rot = safeRot;
         }
 
-        // 暫時關掉控制器
-        PlayerInputHandler.Instance.SetLockMovement(false); 
-        //if (_rb) { _rb.isKinematic = true; _rb.linearVelocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
-        
+        // 關掉剛體速度以避免落地亂彈
+        if (_rb)
+        {
+            // _rb.isKinematic = true;
+            _rb.linearVelocity  = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+        }
+
         transform.SetPositionAndRotation(pos, rot);
 
-        //if (_rb) _rb.isKinematic = false;
+        // if (_rb) _rb.isKinematic = false;
+    }
+
+    private bool TryFindCheckpointSpawn(string checkpointId, out Vector3 pos, out Quaternion rot)
+    {
+        pos = default; rot = default;
+        var cps = GameObject.FindObjectsOfType<CheckpointSetter>(true);
+        foreach (var cp in cps)
+        {
+            if (cp.id == checkpointId)
+            {
+                var t = cp.GetSpawnTransform();
+                pos = t.position; rot = t.rotation;
+                return true;
+            }
+        }
+        return false;
     }
 }

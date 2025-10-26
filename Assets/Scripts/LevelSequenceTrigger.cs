@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace.EventBus.Events.Core;
 using UnityEngine;
 using DefaultNamespace.EventBus.Events.UI;
 using Player;
@@ -145,13 +146,15 @@ public class LevelSequenceTrigger : MonoBehaviour
                     PlayerPrefs.SetInt($"flag_{s.flagKey}", s.boolValue ? 1 : 0);
                 yield break;
             }
-            case StepKind.PlaySFX:
+            case StepKind.PlaySfx:
             {
-                if (s.audioSource)
-                {
-                    if (s.clipOverride) s.audioSource.PlayOneShot(s.clipOverride, s.volume);
-                    else s.audioSource.Play();
-                }
+                AudioManager.Instance.PlaySFX(s.sfx);
+                yield break;
+            }
+            case StepKind.PlayBgm:
+            {
+                AudioManager.Instance.StopBGM();
+                AudioManager.Instance.PlayBGM(s.bgm);
                 yield break;
             }
             case StepKind.PlayTutorial:

@@ -19,7 +19,7 @@ namespace Player
         {
             if (Input.GetKeyDown(KeyCode.F1))//清除重生點重置
             {
-                CheckpointManager.Instance.ClearCheckpoint();
+                //CheckpointManager.Instance.ClearCheckpoint();
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
 

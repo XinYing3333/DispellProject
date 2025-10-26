@@ -80,10 +80,11 @@ public class StepDrawer : PropertyDrawer
                 Draw("skippable", "Skippable", false);
                 break;
 
-            case StepKind.PlaySFX:
-                Draw("audioSource", "AudioSource", false);
-                Draw("clipOverride", "Clip Override (optional)", false);
-                Draw("volume", "Volume", false);
+            case StepKind.PlaySfx:
+                Draw("sfx", "SFXType", false);
+                break;
+            case StepKind.PlayBgm:
+                Draw("bgm", "BMGType", false);
                 break;
             case StepKind.PlayTutorial:
                 Draw("clip", "Clip", false);
@@ -142,8 +143,11 @@ public class StepDrawer : PropertyDrawer
                 total += H("director", false) + H("vcam", false) + H("skippable", false);
                 break;
 
-            case StepKind.PlaySFX:
-                total += H("audioSource", false) + H("clipOverride", false) + H("volume", false);
+            case StepKind.PlaySfx:
+                total += H("sfx", false) ;
+                break;
+            case StepKind.PlayBgm:
+                total += H("bgm", false);
                 break;
             case StepKind.PlayTutorial:
                 total += H("clip", false);

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.VFX;
 
-[RequireComponent(typeof(Rigidbody), typeof(Collider), typeof(Animator))]
+[RequireComponent(typeof(Rigidbody), typeof(Collider))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Refs")]
@@ -40,11 +40,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 0.6f;
 
-    [Header("Grab Settings")]
-    [SerializeField] private LayerMask ledgeLayer;
-    [SerializeField] private float grabOffset = 1.5f;
-    [SerializeField] private float grabDetectionHeight = 1.2f;
-    [SerializeField] private float ledgeCheckDistance = 0.5f;
+    // [Header("Grab Settings")]
+    // [SerializeField] private LayerMask ledgeLayer;
+    // [SerializeField] private float grabOffset = 1.5f;
+    // [SerializeField] private float grabDetectionHeight = 1.2f;
+    // [SerializeField] private float ledgeCheckDistance = 0.5f;
 
     [Header("Detect Lock")]
     [SerializeField] public bool isWalkOnly = false;
@@ -175,14 +175,14 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // 抓邊流程的輸入（放這裡僅觸發，實際位移於 FixedUpdate）
-        if (isGrabbing)
-        {
-            if (input.JumpPressed)
-            {
-                StartCoroutine(ReleaseLedge());
-                TryJump(); // 放手後立刻跳
-            }
-        }
+        // if (isGrabbing)
+        // {
+        //     if (input.JumpPressed)
+        //     {
+        //         StartCoroutine(ReleaseLedge());
+        //         TryJump(); // 放手後立刻跳
+        //     }
+        // }
 
         // 相機 recentring 只在「移動/停止」切換時調一次
         // bool isMoving = _rawInputMovement.sqrMagnitude > 0.01f;
@@ -230,7 +230,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // 抓邊檢測（未抓時才檢查）
-        if (!isGrabbing) CheckForLedgeGrab();
+        //if (!isGrabbing) CheckForLedgeGrab();
 
         // 牆面摩擦（若要做可在這裡切材質）
         CheckWallFriction();
@@ -442,7 +442,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // ====== 抓邊 ======
-    private void CheckForLedgeGrab()
+    /*private void CheckForLedgeGrab()
     {
         Vector3 forwardStart = transform.position + Vector3.up * Mathf.Max(1.5f, grabDetectionHeight);
         Vector3 forwardDir = transform.forward;
@@ -491,7 +491,7 @@ public class PlayerMovement : MonoBehaviour
             _rb.useGravity = true;
         }
         isGrabbing = false;
-    }
+    }*/
     
     private void TrackSafeGround()
     {

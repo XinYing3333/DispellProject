@@ -1,10 +1,11 @@
 using System.Collections;
+using DefaultNamespace.Thought;
 using UnityEngine;
 using UnityEngine.AI;
 using Player.InteractionSystem;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class EnemyAI : MonoBehaviour, ICollectable
+public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
 {
     public enum AttackMode
     {
@@ -20,7 +21,7 @@ public class EnemyAI : MonoBehaviour, ICollectable
     public float stunTime = 2f;
     private bool _isStunned = false;
     public DamageDealer damageDealer;
-    [SerializeField]private Animator _stateUIAnimator;
+    [SerializeField] private Animator _stateUIAnimator;
 
     private bool isPlay;
     private NavMeshAgent agent;
@@ -40,11 +41,10 @@ public class EnemyAI : MonoBehaviour, ICollectable
 
         if (distanceToTarget < detectionRange && !_isStunned)
         {
-
             agent.isStopped = false;
             agent.destination = target.position;
             _stateUIAnimator.enabled = true;
-            if(!isPlay)_stateUIAnimator.Play("enemy-warning");
+            if (!isPlay) _stateUIAnimator.Play("enemy-warning");
             isPlay = true;
         }
         else if (distanceToTarget > detectionRange && !_isStunned)
@@ -62,7 +62,6 @@ public class EnemyAI : MonoBehaviour, ICollectable
 
     IEnumerator OnStun()
     {
-        
         _isStunned = true;
         agent.isStopped = true;
         isPlay = false;
@@ -81,15 +80,24 @@ public class EnemyAI : MonoBehaviour, ICollectable
     {
         if (other.TryGetComponent(out Spell spell))
         {
+            if(_isStunned)return;
+            stunTime = 2f;
             StartCoroutine(OnStun());
         }
+    }
+
+    public void OnHit(ThoughtPayloadSO payload)
+    {
+        if(_isStunned)return;
+        stunTime = 3f;
+        StartCoroutine(OnStun());
     }
 
     public void Collect()
     {
         if (!_isStunned) return;
         //LevelStateStore.Instance.MarkCollectedSession(_spawnId);
-        CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
+        CollectionSystem.CollectItem(CollectionSystem.CollectedType.EnemyThough, 1);
         Destroy(gameObject);
         //_owner.ReturnThoughToPool(gameObject);
     }

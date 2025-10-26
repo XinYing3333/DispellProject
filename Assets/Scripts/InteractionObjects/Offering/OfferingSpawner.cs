@@ -8,6 +8,10 @@ public class OfferingSpawner : MonoBehaviour ,IHitReceiver
 {
     [Header("Spawn")]
     [SerializeField] private int spawn = 3;
+    [SerializeField] private bool haveSpawnMax = true;
+    [SerializeField] private int spawnMaxTime = 3;
+    private int spawnCurrentTime = 0;
+    
     [SerializeField] private int maxVisualPieces = 10; // 視覺上限
     [SerializeField] private float scatterRadius = 1.2f;
     [SerializeField] private Vector2 upImpulse = new Vector2(0.8f, 1.6f);
@@ -64,6 +68,8 @@ public class OfferingSpawner : MonoBehaviour ,IHitReceiver
     // 舊版等量生成（只在數量小時用）
     public void SpawnPieces(int amount, int valuePerPiece = 1, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Though)
     {
+        if(spawnCurrentTime >= spawnMaxTime)return;
+        spawnCurrentTime += 1;
         SpawnTotalValue(amount * valuePerPiece, type);
     }
 

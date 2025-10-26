@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Playables;
 using Cinemachine;
@@ -17,6 +18,7 @@ public class CutsceneTrigger : MonoBehaviour
 
     [Header("Trigger")]
     public bool playOnEnter = true;
+    public bool playOnStart = false;
     public bool onlyOnce = true;
     public bool allowSkip = true;
 
@@ -24,6 +26,15 @@ public class CutsceneTrigger : MonoBehaviour
     public bool autoBindExposedReferences = true;
 
     private bool _playedThisSession;
+
+
+    private void Start()
+    {
+        if (playOnStart)
+        {
+            TryPlay();
+        }
+    }
 
     private void Reset()
     {

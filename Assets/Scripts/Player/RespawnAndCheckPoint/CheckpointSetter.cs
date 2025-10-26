@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DefaultNamespace.EventBus.Events.Core;
+using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
 public class CheckpointSetter : MonoBehaviour
@@ -17,22 +18,25 @@ public class CheckpointSetter : MonoBehaviour
     {
         var col = GetComponent<Collider>();
         col.isTrigger = true;
-        if (string.IsNullOrEmpty(id)) id = gameObject.name; // 最起碼給個預設
+        if (string.IsNullOrEmpty(id)) id = gameObject.name;
     }
 
-    public Transform GetSpawnTransform()
-    {
-        return spawnPointOverride ? spawnPointOverride : transform;
-    }
+    public Transform GetSpawnTransform() => spawnPointOverride ? spawnPointOverride : transform;
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
-        var t = GetSpawnTransform();
-        CheckpointManager.Instance.SetActiveCheckpoint(id, t);
 
-        // TODO: 視覺/音效反饋
-        // e.g., animator.SetTrigger("Activated"); audioSource.PlayOneShot(sfx);
+        var t = GetSpawnTransform();
+        bool firstSaved = CheckpointManager.Instance.SaveCheckpointFirstTime(id, t);
+
+        if (firstSaved)
+        {
+            // 一些一次性演出（音效/特效/提示）
+            EventBus<OnCheckpointUpdated>.Raise(new OnCheckpointUpdated());
+            // 可加 animator.SetTrigger("Activated"); 等等
+        }
+        // 已觸發過就什麼都不做（不覆寫最近進度）
     }
 
     private void OnDrawGizmos()

@@ -1,4 +1,5 @@
 using System.Collections;
+using Player;
 using UnityEngine;
 
 namespace BossFight
@@ -7,6 +8,8 @@ namespace BossFight
     {
         public enum BossState { Idle, Attacking, Stunned }
 
+        [SerializeField] private GameObject demoCanvas;
+        
         [Header("Refs")]
         [SerializeField] private Transform modelRoot;
         [SerializeField] private Animator anim;
@@ -120,7 +123,18 @@ namespace BossFight
             Debug.Log("Boss 死亡！");
             anim.Play("birld-ani-dead");
             StopAllCoroutines();
+
+            StartCoroutine(ShowDemoCanvas());
             // 可觸發勝利 UI、掉落、過場動畫
+        }
+        
+        // --------- Demo -----------
+        IEnumerator ShowDemoCanvas()
+        {
+            yield return new WaitForSeconds(5f);
+            PlayerInputHandler.Instance.SetLockMovement(true);
+            demoCanvas.SetActive(true);
+            Time.timeScale = 0f;
         }
     }
 }

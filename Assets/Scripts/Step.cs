@@ -27,9 +27,9 @@ public class Step
     [Header("Toggle / Flag")] public GameObject targetGO; // 要開關的物件
     public string flagKey; // PlayerPrefs flag_xxx
 
-    [Header("SFX")] public AudioSource audioSource; // 要播放的 AudioSource
-    public AudioClip clipOverride; // 可選：覆寫 clip
-    [Range(0f, 1f)] public float volume = 1f;
+    [Header("SFX")] public SFXType sfx; // 要播放的 AudioSource
+    
+    [Header("BGM")] public BGMType bgm; // 要播放的 AudioSource
 
     [Header("Tutorial")] public VideoClip clip;
 }
@@ -43,6 +43,7 @@ public enum StepKind
     Wait,
     ToggleObject,
     SetFlag,
-    PlaySFX,
+    PlaySfx,
+    PlayBgm,
     PlayTutorial
 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-1000)]
 public class CheckpointManager : MonoBehaviour
@@ -12,87 +10,72 @@ public class CheckpointManager : MonoBehaviour
     public struct SaveStruct
     {
         public string scene;
-        public string checkpointId;   // ⭐ 用ID更穩定
-        public Vector3 fallbackPos;   // 可選：當找不到ID時退而求其次
+        public string checkpointId;   // 用唯一ID
+        public Vector3 fallbackPos;   // 地圖改動找不到ID時的備援
         public Vector3 fallbackEuler;
     }
 
-    private const string PREFS_KEY = "LAST_CHECKPOINT_V2";
-
-    // 每個場景一筆（如果你有多場景串接）
-    private readonly Dictionary<string, SaveStruct> _byScene = new();
-
-    public bool TryGetCheckpointSpawn(string scene, out Vector3 pos, out Quaternion rot)
-    {
-        pos = default; rot = default;
-        if (!_byScene.TryGetValue(scene, out var s)) return false;
-
-        // 依 ID 尋找場景中的 Checkpoint
-        var cps = GameObject.FindObjectsOfType<CheckpointSetter>(true);
-        foreach (var cp in cps)
-        {
-            if (cp.id == s.checkpointId)
-            {
-                var t = cp.GetSpawnTransform();
-                pos = t.position; rot = t.rotation;
-                return true;
-            }
-        }
-
-        // 找不到相符ID → 用 fallback（避免地圖改動時完全無法重生）
-        pos = s.fallbackPos;
-        rot = Quaternion.Euler(s.fallbackEuler);
-        return true;
-    }
-
-    public void SetActiveCheckpoint(string checkpointId, Transform spawn, bool saveToPrefs = true)
-    {
-        string scene = SceneManager.GetActiveScene().name;
-        var data = new SaveStruct
-        {
-            scene = scene,
-            checkpointId = checkpointId,
-            fallbackPos = spawn.position,
-            fallbackEuler = spawn.rotation.eulerAngles
-        };
-        _byScene[scene] = data;
-
-        if (saveToPrefs)
-        {
-            var json = JsonUtility.ToJson(data);
-            PlayerPrefs.SetString(PREFS_KEY, json);
-            PlayerPrefs.Save();
-        }
-        Debug.Log($"Saved checkpoint {checkpointId}");
-    }
-
-    public bool HasCheckpointForCurrentScene()
-    {
-        return _byScene.ContainsKey(SceneManager.GetActiveScene().name);
-    }
-
-    public void ClearCheckpoint(bool alsoPrefs = false)
-    {
-        _byScene.Clear();
-        if (alsoPrefs) PlayerPrefs.DeleteKey(PREFS_KEY);
-    }
+    private const string LAST_KEY   = "LAST_CHECKPOINT_V2";
+    private const string ACT_PREFIX = "CP_ACT_"; // 是否曾觸發過某 checkpoint
 
     private void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        LoadFromPrefsIfAny();
     }
 
-    private void LoadFromPrefsIfAny()
+    // ---- 查詢/讀取 ----
+    public bool HasSavedCheckpoint() => PlayerPrefs.HasKey(LAST_KEY);
+
+    public bool TryLoadSavedCheckpoint(out SaveStruct data)
     {
-        if (!PlayerPrefs.HasKey(PREFS_KEY)) return;
+        data = default;
+        if (!PlayerPrefs.HasKey(LAST_KEY)) return false;
         try
         {
-            var s = JsonUtility.FromJson<SaveStruct>(PlayerPrefs.GetString(PREFS_KEY));
-            _byScene[s.scene] = s;
+            data = JsonUtility.FromJson<SaveStruct>(PlayerPrefs.GetString(LAST_KEY));
+            return !string.IsNullOrEmpty(data.scene) && !string.IsNullOrEmpty(data.checkpointId);
         }
-        catch { /* ignore */ }
+        catch { return false; }
+    }
+
+    public bool IsCheckpointActivated(string checkpointId)
+    {
+        return PlayerPrefs.GetInt(ACT_PREFIX + checkpointId, 0) == 1;
+    }
+
+    // ---- 寫入（只在第一次踏入該ID時生效） ----
+    public bool SaveCheckpointFirstTime(string checkpointId, Transform spawn)
+    {
+        if (IsCheckpointActivated(checkpointId)) return false; // 已經記過就不覆寫
+
+        var data = new SaveStruct
+        {
+            scene        = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+            checkpointId = checkpointId,
+            fallbackPos  = spawn.position,
+            fallbackEuler= spawn.rotation.eulerAngles
+        };
+
+        var json = JsonUtility.ToJson(data);
+        PlayerPrefs.SetString(LAST_KEY, json);
+        PlayerPrefs.SetInt(ACT_PREFIX + checkpointId, 1);
+        PlayerPrefs.Save();
+
+        Debug.Log($"[Checkpoint] First time reach: {data.scene}:{checkpointId} -> saved to PlayerPrefs");
+        return true;
+    }
+
+    // ---- 清除 ----
+    public void ClearLastCheckpoint()
+    {
+        PlayerPrefs.DeleteKey(LAST_KEY);
+    }
+
+    public void ClearAllActivationFlags()
+    {
+        // 若要全清，建議你另外維護一份所有 checkpointId 清單再逐一刪除
+        Debug.LogWarning("ClearAllActivationFlags: 需要你自行實作遍歷所有ID刪除 ACT_PREFIX。");
     }
 }
