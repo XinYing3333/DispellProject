@@ -24,6 +24,10 @@ namespace DefaultNamespace
         {
             if (stage == 0 && useDeltaForStage0)
                 baselineThough = CollectionSystem.GetItemCount(CollectionSystem.CollectedType.Though);
+            if (stage == 2)
+            {
+                Destroy(gameObject);
+            }
         }
 
         private void Update()

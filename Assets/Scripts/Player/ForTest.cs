@@ -17,15 +17,11 @@ namespace Player
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F1))//清除重生點重置
+            if (Input.GetKeyDown(KeyCode.F9))//清除重生點重置
             {
                 //CheckpointManager.Instance.ClearCheckpoint();
-                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-            }
-
-            if (Input.GetKeyDown(KeyCode.F2))
-            {
-                playerHP.enabled = !playerHP.enabled;
+                PlayerPrefs.DeleteAll();
+                SceneManager.LoadScene("Scenes/MainMenu");
             }
         }
     }

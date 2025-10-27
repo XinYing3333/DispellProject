@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -62,6 +63,17 @@ public class UIPanelFocus : MonoBehaviour
             _pausedByThis = true;
         }
     }
+
+    // ========================================= demo
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            gameObject.SetActive(false);
+        }
+    }
+    // ========================================= demo
+
 
     private void OnDisable()
     {

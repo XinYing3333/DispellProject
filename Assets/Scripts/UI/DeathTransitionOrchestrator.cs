@@ -1,7 +1,5 @@
-﻿// DeathTransitionOrchestrator.cs
-using System.Collections;
+﻿using System.Collections;
 using EventBus.Events.Health;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -28,32 +26,11 @@ public class DeathTransitionOrchestrator : MonoBehaviour
 
     private Health playerHP;
     private RespawnController playerRespawn;
-
-    // ⭐ 新增：作為 RespawnAtLastSafe 的備援出生點（優先取 SpawnOnSceneLoaded.defaultSpawnPoint）
     private Transform _fallbackSpawn;
 
     private bool _running;
 
-    private void Start()
-    {
-        // 預設不重載場景，死亡只做就地重生（你可以依需求改回 true）
-        reloadSameScene = false;
-
-        var player = GameObject.FindWithTag("Player");
-        if (player)
-        {
-            playerHP      = player.GetComponent<Health>();
-            playerRespawn = player.GetComponent<RespawnController>();
-        }
-
-        // ⭐ 取得場景預設點作為備援（找不到就先用玩家目前 Transform）
-        var loader = FindObjectOfType<SpawnOnSceneLoaded>();
-        if (loader && loader.defaultSpawnPoint)
-            _fallbackSpawn = loader.defaultSpawnPoint;
-        else if (player)
-            _fallbackSpawn = player.transform;
-    }
-
+    // -------- 生命週期 --------
     private void OnEnable()
     {
         _eventPlayerDeath   = new EventBinding<OnPlayerDeath>(OnPlayerDead);
@@ -61,51 +38,69 @@ public class DeathTransitionOrchestrator : MonoBehaviour
 
         EventBus<OnPlayerDeath>.Register(_eventPlayerDeath);
         EventBus<OnPlayerRespawn>.Register(_eventPlayerRespawn);
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        // 嘗試先抓一次（若此時拿不到也沒關係，之後會重試）
+        EnsurePlayerRefs();
     }
 
     private void OnDisable()
     {
         EventBus<OnPlayerDeath>.Deregister(_eventPlayerDeath);
         EventBus<OnPlayerRespawn>.Deregister(_eventPlayerRespawn);
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    private void Update()
+    private void OnSceneLoaded(Scene s, LoadSceneMode m)
     {
-        if (Input.GetKeyDown(KeyCode.P)) // 測試鍵
-            Play();
+        // 場景變了，清快取，下一次用到時再抓
+        playerHP = null;
+        playerRespawn = null;
+        _fallbackSpawn = null;
+
+        // 等下一幀再抓，避免載入中的時序
+        StartCoroutine(CoDelayEnsureRefs());
     }
 
+    private IEnumerator CoDelayEnsureRefs()
+    {
+        yield return null;
+        EnsurePlayerRefs();
+    }
+
+    // -------- 公開 API / 事件回呼 --------
     public void Play()
     {
+        if (_running) return;
+        // 強制把重載關掉，避免先前死亡把旗標留著
+        reloadSameScene = false;
+        StartCoroutine(CoPlay());
+    }
+
+
+    public void OnPlayerDead()
+    {
+        // 依需求：死亡時是否重載場景
+        reloadSameScene = true;
         if (_running) return;
         StartCoroutine(CoPlay());
     }
 
-    public void OnPlayerDead()
-    {
-        // 依需求切換：若你想死亡時重載場景，這裡設 true；若只想就地重生，設 false
-        reloadSameScene = true;
-        StartCoroutine(CoPlay());
-    }
-
+    // -------- 主流程 --------
     private IEnumerator CoPlay()
     {
         _running = true;
 
-        // 記錄/套用 TimeScale
+        // 惰性確保引用（Build/地址化/加載時序下很重要）
+        yield return EnsurePlayerRefsYield();
+
         float originalScale = Time.timeScale;
         if (slowMoOnDeath) Time.timeScale = slowMoScale;
 
-        // 執行可替換的轉場效果（黑屏）
         if (effect) yield return effect.Play();
-
-        // 保持黑屏片刻（用 realtime 避免受 timescale 影響）
         yield return new WaitForSecondsRealtime(holdBlack);
-
-        // 還原時間
         Time.timeScale = originalScale;
 
-        // ---- A) 重載場景路徑 ----
         if (reloadSameScene)
         {
             string sceneToLoad = string.IsNullOrEmpty(sceneNameOverride)
@@ -115,16 +110,16 @@ public class DeathTransitionOrchestrator : MonoBehaviour
             Debug.Log("[DeathTransition] Reloading scene: " + sceneToLoad);
             SceneManager.LoadScene(sceneToLoad);
             _running = false;
-            yield break; // 重載後後續不用執行
+            yield break;
         }
 
-        // ---- B) 不重載，直接在同場景 RespawnAtLastSafe ----
+        playerRespawn = GameObject.FindGameObjectWithTag("Player").GetComponent<RespawnController>();
+        
+        // 不重載，直接在同場景重生
         if (playerRespawn)
         {
-            // ⭐ 關鍵：把備援位置/旋轉傳進去
             Vector3 fbPos = _fallbackSpawn ? _fallbackSpawn.position : playerRespawn.transform.position;
             Quaternion fbRot = _fallbackSpawn ? _fallbackSpawn.rotation : playerRespawn.transform.rotation;
-
             playerRespawn.RespawnAtLastSafe(fbPos, fbRot);
         }
         else
@@ -132,9 +127,50 @@ public class DeathTransitionOrchestrator : MonoBehaviour
             Debug.LogWarning("[DeathTransition] playerRespawn not found, cannot respawn.");
         }
 
-        // 回到可視
         if (effectToTransparent) yield return effectToTransparent.Play();
 
         _running = false;
+    }
+
+    // -------- 參考抓取（可重複呼叫，保證安全） --------
+    private void EnsurePlayerRefs()
+    {
+        if (playerRespawn && playerHP && _fallbackSpawn) return;
+
+        // 先找 Player（允許非啟用與不同層次）
+        GameObject playerGO = GameObject.FindWithTag("Player");
+        if (!playerGO)
+        {
+            // 有些專案玩家一開始是關閉的或沒打 Tag → 退而求其次
+            var resp = FindObjectOfType<RespawnController>(true);
+            if (resp) playerGO = resp.gameObject;
+        }
+
+        if (playerGO)
+        {
+            playerHP      = playerGO.GetComponent<Health>()       ?? playerHP;
+            playerRespawn = playerGO.GetComponent<RespawnController>() ?? playerRespawn;
+        }
+
+        // 備援出生點
+        if (_fallbackSpawn == null)
+        {
+            var loader = FindObjectOfType<SpawnOnSceneLoaded>(true);
+            if (loader && loader.defaultSpawnPoint) _fallbackSpawn = loader.defaultSpawnPoint;
+            else if (playerGO) _fallbackSpawn = playerGO.transform;
+        }
+    }
+
+    // 當下拿不到時，等到拿到為止（最多等數幀避免無限等）
+    private IEnumerator EnsurePlayerRefsYield(int maxFrames = 30)
+    {
+        int frames = 0;
+        while ((!playerRespawn || !playerHP || !_fallbackSpawn) && frames < maxFrames)
+        {
+            EnsurePlayerRefs();
+            if (playerRespawn && playerHP && _fallbackSpawn) break;
+            frames++;
+            yield return null;
+        }
     }
 }
