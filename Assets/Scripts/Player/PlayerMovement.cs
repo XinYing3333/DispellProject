@@ -141,8 +141,8 @@ public class PlayerMovement : MonoBehaviour
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 10f * Time.deltaTime);
 
         // Animator 層權重
-        SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);
-        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);
+        SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 1f);
+        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 1f);
 
         // 動畫速度參數（僅 Update 更動）
         _animSpeedParam = (_rawInputMovement.magnitude < 0.1f)

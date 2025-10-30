@@ -114,7 +114,11 @@ public class SceneController : MonoBehaviour
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(SFXType.Click);
     }
-
+    
+    public void ExitGame()
+    {
+        Application.Quit();
+    }
     // =========================
     // 內部流程
     // =========================

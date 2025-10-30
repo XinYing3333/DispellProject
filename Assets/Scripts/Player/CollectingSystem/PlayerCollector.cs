@@ -6,8 +6,8 @@ using Player.InteractionSystem;
 public class PlayerCollector : MonoBehaviour
 {
     [Header("Detect (前方錐形)")]
-    public Transform center;               // 玩家胸口/CollectPoint
-    public Transform forwardRef;           // 通常用相機或玩家 forward
+    public Transform center;
+    public Transform forwardRef;
     public LayerMask interactionMask;
     public float radius = 2.0f;
     [Range(1f, 180f)] public float angle = 90f;
@@ -28,13 +28,17 @@ public class PlayerCollector : MonoBehaviour
     private readonly Collider[] _hits = new Collider[64];
     private float _cosHalf;
 
-    // 與控制器溝通（由上層注入）
     private System.Func<bool> _isBusy;
     private System.Action<Rigidbody, bool> _onPulledResult;
 
-    // 狀態
+    // ===== 狀態 =====
+    // 原本就有：
     private readonly HashSet<Transform> _pulling = new();
     private int _activePulls = 0;
+
+    // 👉 新增：記錄正在拉的 tween、以及被關掉的碰撞器
+    private readonly Dictionary<Transform, Tween> _pullTweens = new();
+    private readonly Dictionary<Transform, (Rigidbody rb, Collider[] cols)> _pulledPhysics = new();
 
     void OnValidate() => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
     void Awake()      => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
@@ -50,7 +54,6 @@ public class PlayerCollector : MonoBehaviour
         return center ? center.position + fwd * frontOffset : transform.position + fwd * frontOffset;
     }
 
-    // —— 單次搜尋→判定→拉近→回報
     public void TryAbsorbOnce()
     {
         if (!center || IsCollectorBusy()) return;
@@ -75,7 +78,7 @@ public class PlayerCollector : MonoBehaviour
             Vector3 toN = to / Mathf.Sqrt(d2);
             if (Vector3.Dot(fwd, toN) < cosHalf) continue;
 
-            float score = 1f / Mathf.Max(0.0001f, Mathf.Sqrt(d2)); // 越近越好
+            float score = 1f / Mathf.Max(0.0001f, Mathf.Sqrt(d2));
             if (score > bestScore) { bestScore = score; bestT = c.transform; }
         }
 
@@ -95,43 +98,46 @@ public class PlayerCollector : MonoBehaviour
         }
     }
 
+    // =============== Collect 版 ===============
     private void StartPullThenCollect(Transform target, ICollectable collectable)
     {
         if (!target || _pulling.Contains(target)) return;
         _pulling.Add(target);
         _activePulls++;
 
-        // 關物理（選配）
         PrepareForPull(target, out var rb, out var cols);
 
-        // 拉到前方一點（不做最終貼手）
         Vector3 end = GetFrontPoint();
 
-        target.DOMove(end, pullDuration)
-              .SetEase(pullEase)
-              .OnComplete(() =>
-              {
-                  try
-                  {
-                      collectable.Collect();
-                      _onPulledResult?.Invoke(null, true);
-                  }
-                  finally
-                  {
-                      RestoreAfterPull(target, rb, cols);
-                      _pulling.Remove(target);
-                      _activePulls = Mathf.Max(0, _activePulls - 1);
-                  }
-              })
-              .OnKill(() =>
-              {
-                  RestoreAfterPull(target, rb, cols);
-                  _pulling.Remove(target);
-                  _activePulls = Mathf.Max(0, _activePulls - 1);
-              });
+        var tw = target.DOMove(end, pullDuration)
+            .SetEase(pullEase)
+            .OnComplete(() =>
+            {
+                // 有可能在中途被取消，這裡要再確認還在 pulling
+                try
+                {
+                    collectable.Collect();
+                    _onPulledResult?.Invoke(null, true);
+                }
+                finally
+                {
+                    RestoreAfterPull(target, rb, cols);
+                    CleanupPullState(target);
+                }
+            })
+            .OnKill(() =>
+            {
+                // 被外部 CancelAllPulls() 殺掉也會進來這裡
+                RestoreAfterPull(target, rb, cols);
+                CleanupPullState(target);
+            });
+
+        _pullTweens[target] = tw;
+        if (disablePhysicsDuringPull)
+            _pulledPhysics[target] = (rb, cols);
     }
 
-    // 非 ICollectable：只把剛體拉到玩家前方「附近」，最終貼合交給 HandSlot
+    // =============== 非 Collect 版 ===============
     private void StartPullThenHandOff(Transform target, Rigidbody rb)
     {
         if (!target || _pulling.Contains(target)) return;
@@ -140,38 +146,72 @@ public class PlayerCollector : MonoBehaviour
 
         Vector3 endPos = GetFrontPoint();
 
-        var origCCD   = rb.collisionDetectionMode;
-        var origInterp= rb.interpolation;
+        var origCCD    = rb.collisionDetectionMode;
+        var origInterp = rb.interpolation;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.interpolation          = RigidbodyInterpolation.Interpolate;
 
-        rb.DOMove(endPos, pullDuration)
-          .SetEase(pullEase)
-          .SetUpdate(UpdateType.Fixed)
-          .OnComplete(() =>
-          {
-              try
-              {
-                  _onPulledResult?.Invoke(rb, false);
-              }
-              finally
-              {
-                  rb.collisionDetectionMode = origCCD;
-                  rb.interpolation          = origInterp;
-                  _pulling.Remove(target);
-                  _activePulls = Mathf.Max(0, _activePulls - 1);
-              }
-          })
-          .OnKill(() =>
-          {
-              rb.collisionDetectionMode = origCCD;
-              rb.interpolation          = origInterp;
-              _pulling.Remove(target);
-              _activePulls = Mathf.Max(0, _activePulls - 1);
-          });
+        var tw = rb.DOMove(endPos, pullDuration)
+            .SetEase(pullEase)
+            .SetUpdate(UpdateType.Fixed)
+            .OnComplete(() =>
+            {
+                try
+                {
+                    _onPulledResult?.Invoke(rb, false);
+                }
+                finally
+                {
+                    rb.collisionDetectionMode = origCCD;
+                    rb.interpolation          = origInterp;
+                    CleanupPullState(target);
+                }
+            })
+            .OnKill(() =>
+            {
+                // 被 cancel 的時候要還原物理
+                rb.collisionDetectionMode = origCCD;
+                rb.interpolation          = origInterp;
+                CleanupPullState(target);
+            });
+
+        _pullTweens[target] = tw;
     }
 
-    // ——— Collect 流程的關/還原物理
+    // =============== 取消全部拉取（給 InteractionController 用） ===============
+    public void CancelAllPulls()
+    {
+        // 1) 先 Kill 所有 tween
+        foreach (var kv in _pullTweens)
+        {
+            var t = kv.Value;
+            if (t.IsActive()) t.Kill(false);
+        }
+        _pullTweens.Clear();
+
+        // 2) 把被我們關掉物理的還原
+        foreach (var kv in _pulledPhysics)
+        {
+            var target = kv.Key;
+            var (rb, cols) = kv.Value;
+            RestoreAfterPull(target, rb, cols);
+        }
+        _pulledPhysics.Clear();
+
+        // 3) 狀態清空
+        _pulling.Clear();
+        _activePulls = 0;
+    }
+
+    // =============== 小工具 ===============
+    private void CleanupPullState(Transform target)
+    {
+        _pulling.Remove(target);
+        _activePulls = Mathf.Max(0, _activePulls - 1);
+        _pullTweens.Remove(target);
+        _pulledPhysics.Remove(target);
+    }
+
     private void PrepareForPull(Transform t, out Rigidbody rb, out Collider[] cols)
     {
         rb   = t.GetComponentInParent<Rigidbody>();
@@ -182,7 +222,11 @@ public class PlayerCollector : MonoBehaviour
         {
             rb.isKinematic = true;
             rb.useGravity  = false;
+#if UNITY_6000_0_OR_NEWER
             rb.linearVelocity = Vector3.zero;
+#else
+            rb.velocity = Vector3.zero;
+#endif
         }
         foreach (var c in cols) c.enabled = false;
     }
@@ -197,13 +241,15 @@ public class PlayerCollector : MonoBehaviour
             rb.isKinematic = false;
             rb.useGravity  = true;
         }
-        foreach (var c in cols)
+        if (cols != null)
         {
-            if (c) c.enabled = true;
+            foreach (var c in cols)
+            {
+                if (c) c.enabled = true;
+            }
         }
     }
 
-    // —— Gizmos
     private void OnDrawGizmosSelected()
     {
         if (!drawGizmos || !center) return;

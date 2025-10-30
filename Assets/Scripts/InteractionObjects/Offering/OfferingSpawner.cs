@@ -45,7 +45,7 @@ public class OfferingSpawner : MonoBehaviour ,IHitReceiver
 
     
     // 以「總價值」生成，會自動聚合到有限顆數
-    public void SpawnTotalValue(int totalValue, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Though)
+    public void SpawnTotalValue(int totalValue, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Offering)
     {
         if (totalValue <= 0) return;
 
@@ -66,7 +66,7 @@ public class OfferingSpawner : MonoBehaviour ,IHitReceiver
     }
 
     // 舊版等量生成（只在數量小時用）
-    public void SpawnPieces(int amount, int valuePerPiece = 1, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Though)
+    public void SpawnPieces(int amount, int valuePerPiece = 1, CollectionSystem.CollectedType type = CollectionSystem.CollectedType.Offering)
     {
         if(spawnCurrentTime >= spawnMaxTime)return;
         spawnCurrentTime += 1;

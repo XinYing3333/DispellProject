@@ -72,14 +72,11 @@ public class HeartsUI : MonoBehaviour
         if (!heartImage) heartImage = GetComponentInChildren<Image>(true);
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        // 記錄顯示位置（目前錨點）
+        _rt = GetComponent<RectTransform>();
         _shownPos = _rt.anchoredPosition;
-        // 計算場外位置
         _hiddenPos = CalcHiddenPos(_rt, slideFrom, offscreenPadding);
-
-        // 先把它放到場外（避免開場就看到）
         _rt.anchoredPosition = _hiddenPos;
 
         _binding = new EventBinding<OnHealthChanged>(OnHealthChanged);
@@ -93,11 +90,17 @@ public class HeartsUI : MonoBehaviour
             if (showOnEnable)
             {
                 SlideIn();
-                TryAutoHide(); // 若不是低血會排程滑出
-                TryLowHpBeat(); // 若是低血則啟動心跳
+
+                // 🔽 開場時：如果一開始就是滿血就排程隱藏，否則常駐
+                if (IsFullHp())
+                    TryAutoHide();
             }
+
+            // 低血心跳照舊
+            TryLowHpBeat();
         }
     }
+
 
     void OnDisable()
     {
@@ -121,25 +124,28 @@ public class HeartsUI : MonoBehaviour
     {
         if (!target || e.target != target.gameObject) return;
 
-        // 更新圖示
         Refresh(e.current, e.max);
 
         int heartsNow = GetHearts(e.current, e.max);
         bool hpDecreased = (_lastHearts >= 0 && heartsNow < _lastHearts);
         _lastHearts = heartsNow;
 
-        // 任何血量變動都先滑入顯示
+        // 只要有變化就顯示
         SlideIn();
 
-        // 低血心跳or取消
+        // 低血就跳
         TryLowHpBeat();
 
-        // 非低血則排程滑出
-        if (heartsNow > lowHpThreshold) TryAutoHide();
+        // 🔽 這裡改掉：只有「滿血」才會自動收回去
+        if (IsFullHp())
+            TryAutoHide();
+        else
+            CancelAutoHide();   // 不滿就不要收
 
-        // 若是掉血，來個彈跳
-        if (hpDecreased) PlayHitBounce();
+        if (hpDecreased)
+            PlayHitBounce();
     }
+
 
     private void Refresh(int current, int max)
     {
@@ -280,4 +286,22 @@ public class HeartsUI : MonoBehaviour
 
         if (heartImage) heartImage.rectTransform.localScale = Vector3.one;
     }
+    
+    private bool IsFullHp()
+    {
+        if (!target) return false;
+        int currentHearts = GetHearts(target.GetCurrent(), target.GetMax());
+        int maxHearts     = GetHearts(target.GetMax(), target.GetMax());
+        return currentHearts >= maxHearts;
+    }
+
+    private void CancelAutoHide()
+    {
+        if (_autoHideCo != null)
+        {
+            StopCoroutine(_autoHideCo);
+            _autoHideCo = null;
+        }
+    }
+
 }

@@ -98,6 +98,10 @@ public class InteractionController : MonoBehaviour
         _isAbsorbHeld = false;
         State = InteractState.Idle;
 
+        // 👉 新增：叫 Collector 把還在拉的全部停掉
+        if (collector)
+            collector.CancelAllPulls();
+
         if (_absorbRoutine != null)
         {
             StopCoroutine(_absorbRoutine);
@@ -109,6 +113,7 @@ public class InteractionController : MonoBehaviour
 
         SetAimScanningAccordingToState();
     }
+
 
     private System.Collections.IEnumerator AbsorbHoldLoop()
     {
@@ -151,16 +156,27 @@ public class InteractionController : MonoBehaviour
         }
     }
 
-    // ====== Collector 回報 ======
     private void OnAbsorbResult(Rigidbody rb, bool wasCollected)
     {
-        if (wasCollected) { State = InteractState.Idle; return; }
+        if (wasCollected)
+        {
+            State = InteractState.Idle;
+            return;
+        }
 
         if (rb && handSlot && handSlot.TryAttach(rb))
+        {
             State = InteractState.ReadyToThrow;
+
+            // ✅ 新增這行：吸附成功時關閉特效
+            particleVFX?.ForEach(p => p.Stop());
+        }
         else
+        {
             State = InteractState.Idle;
+        }
     }
+
 
     private void TrySpawnAndThrowSpell()
     {
