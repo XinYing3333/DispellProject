@@ -1,8 +1,8 @@
 //EXTERNAL playEmote(emoteName) 
-「必須把它<color=\#FF2424>擊暈</color>后才能吸收。」#speaker:黑 #portrait:god-1
+「必須把它<color=\#FF2424>擊暈</color>后才能吸收。」#speaker:黑 #portrait:god-1 #audio:god
 「靈媒，注意不要被傷到！」
-「我從來沒有聽說過念頭會攻擊人啊？」#speaker:鄔詩 #portrait:wushi-shock #layout:layout1
-「這裡畢竟祂們形成的空間，凡世經驗未必適用。」#speaker:黑 #portrait:god-1
+「我從來沒有聽說過念頭會攻擊人啊？」#speaker:鄔詩 #portrait:wushi-shock #layout:layout1 #audio:wushi
+「這裡畢竟祂們形成的空間，凡世經驗未必適用。」#speaker:黑 #portrait:god-1 #audio:god
 「好消息是，在這裡頭你也死不了。」#speaker:白 #portrait:god-2
-「這算是好消息嗎？」#speaker:鄔詩 #portrait:wushi-scorn
+「這算是好消息嗎？」#speaker:鄔詩 #portrait:wushi-scorn #audio:wushi
 ->END 

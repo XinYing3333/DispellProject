@@ -20,8 +20,10 @@ namespace DefaultNamespace
         [SerializeField] private bool anyOfferingOk = true; // true = 任何 Offering；false = 你自己在程式內改成特定種類檢查
         [SerializeField] private LevelSequenceTrigger finishTutorial ; 
         
+        public static bool isTutorialFinished = false;
         private void OnEnable()
         {
+            if(isTutorialFinished)return;
             if (stage == 0 && useDeltaForStage0)
                 baselineThough = CollectionSystem.GetItemCount(CollectionSystem.CollectedType.Though);
             if (stage == 2)
@@ -32,6 +34,7 @@ namespace DefaultNamespace
 
         private void Update()
         {
+            if(isTutorialFinished)return;
             switch (stage)
             {
                 case 0:
@@ -68,6 +71,8 @@ namespace DefaultNamespace
                     if (done)
                     {
                         finishTutorial.Play();
+                        isTutorialFinished = true;
+                        Debug.Log("tutorial finished");
                         // TODO: 第二階段完成時要做的事（播教學B / 開UI / 等等）
                         stage = 2; // 全部完成
                     }

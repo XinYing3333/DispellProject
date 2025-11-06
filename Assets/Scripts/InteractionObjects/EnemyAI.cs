@@ -31,6 +31,7 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
         target = GameObject.FindGameObjectWithTag("Player").transform;
         agent = GetComponent<NavMeshAgent>();
         damageDealer = GetComponent<DamageDealer>();
+
     }
 
     void Update()
@@ -59,6 +60,11 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
     }
 
     int originalLayer;
+
+    public void AttackStun()
+    {
+        StartCoroutine(OnStun());
+    }
 
     IEnumerator OnStun()
     {

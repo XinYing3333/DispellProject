@@ -97,6 +97,7 @@ public class S1Opening : MonoBehaviour
             if (HasPlayedPersistent()) return;
         }
 
+        PlayerInputHandler.Instance.SetLockMovement(true);
         introPlayer.gameObject.SetActive(true);
         if (introPlayer != null)
         {

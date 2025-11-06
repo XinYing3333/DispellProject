@@ -16,12 +16,17 @@ namespace Player
         public bool SkillPressed { get; private set; }
         public bool DashPressed { get; private set; }
         public bool ShootPressed { get; private set; }
+        public bool SwitchPressed => _switch.WasPressedThisFrame();
         public bool IsCollecting { get; private set; }
         public bool IsSkillUIOpen { get; private set; }
         public bool IsSettingPressed => _setting.WasPressedThisFrame();
         public bool IsTargetPressed { get; private set; }
         public bool IsAiming { get; private set; }
         public bool InteractPressed => _interact.WasPressedThisFrame();
+        
+        //========= test =============
+        public bool ExitPressed => _exit.WasPressedThisFrame();
+        public bool ResetPressed => _reset.WasPressedThisFrame();
 
         public event Action OnJump;
         public event Action OnSkill;
@@ -33,7 +38,7 @@ namespace Player
 
         private PlayerInput _playerInput;
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim, _skill, _target;
-        private InputAction _skillUI, _setting;
+        private InputAction _skillUI, _setting, _exit, _reset, _switch;
 
         void Awake()
         {
@@ -59,8 +64,15 @@ namespace Player
             _collect = _playerInput.actions["Collect"]; // 吸收（按住）
             _dash = _playerInput.actions["Dash"];
             _interact = _playerInput.actions["Interact"]; // 丟下
+            
+            
+            _exit = _playerInput.actions["Exit"]; // 丟下
+            _reset = _playerInput.actions["Reset"];
+            
             _aim = _playerInput.actions["Aim"];
             _skill = _playerInput.actions["Skill"];
+            
+            _switch =  _playerInput.actions["Switch"];
          //   _skillUI = _playerInput.actions["SkillUI"];
             _setting = _playerInput.actions["Setting"];
             _target = _playerInput.actions["Target"];

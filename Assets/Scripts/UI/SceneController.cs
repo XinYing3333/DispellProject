@@ -92,7 +92,7 @@ public class SceneController : MonoBehaviour
     /// <summary>
     /// 以同步方式切換（不建議顯示 loading）
     /// </summary>
-    public static void LoadScene(string sceneName)
+    public void LoadScene(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
     }

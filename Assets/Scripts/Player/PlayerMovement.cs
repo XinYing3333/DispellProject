@@ -56,6 +56,25 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float stableTimeThreshold = 0.2f;  // 站穩多久才算安全
     [SerializeField] private float maxHorizontalSpeed = 7f;     // 移動太快不記錄
     [SerializeField] private LayerMask safeGroundMask;          // 可踩的地面層（可用原 groundLayer）
+    
+    [Header("Landing Buffer")]
+    [SerializeField] private bool enableLandingBuffer = true;
+    [SerializeField, Tooltip("依落地衝擊決定恢復時長的下限/上限（秒）")]
+    private Vector2 landingDurationRange = new Vector2(0.08f, 0.35f);
+    [SerializeField, Tooltip("把落地瞬間 -Vy 映射為衝擊強度的最小/最大（m/s）")]
+    private Vector2 landingImpactRange = new Vector2(3f, 16f);
+    [SerializeField, Tooltip("落地後速度恢復曲線：x=時間(0~1), y=水平速度倍率(0~1)")]
+    private AnimationCurve landingRecoveryCurve = AnimationCurve.EaseInOut(0f, 0.15f, 1f, 1f);
+    [SerializeField, Tooltip("落地恢復是否可被 Dash 取消")]
+    private bool cancelLandingBufferOnDash = true;
+    [SerializeField, Tooltip("落地恢復是否可被跳躍取消")]
+    private bool cancelLandingBufferOnJump = true;
+
+    private bool _landingRecoverActive = false;
+    private float _landingRecoverElapsed = 0f;
+    private float _landingRecoverDuration = 0f;
+    private float _airPeakDownVel = 0f; // 在空中記錄過的最小 y 速度（最向下）
+
 
     private float stableTimer = 0f;
     private bool hasSafeGround = false;
@@ -159,6 +178,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 if (input.JumpPressed)
                 {
+                    if (cancelLandingBufferOnJump) _landingRecoverActive = false; // 允許跳躍取消
                     TryJump();
                     input.ResetJump();
                 }
@@ -168,7 +188,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 if (input.DashPressed)
                 {
-                    StartCoroutine(DashCoroutine()); // 協程內用 WaitForFixedUpdate
+                    if (cancelLandingBufferOnDash) _landingRecoverActive = false; // 允許 Dash 取消
+                    StartCoroutine(DashCoroutine());
                     input.ResetDash();
                 }
             }
@@ -213,21 +234,42 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        // 地面檢測（物理步統一）
         wasOnGround = isOnGround;
         isOnGround = IsGrounded();
 
-        // 落地/離地事件（VFX/音）
+// 在空中：記錄向下速度峰值（最負的 y）
+        if (!isOnGround)
+        {
+            _airPeakDownVel = Mathf.Min(_airPeakDownVel, _rb.linearVelocity.y);
+        }
+
+// 落地瞬間
         if (isOnGround && !wasOnGround)
         {
             if (groundedVFX != null) groundedVFX.Play();
             ResetJump();
             hasPlayedGroundedVFX = true;
+
+            if (enableLandingBuffer)
+            {
+                // 衝擊強度（0~1）：把 -Vy 映射到設定的落地衝擊區間
+                float impact = Mathf.InverseLerp(landingImpactRange.x, landingImpactRange.y, -_airPeakDownVel);
+                // 決定恢復時長（下限~上限）
+                _landingRecoverDuration = Mathf.Lerp(landingDurationRange.x, landingDurationRange.y, impact);
+                _landingRecoverElapsed = 0f;
+                _landingRecoverActive = _landingRecoverDuration > 0.0001f;
+            }
+
+            // 落地後重置空中峰值
+            _airPeakDownVel = 0f;
         }
         else if (!isOnGround && wasOnGround)
         {
             hasPlayedGroundedVFX = false;
+            // 剛離地就把峰值歸 0，開始記錄
+            _airPeakDownVel = 0f;
         }
+
 
         // 抓邊檢測（未抓時才檢查）
         //if (!isGrabbing) CheckForLedgeGrab();
@@ -248,15 +290,31 @@ public class PlayerMovement : MonoBehaviour
             // 一般移動（MovePosition）
             if (!isDashing)
             {
-                Vector3 move = _rawInputMovement * (_currentSpeed * Time.fixedDeltaTime);
-                _rb.MovePosition(_rb.position + move);
-
                 if (_rawInputMovement.sqrMagnitude > 0.01f)
                 {
+                    // 計算落地恢復倍率
+                    float landMul = 1f;
+                    if (_landingRecoverActive)
+                    {
+                        _landingRecoverElapsed += Time.fixedDeltaTime;
+                        float t = Mathf.Clamp01(_landingRecoverElapsed / _landingRecoverDuration);
+                        landMul = Mathf.Clamp01(landingRecoveryCurve.Evaluate(t));
+
+                        if (_landingRecoverElapsed >= _landingRecoverDuration)
+                        {
+                            _landingRecoverActive = false;
+                            landMul = 1f;
+                        }
+                    }
+
+                    Vector3 move = _rawInputMovement * (_currentSpeed * landMul * Time.fixedDeltaTime);
+                    _rb.MovePosition(_rb.position + move);
+
                     var targetRot = Quaternion.LookRotation(_rawInputMovement);
                     var newRot = Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime);
                     _rb.MoveRotation(newRot);
                 }
+
             }
         }
 
