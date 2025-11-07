@@ -1,4 +1,5 @@
 using Cinemachine;
+using DefaultNamespace;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -49,6 +50,9 @@ namespace Player
             if (input.ResetPressed)
             {
                 PlayerPrefs.DeleteAll();
+                CollectionSystem.ClearCollection();
+                ForTutorialDemo.isTutorialFinished = false;
+                Time.timeScale = 1;
                 SceneController.Instance.LoadScene("MainMenu");
                 return;
             }

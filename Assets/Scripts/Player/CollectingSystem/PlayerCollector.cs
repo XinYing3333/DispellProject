@@ -140,7 +140,7 @@ public class PlayerCollector : MonoBehaviour
     // =============== 非 Collect 版 ===============
     private void StartPullThenHandOff(Transform target, Rigidbody rb)
     {
-        if (!target || _pulling.Contains(target)) return;
+        if (!target || _pulling.Contains(target) || rb.CompareTag("boss")) return;
         _pulling.Add(target);
         _activePulls++;
 

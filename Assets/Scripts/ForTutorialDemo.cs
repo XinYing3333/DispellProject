@@ -21,9 +21,19 @@ namespace DefaultNamespace
         [SerializeField] private LevelSequenceTrigger finishTutorial ; 
         
         public static bool isTutorialFinished = false;
+        public GameObject pangolinIdle;
+        public GameObject pangolin1;
+        public GameObject pangolin2;
+        
         private void OnEnable()
         {
-            if(isTutorialFinished)return;
+            if (isTutorialFinished)
+            {
+                pangolinIdle.gameObject.SetActive(false);
+                pangolin1.gameObject.SetActive(true);
+                pangolin2.gameObject.SetActive(true);
+                return;
+            }
             if (stage == 0 && useDeltaForStage0)
                 baselineThough = CollectionSystem.GetItemCount(CollectionSystem.CollectedType.Though);
             if (stage == 2)
