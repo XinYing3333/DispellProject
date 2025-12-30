@@ -296,9 +296,13 @@ public class DialogueManager : MonoBehaviour
             yield return new WaitForSeconds(typingSpeed);
         }
 
-        if(isAutoDisplay) yield return new WaitForSeconds(1f);
+        if(isAutoDisplay) yield return new WaitForSeconds(0.8f);
 
-        continueIcon.SetActive(true);
+        if (!isAutoDisplay)
+        {
+            continueIcon.SetActive(true);
+        }
+        
         DisplayChoices();
         canContinueToNextLine = true;
     }

@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4321619813945176072
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: OceanScene-Water-Preset 1
+  m_Shader: {fileID: 4800000, guid: efcaf526ceb1f4efd9eb4e4c30c6ade6, type: 3}
+  m_Parent: {fileID: 2100000, guid: 5f8c68488f6044252a99ccde0080fb57, type: 2}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _COLORMODE_LINEAR
+  - _FOAMMODE_TEXTURE
+  - _NOISESOURCE_WORLD_SPACE
+  - _WAVEMODE_GRID
+  m_InvalidKeywords:
+  - _OPAQUE_OFF
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap:
+    RenderType: Transparent
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _NoiseMap:
+        m_Texture: {fileID: 2800000, guid: 062db1959aabc4afb95dd37cf1c09dd6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Amplitude: 0.51
+    - _CrestSize: 0
+    - _FadeDistance: 0.16
+    - _FoamAmount: 0.06
+    - _FoamDepth: 0.47
+    - _FoamDirection: -0.12
+    - _FoamMode: 2
+    - _FoamScale: 0.29
+    - _FoamSharpness: 0.88
+    - _FoamSpeed: 0.26
+    - _Frequency: 0.08
+    - _RefractionFrequency: 75
+    - _RefractionScale: 3
+    - _RefractionSpeed: 0.49
+    - _Speed: 0.3
+    - _WaterClearness: 0.083
+    - _WaterDepth: 5.27
+    - _WaveMode: 2
+    m_Colors:
+    - _ColorDeep: {r: 0.6367924, g: 0.8860948, b: 1, a: 1}
+    - _ColorShallow: {r: 0.34531865, g: 0.5973402, b: 0.754717, a: 0.8156863}
+    - _FoamColor: {r: 0.9975696, g: 1, b: 0.9575471, a: 0.8}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -10453,7 +10453,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_sharedMaterial: {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -10871,7 +10872,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1283425731}
+    m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 637130edb9ed7a2449ddaf4be9195b9e, type: 3}
       propertyPath: m_LocalScale.x
@@ -10944,11 +10945,6 @@ PrefabInstance:
 --- !u!1 &273083046 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 637130edb9ed7a2449ddaf4be9195b9e, type: 3}
-  m_PrefabInstance: {fileID: 273083045}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &273083047 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 637130edb9ed7a2449ddaf4be9195b9e, type: 3}
   m_PrefabInstance: {fileID: 273083045}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &273083048
@@ -16610,7 +16606,7 @@ PrefabInstance:
     - {fileID: 6055036806825618652, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 661257878903891946, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-      insertIndex: 17
+      insertIndex: -1
       addedObject: {fileID: 517535825}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
@@ -16622,11 +16618,6 @@ Transform:
 --- !u!4 &454553314 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 661257878903891946, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 454553310}
-  m_PrefabAsset: {fileID: 0}
---- !u!95 &454553319 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 6132482211437129219, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
   m_PrefabInstance: {fileID: 454553310}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &454553326 stripped
@@ -17670,9 +17661,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 454553326}
-  heartPrefab: {fileID: 439067264}
-  fullHeart: {fileID: 21300000, guid: 047fbf48413a25b47a188b7a4257a310, type: 3}
-  emptyHeart: {fileID: 21300000, guid: 92cb7c815400ba841ace40292679cac1, type: 3}
+  heartImage: {fileID: 0}
+  heartStages: []
+  slideFrom: 0
+  enterDuration: 0.35
+  exitDuration: 0.3
+  autoHideDelay: 1.6
+  offscreenPadding: 60
+  enterEase: 9
+  exitEase: 8
+  useUnscaledTime: 1
+  lowHpThreshold: 2
+  lowBeatScale: 1.08
+  lowBeatPeriod: 0.6
+  hitBounceScale: 1.18
+  hitBounceDuration: 0.18
+  hitBounceEase: 27
+  showOnEnable: 1
 --- !u!114 &495316569
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19331,38 +19336,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df9513caeb714552b865e191ab6929ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  noImmediateRepeat: 1
-  useWeightedRandom: 1
-  weightLanding: 1
-  weightCharge: 1
+  demoCanvas: {fileID: 0}
   modelRoot: {fileID: 827071170}
   anim: {fileID: 827071169}
   player: {fileID: 454553314}
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 8
+  services: {fileID: 0}
+  health: {fileID: 0}
   telegraphPrefab: {fileID: 1257638349348624925, guid: 214aeee2cea203e4f83fd7366e46d7ca, type: 3}
   chargeTelegraphPrefab: {fileID: 6927646016810272092, guid: a95c11f6b57d51848bcc5c63c2de9d51, type: 3}
-  telegraphTime: 0.8
-  telegraphStartRadius: 2.6
-  telegraphEndRadius: 0.8
   hoverHeight: 35
   riseSpeed: 20
   descendSpeed: 22
   minLandDistFromPlayer: 4
   maxLandDistFromPlayer: 9
-  stunDuration: 1.2
-  landAoERadius: 2.6
-  landAoEDamage: 1
-  autoLoopLanding: 1
+  groundOffset: 1.5
+  landingsPerCharge: 2
   landingIdleBetween: 0
   chargeIdleBetween: 1.5
-  chargeWindup: 0.45
-  chargeDistance: 14
-  chargeSpeed: 28
-  chargeWidth: 1.6
-  chargeDamage: 1
-  chargeRecover: 0.6
+  landingCfg:
+    telegraphTime: 0.8
+    telegraphStartRadius: 2.6
+    telegraphEndRadius: 0.8
+    hoverHeight: 35
+    riseSpeed: 20
+    descendSpeed: 22
+    stunDuration: 1.2
+    landAoERadius: 2.6
+    landAoEDamage: 1
+  chargeCfg:
+    windup: 0.45
+    distance: 14
+    speed: 28
+    width: 1.6
+    damage: 1
+    recover: 0.6
+    stickToGround: 1
+    groundOffset: 0.03
+    probeUp: 50
+    probeDown: 80
 --- !u!4 &549834290
 Transform:
   m_ObjectHideFlags: 0
@@ -36500,13 +36511,13 @@ PlayableDirector:
   m_InitialTime: 0
   m_SceneBindings:
   - key: {fileID: -7769262343159237564, guid: 751c756cd864ec04c80f0050696420be, type: 2}
-    value: {fileID: 454553319}
+    value: {fileID: 0}
   - key: {fileID: 8197576760331771495, guid: 751c756cd864ec04c80f0050696420be, type: 2}
     value: {fileID: 1073657239}
   - key: {fileID: 8197576760331771495, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
     value: {fileID: 1073657239}
   - key: {fileID: -7769262343159237564, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
-    value: {fileID: 454553319}
+    value: {fileID: 0}
   - key: {fileID: 8847107500560628300, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
     value: {fileID: 786055631}
   m_ExposedReferences:
@@ -40244,9 +40255,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 454553326}
-  heartPrefab: {fileID: 1362852778}
-  fullHeart: {fileID: 21300000, guid: 047fbf48413a25b47a188b7a4257a310, type: 3}
-  emptyHeart: {fileID: 21300000, guid: 92cb7c815400ba841ace40292679cac1, type: 3}
+  heartImage: {fileID: 0}
+  heartStages: []
+  slideFrom: 0
+  enterDuration: 0.35
+  exitDuration: 0.3
+  autoHideDelay: 1.6
+  offscreenPadding: 60
+  enterEase: 9
+  exitEase: 8
+  useUnscaledTime: 1
+  lowHpThreshold: 2
+  lowBeatScale: 1.08
+  lowBeatPeriod: 0.6
+  hitBounceScale: 1.18
+  hitBounceDuration: 0.18
+  hitBounceEase: 27
+  showOnEnable: 1
 --- !u!114 &1186224820
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42301,45 +42326,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -8413582143325061412, guid: 024cd3f43c7dfc5418fedbb09d3c8850, type: 3}
---- !u!1 &1283425721 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5979414372500441755, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
-  m_PrefabInstance: {fileID: 1939659304}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1283425731 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5853153488523223420, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
-  m_PrefabInstance: {fileID: 1939659304}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1283425732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1283425721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0bccac03680040b8b801277703fdf7d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  outlineScript: {fileID: 273083048}
-  outlineObject: {fileID: 0}
---- !u!114 &1283425733
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1283425721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 686bc7f623bf469eb8a99eedb1d9f676, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCollider: {fileID: 0}
-  outlineScript: {fileID: 0}
-  outlineObject: {fileID: 0}
 --- !u!1 &1284837937 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3435329260632033982, guid: 024cd3f43c7dfc5418fedbb09d3c8850, type: 3}
@@ -44109,6 +44095,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effect: {fileID: 57753143}
+  effectToTransparent: {fileID: 0}
   holdBlack: 0.3
   slowMoOnDeath: 1
   slowMoScale: 0.2
@@ -48032,7 +48019,7 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
 --- !u!4 &1519895619 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 5853153488523223420, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2659852265684337264, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
   m_PrefabInstance: {fileID: 1519895618}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1524221150
@@ -49570,11 +49557,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultSpawnPoint: {fileID: 0}
-  snapToGround: 1
-  groundCheckDown: 5
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 8
 --- !u!1001 &1589231640
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -52210,7 +52192,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_sharedMaterial: {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -58046,7 +58029,7 @@ PlayableDirector:
   m_InitialTime: 0
   m_SceneBindings:
   - key: {fileID: -7769262343159237564, guid: 751c756cd864ec04c80f0050696420be, type: 2}
-    value: {fileID: 454553319}
+    value: {fileID: 0}
   - key: {fileID: 8197576760331771495, guid: 751c756cd864ec04c80f0050696420be, type: 2}
     value: {fileID: 1073657239}
   m_ExposedReferences:
@@ -59837,17 +59820,8 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 2349021655955483566, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 5853153488523223420, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 273083047}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5979414372500441755, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
-      insertIndex: 5
-      addedObject: {fileID: 1283425733}
-    - targetCorrespondingSourceObject: {fileID: 5979414372500441755, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
-      insertIndex: 6
-      addedObject: {fileID: 1283425732}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
 --- !u!1 &1940210843 stripped
 GameObject:
@@ -60723,6 +60697,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effect: {fileID: 766344229}
+  effectToTransparent: {fileID: 0}
   holdBlack: 0.3
   slowMoOnDeath: 1
   slowMoScale: 0.2
@@ -62673,6 +62648,7 @@ MonoBehaviour:
   vcam: {fileID: 76185656}
   cutsceneId: S1
   playOnEnter: 1
+  playOnStart: 0
   onlyOnce: 0
   allowSkip: 0
   autoBindExposedReferences: 0
@@ -64424,3 +64400,4 @@ SceneRoots:
   - {fileID: 1790436140}
   - {fileID: 164881005}
   - {fileID: 549834290}
+  - {fileID: 273083045}

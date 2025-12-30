@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SimpleCel01_StylSurf_Single
+  m_Shader: {fileID: 4800000, guid: bee44b4a58655ee4cbff107302a3e131, type: 3}
+  m_Parent: {fileID: 2100000, guid: e81cc5197e16f4d5ca99bad79723f8d1, type: 2}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _CELPRIMARYMODE_SINGLE
+  - _DETAILMAPBLENDINGMODE_MULTIPLY
+  - _GRADIENTSPACE_WORLD
+  - _OUTLINESPACE_SCREEN
+  - _TEXTUREBLENDINGMODE_MULTIPLY
+  m_InvalidKeywords:
+  - _FLAT_RIM_ENABLED
+  - _FLAT_SHADOWS_ENABLED
+  - _FLAT_SPECULAR_ENABLED
+  - _UNITYSHADOWMODE_NONE
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - SRPDEFAULTUNLIT
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 0, y: 0}
+        m_Offset: {x: 1, y: 1}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 0, y: 0}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 30, y: 15}
+        m_Offset: {x: 1.5, y: 1.7}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 0, y: 0}
+        m_Offset: {x: 1, y: 1}
+    m_Ints: []
+    m_Floats:
+    - _CelExtraEnabled: 0
+    - _CelNumSteps: 3
+    - _FlatRimEdgeSmoothness: 0.006
+    - _FlatRimSize: 0.235
+    - _FlatSpecularEdgeSmoothness: 0.11
+    - _FlatSpecularSize: 0.151
+    - _GradientAngle: 0
+    - _GradientSize: 10
+    - _RimEnabled: 0
+    - _SelfShadingSize: 0.706
+    - _SelfShadingSizeExtra: 0.557
+    - _ShadowEdgeSizeExtra: 0
+    - _ShadowEdgeSmoothness: 0.01
+    - _SpecularEnabled: 0
+    - _UnityShadowPower: 0.2
+    m_Colors:
+    - _BaseColor: {r: 0.27058825, g: 0.8507489, b: 1, a: 1}
+    - _Color: {r: 0.27058828, g: 0.8507489, b: 1, a: 1}
+    - _ColorCelShadow: {r: 0.38581347, g: 0.38787434, b: 0.9622642, a: 1}
+    - _ColorDim: {r: 0.5471698, g: 0.3484336, b: 0.3746519, a: 1}
+    - _ColorDimExtra: {r: 0.18867922, g: 0.06541272, b: 0.029369881, a: 1}
+    - _ColorDimSteps: {r: 0.85, g: 0.85, b: 0.85, a: 0.85}
+    - _ColorGradient: {r: 0.65, g: 0.65, b: 0.65, a: 1}
+    - _ColorShadows: {r: 0.37835297, g: 0.4602353, b: 0.72, a: 1}
+    - _FlatRimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _FlatSpecularColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -16,7 +16,7 @@ Material:
   - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
   m_LightmapFlags: 2
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
   stringTagMap:
@@ -52,14 +52,14 @@ Material:
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
-    - _BillboardSize: 0.341
+    - _BillboardSize: 0.284
     - _Blend: 0
     - _BlendModePreserveSpecular: 0
     - _CastShadows: 1
     - _Cull: 0
     - _DstBlend: 10
     - _EmissionPower: 8.75
-    - _Inflate: -8.92
+    - _Inflate: -8.81
     - _JitterScale: 1.5
     - _PositionScale: 0.88
     - _QueueControl: 0
@@ -69,7 +69,7 @@ Material:
     - _RotationScrollSpeed: 0.06
     - _RotationSpeed: 0.2
     - _RotationStrengh: 1
-    - _Smoothness: 0
+    - _Smoothness: 0.333
     - _SrcBlend: 5
     - _Surface: 1
     - _TextureSize: 0.78
@@ -81,7 +81,7 @@ Material:
     - _ZWrite: 0
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.43516377, g: 0.7264151, b: 0.44210315, a: 0.454902}
+    - _Color: {r: 0.4669811, g: 1, b: 0.48138708, a: 0.454902}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using EventBus.Events.Health;
 using Player;
 using UnityEngine;
@@ -147,20 +148,46 @@ public class Health : MonoBehaviour
     {
         const float total = 0.35f;
         float t = 0f;
+
+        // 快取原始顏色
+        var originalColors = new Dictionary<Renderer, Color>();
+        foreach (var r in flashTargets)
+        {
+            if (!r) continue;
+            if (r.material.HasProperty("_Color"))
+                originalColors[r] = r.material.color;
+        }
+
         while (t < total)
         {
             t += Time.unscaledDeltaTime;
+
+            // 0 / 1 閃爍權重
             float blink = Mathf.PingPong(t * 18f, 1f) > 0.5f ? 1f : 0f;
+
             foreach (var r in flashTargets)
-                if (r)
-                    r.enabled = blink > 0.5f;
+            {
+                if (!r) continue;
+                if (!r.material.HasProperty("_Color")) continue;
+
+                Color baseColor = originalColors[r];
+                Color flashColor = Color.red;
+
+                // 直接切換（硬閃）
+                r.material.color = Color.Lerp(baseColor, flashColor, blink);
+            }
+
             yield return null;
         }
 
-        foreach (var r in flashTargets)
-            if (r)
-                r.enabled = true;
+        // 還原顏色
+        foreach (var kv in originalColors)
+        {
+            if (kv.Key)
+                kv.Key.material.color = kv.Value;
+        }
     }
+
 
     void ClampAndNotify()
     {
