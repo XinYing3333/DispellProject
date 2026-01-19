@@ -3,6 +3,9 @@ using DefaultNamespace.EventBus.Events.UI;
 using DefaultNamespace.UI.Objective;
 using UnityEngine;
 
+/// <summary>
+/// 僅供取得參數，要改變内容的話用 Event Raise
+/// </summary>
 public class ObjectiveStore : MonoBehaviour, IObjectiveProvider
 {
     public static ObjectiveStore Instance { get; private set; }
@@ -35,6 +38,5 @@ public class ObjectiveStore : MonoBehaviour, IObjectiveProvider
     private void OnSet(SetObjective e)
     {
         currentText = e.Text;
-        // 需要的話這裡也可 Raise 一個 ObjectiveChanged 事件（UI 有即時需求時）
     }
 }

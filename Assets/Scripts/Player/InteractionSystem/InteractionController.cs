@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using NUnit.Framework;
-using Player.InteractionSystem;
 using UnityEngine;
+using Player.InteractionSystem;
 
 public enum InteractState { Idle, ReadyToThrow }
 
@@ -17,10 +16,10 @@ public class InteractionController : MonoBehaviour
     [SerializeField] private float throwSpeed = 18f;
     [SerializeField] private ThrowingSystem.ThrowArcMode arcMode = ThrowingSystem.ThrowArcMode.ToTarget;
     [SerializeField] private bool preferHighArc = true;
-    [SerializeField, UnityEngine.Range(5f,60f)] private float fixedAngle = 35f;
-    
+    [SerializeField, Range(5f, 60f)] private float fixedAngle = 35f;
+
     [Header("Spell (Empty-hand Throw)")]
-    [SerializeField] private Rigidbody spellPrefab;     // ★ 你要丟的法術 Prefab（上面要有 Rigidbody）
+    [SerializeField] private Rigidbody spellPrefab;
     [SerializeField] private bool allowSpellWhenEmpty = true;
     [SerializeField] private float spellCooldown = 0.2f;
     [SerializeField, Tooltip("空手也開啟 AimAssist 掃描以利瞄準 spell")]
@@ -32,17 +31,19 @@ public class InteractionController : MonoBehaviour
     [SerializeField, Tooltip("長按吸收時的掃描間隔秒數")]
     private float absorbTickInterval = 0.12f;
 
-    [SerializeField]private List<ParticleSystem> particleVFX;
+    [SerializeField] private List<ParticleSystem> particleVFX;
+
     public InteractState State { get; private set; } = InteractState.Idle;
 
     private ThrowingSystem _thrower;
     private Coroutine _absorbRoutine;
     private bool _isAbsorbHeld;
-    private bool _prevHasItem;
+    private bool _prevScanning;
 
     void Awake()
     {
         if (!handSlot) handSlot = GetComponentInChildren<HandSlot>();
+
         _thrower = new ThrowingSystem(throwOrigin, throwSpeed, aimAssist)
         {
             ArcMode = arcMode,
@@ -52,65 +53,75 @@ public class InteractionController : MonoBehaviour
             UseGravity = true
         };
 
-        if (!collector) return;
-        collector.SetBusyChecker(() => handSlot.HasItem);
-        collector.SetOnPulledResult(OnAbsorbResult);
+        if (collector)
+        {
+            collector.SetBusyChecker(() => handSlot && handSlot.HasItem);
+            collector.SetOnPulledResult(OnAbsorbResult);
+        }
 
-        _prevHasItem = handSlot && handSlot.HasItem;
-        if (aimAssist) aimAssist.SetScanning(_prevHasItem || scanWhenEmptyForSpell); // ★ 空手也可掃描（可關）
+        _prevScanning = false;
+        SetAimScanningAccordingToState();
     }
-    
+
     void Update()
     {
-        if (handSlot && aimAssist)
+        // 只負責掃描開關的狀態維護（避免在這裡動 VFX）
+        SetAimScanningAccordingToState();
+    }
+
+    private void SetAimScanningAccordingToState()
+    {
+        if (!aimAssist) return;
+        bool has = handSlot && handSlot.HasItem;
+        bool shouldScan = has || (scanWhenEmptyForSpell && allowSpellWhenEmpty);
+        if (shouldScan != _prevScanning)
         {
-            bool has = handSlot.HasItem;
-            if(has)particleVFX.ForEach(particle => particle.Stop());
-            // ★ 若允許空手施放 spell，則空手時也維持掃描；否則維持原本「手上有東西才掃描」
-            bool shouldScan = has || (scanWhenEmptyForSpell && allowSpellWhenEmpty);
-            if (shouldScan != _prevHasItem) // 用 _prevHasItem 當前狀態對比旗標
-            {
-                aimAssist.SetScanning(shouldScan);
-                _prevHasItem = shouldScan;
-            }
+            aimAssist.SetScanning(shouldScan);
+            _prevScanning = shouldScan;
         }
-        
     }
 
     // ====== 長按吸收：開始/結束 ======
     public void Input_StartAbsorbHold()
     {
-        particleVFX.ForEach(particle => particle.Play());
-
+        particleVFX?.ForEach(p => p.Play());
         if (_isAbsorbHeld) return;
-        _isAbsorbHeld = true;
 
-        // 若手上已有物，規則是不可再吸，直接忽略（busyChecker 也會擋）
+        _isAbsorbHeld = true;
         if (_absorbRoutine == null)
             _absorbRoutine = StartCoroutine(AbsorbHoldLoop());
     }
 
     public void Input_Drop()
     {
-        particleVFX.ForEach(particle => particle.Stop());
-
+        particleVFX?.ForEach(p => p.Stop());
         _isAbsorbHeld = false;
         State = InteractState.Idle;
-        
-        if (!handSlot.HasItem) return;
-        handSlot.Detach(); // 不加速度，直接放地上
+
+        // 👉 新增：叫 Collector 把還在拉的全部停掉
+        if (collector)
+            collector.CancelAllPulls();
+
+        if (_absorbRoutine != null)
+        {
+            StopCoroutine(_absorbRoutine);
+            _absorbRoutine = null;
+        }
+
+        if (handSlot && handSlot.HasItem)
+            handSlot.Detach();
+
+        SetAimScanningAccordingToState();
     }
+
 
     private System.Collections.IEnumerator AbsorbHoldLoop()
     {
         var wait = new WaitForSeconds(absorbTickInterval);
         while (_isAbsorbHeld)
         {
-            // 僅在未持有物時嘗試吸收一次
             if (!handSlot.HasItem && collector)
-                collector.TryAbsorbOnce();   // 一次決策：收進背包或交給手上
-
-            // 若此 tick 吸到手上物，下一輪會因 handSlot.HasItem=true 而不再嘗試
+                collector.TryAbsorbOnce();
             yield return wait;
         }
         _absorbRoutine = null;
@@ -119,80 +130,97 @@ public class InteractionController : MonoBehaviour
     // ====== 投擲 / 丟棄 ======
     public void Input_Throw()
     {
-        particleVFX.ForEach(particle => particle.Stop());
+        particleVFX?.ForEach(p => p.Stop());
 
-        // 先處理「手上有物」的既有流程
-        if (handSlot.HasItem)
+        if (handSlot && handSlot.HasItem)
         {
             _isAbsorbHeld = false;
 
             var rb = handSlot.Take();
-            if (!rb) { State = InteractState.Idle; return; }
+            if (rb)
+            {
+                rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
+                _thrower.ThrowExisting(rb, transform);
+            }
 
-            rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
-            _thrower.ThrowExisting(rb, transform);
             State = InteractState.Idle;
+            SetAimScanningAccordingToState();
             return;
         }
 
-        // ★ 新增：手上「沒有物件」→ 丟 spell
         if (allowSpellWhenEmpty && spellPrefab)
         {
             TrySpawnAndThrowSpell();
             State = InteractState.Idle;
+            SetAimScanningAccordingToState();
         }
-        // else: 沒有 spellPrefab 或未允許，就什麼都不做
     }
 
-    // ====== 由 Collector 回報的吸收結果 ======
     private void OnAbsorbResult(Rigidbody rb, bool wasCollected)
     {
         if (wasCollected)
         {
-            // 直接收進背包 → 如果仍在按住，保持吸收狀態；否則 Idle
-            State = _isAbsorbHeld ? InteractState.Idle : InteractState.Idle;
+            State = InteractState.Idle;
             return;
         }
 
-        // 吸到不可收集的剛體 → 放到手上，進入可投擲狀態
-        if (rb && handSlot.TryAttach(rb))
+        if (rb && handSlot && handSlot.TryAttach(rb))
+        {
             State = InteractState.ReadyToThrow;
+
+            // ✅ 新增這行：吸附成功時關閉特效
+            particleVFX?.ForEach(p => p.Stop());
+        }
         else
+        {
             State = InteractState.Idle;
+        }
     }
-    
+
+
     private void TrySpawnAndThrowSpell()
     {
         if (Time.time - _lastSpellTime < spellCooldown) return;
 
-        // 生成實例
-        Rigidbody rb = Instantiate(spellPrefab);
+        var pos = throwOrigin ? throwOrigin.position 
+            : transform.position + transform.forward * 0.5f + Vector3.up;
+        var rot = throwOrigin ? throwOrigin.rotation : transform.rotation;
 
-        // 設定初始位置/朝向
-        if (throwOrigin)
-        {
-            rb.position = throwOrigin.position;
-            rb.rotation = throwOrigin.rotation;
-        }
-        else
-        {
-            // 沒指定 throwOrigin 就用玩家前方一小段
-            rb.position = transform.position + transform.forward * 0.5f + Vector3.up * 1f;
-            rb.rotation = transform.rotation;
-        }
+        Rigidbody rb = Instantiate(spellPrefab, pos, rot);
 
-        // 物理開啟（確保可以飛）
         rb.isKinematic = false;
         rb.useGravity  = _thrower.UseGravity;
         rb.detectCollisions = true;
 
-        // 可選：若 spell 也實作 IThrowable，仍可觸發統一鉤子
+        // 先把軌跡關掉並清空，等下一個 Fixed 再打開
+        ResetTrails(rb.transform, emittingAfter: true);
+
         rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
 
-        // 直接沿用你的彈道系統（含 AimAssist → ToTarget、或 fallback 固定角）
-        _thrower.ThrowExisting(rb, transform);
+        _thrower.ThrowExisting(rb, transform); // 這裡會立即給速度/方向
 
         _lastSpellTime = Time.time;
+    }
+
+    
+    static void ResetTrails(Transform root, bool emittingAfter = true)
+    {
+        var trails = root.GetComponentsInChildren<TrailRenderer>(true);
+        foreach (var tr in trails)
+        {
+            tr.emitting = false; // 先關掉
+            tr.Clear();          // 清空既有點
+        }
+
+        if (emittingAfter)
+            root.GetComponent<MonoBehaviour>()?.StartCoroutine(EnableTrailsNextFixed(root));
+    }
+
+    static System.Collections.IEnumerator EnableTrailsNextFixed(Transform root)
+    {
+        yield return new WaitForFixedUpdate(); // 等物理步進一次，確定位置/速度都就緒
+        var trails = root.GetComponentsInChildren<TrailRenderer>(true);
+        foreach (var tr in trails) tr.emitting = true;
     }
 
 }

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 using Cinemachine;
+using EventBus.Events.UI;
 
 /// <summary>
 /// Timeline 過場總管：統一處理輸入鎖定、鏡頭切換、可跳過、淡入淡出。
@@ -47,6 +48,27 @@ public class CutsceneManager : MonoBehaviour
 
     public bool IsPlaying => _isPlaying;
 
+    
+    private EventBinding<OnCutsceneStarted> _startbinding;
+    private EventBinding<OnCutsceneEnded> _endbinding;
+
+    private void OnEnable()
+    {
+        _startbinding = new EventBinding<OnCutsceneStarted>(StartCutScene);
+        _endbinding = new EventBinding<OnCutsceneEnded>(StartCutScene);
+        EventBus<OnCutsceneStarted>.Register(_startbinding);
+        EventBus<OnCutsceneEnded>.Register(_endbinding);
+    } 
+    
+    private void OnDisable()
+    {
+        EventBus<OnCutsceneStarted>.Deregister(_startbinding);
+        EventBus<OnCutsceneEnded>.Deregister(_endbinding);
+    }
+    
+    void StartCutScene(){
+        //execute somethings.
+    }
     private void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }

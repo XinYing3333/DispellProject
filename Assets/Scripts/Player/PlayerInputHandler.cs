@@ -8,34 +8,47 @@ namespace Player
     public class PlayerInputHandler : MonoBehaviour, IPlayerInputSource
     {
         public static PlayerInputHandler Instance { get; private set; }
-        public bool cannotMove;
+
+        /// <summary>
+        /// 僅代表「角色行動相關」是否被鎖，UI / 對話不受影響
+        /// </summary>
+        public bool InputLock { get; private set; }
 
         public Vector2 MoveInput { get; private set; }
         public float MoveSpeedMultiplier { get; private set; } = 1f;
+
+        // ===== Gameplay flags =====
         public bool JumpPressed { get; private set; }
         public bool SkillPressed { get; private set; }
         public bool DashPressed { get; private set; }
         public bool ShootPressed { get; private set; }
         public bool IsCollecting { get; private set; }
-        public bool IsSkillUIOpen { get; private set; }
-        public bool IsSettingPressed { get; private set; }
         public bool IsTargetPressed { get; private set; }
         public bool IsAiming { get; private set; }
-        public bool InteractPressed => _interact.WasPressedThisFrame();
+
+        // 只在未鎖時允許切換（視為 gameplay）
+        public bool SwitchPressed => !InputLock && _switch.WasPressedThisFrame();
+
+        // ===== UI / System 用，不受 InputLock 影響 =====
+        public bool IsSkillUIOpen { get; private set; } // 你之後如果要用再補
+        public bool IsSettingPressed => _setting.WasPressedThisFrame();
+        public bool InteractPressed => _interact.WasPressedThisFrame();   // 提供給對話 / UI 使用
+        public bool ExitPressed => _exit.WasPressedThisFrame();
+        public bool ResetPressed => _reset.WasPressedThisFrame();
 
         public event Action OnJump;
         public event Action OnSkill;
         public event Action OnDash;
         public event Action OnSwitchThrow;
 
-        [Header("Core Interaction")] [SerializeField]
-        private InteractionController interaction;
+        [Header("Core Interaction")]
+        [SerializeField] private InteractionController interaction;
 
         private PlayerInput _playerInput;
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim, _skill, _target;
-        private InputAction _skillUI, _setting;
+        private InputAction _skillUI, _setting, _exit, _reset, _switch;
 
-        void Awake()
+        private void Awake()
         {
             if (Instance != null && Instance != this)
             {
@@ -53,17 +66,21 @@ namespace Player
             }
 
             _movement = _playerInput.actions["Move"];
-            _run = _playerInput.actions["Run"];
-            _jump = _playerInput.actions["Jump"];
-            _shoot = _playerInput.actions["Shoot"]; // 投擲
-            _collect = _playerInput.actions["Collect"]; // 吸收（按住）
-            _dash = _playerInput.actions["Dash"];
-            _interact = _playerInput.actions["Interact"]; // 丟下
-            _aim = _playerInput.actions["Aim"];
-            _skill = _playerInput.actions["Skill"];
-         //   _skillUI = _playerInput.actions["SkillUI"];
-            _setting = _playerInput.actions["Setting"];
-            _target = _playerInput.actions["Target"];
+            _run      = _playerInput.actions["Run"];
+            _jump     = _playerInput.actions["Jump"];
+            _shoot    = _playerInput.actions["Shoot"];
+            _collect  = _playerInput.actions["Collect"];
+            _dash     = _playerInput.actions["Dash"];
+            _interact = _playerInput.actions["Interact"];
+
+            _exit     = _playerInput.actions["Exit"];
+            _reset    = _playerInput.actions["Reset"];
+
+            _aim      = _playerInput.actions["Aim"];
+            _skill    = _playerInput.actions["Skill"];
+            _switch   = _playerInput.actions["Switch"];
+            _setting  = _playerInput.actions["Setting"];
+            _target   = _playerInput.actions["Target"];
 
             if (!interaction)
             {
@@ -75,111 +92,194 @@ namespace Player
 
         private void OnEnable()
         {
-            _collect.started += OnCollectStarted;
+            _collect.started  += OnCollectStarted;
             _collect.canceled += OnCollectCanceled;
 
-            _aim.started += OnAimStarted;
-            _aim.canceled += OnAimCanceled;
+            _aim.started      += OnAimStarted;
+            _aim.canceled     += OnAimCanceled;
 
-            _jump.performed += OnJumpPerformed;
-            _dash.performed += OnDashPerformed;
-            _shoot.performed += OnShootPerformed; // 投擲
-            _skill.performed += OnSkillPerformed;
-         //   _skillUI.performed += OnSkillUIPerformed;
-            _setting.performed += OnSettingPerformed;
-            _interact.performed += OnInteractPerformed; // 丟下
+            _jump.performed   += OnJumpPerformed;
+            _dash.performed   += OnDashPerformed;
+            _shoot.performed  += OnShootPerformed;
+            _skill.performed  += OnSkillPerformed;
+            _interact.performed += OnInteractPerformed;
             _target.performed += OnTargetPerformed;
         }
 
         private void OnDisable()
         {
-            _collect.started -= OnCollectStarted;
+            _collect.started  -= OnCollectStarted;
             _collect.canceled -= OnCollectCanceled;
 
-            _aim.started -= OnAimStarted;
-            _aim.canceled -= OnAimCanceled;
+            _aim.started      -= OnAimStarted;
+            _aim.canceled     -= OnAimCanceled;
 
-            _jump.performed -= OnJumpPerformed;
-            _dash.performed -= OnDashPerformed;
-            _shoot.performed -= OnShootPerformed;
-            _skill.performed -= OnSkillPerformed;
-         //   _skillUI.performed -= OnSkillUIPerformed;
-            _setting.performed -= OnSettingPerformed;
+            _jump.performed   -= OnJumpPerformed;
+            _dash.performed   -= OnDashPerformed;
+            _shoot.performed  -= OnShootPerformed;
+            _skill.performed  -= OnSkillPerformed;
             _interact.performed -= OnInteractPerformed;
             _target.performed -= OnTargetPerformed;
+            
+            StopHoldRumble();
         }
 
-        void Update()
+        private void Update()
         {
-            if (cannotMove) return;
+            if (InputLock)
+            {
+                // 鎖定時不更新 MoveInput，確保角色不會被移動
+                MoveInput = Vector2.zero;
+                MoveSpeedMultiplier = 1f;
+                return;
+            }
 
             MoveInput = _movement.ReadValue<Vector2>();
+
             string controlScheme = _playerInput.currentControlScheme;
             MoveSpeedMultiplier = (controlScheme == "Gamepad")
                 ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
                 : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
+            
+            if (_isRumbling)
+            {
+                if (_playerInput.currentControlScheme != "Gamepad" || Gamepad.current == null)
+                {
+                    StopHoldRumble();
+                }
+                else
+                {
+                    Gamepad.current.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
+                }
+            }
+
         }
+
+        // ========= 只鎖「行動系統」的統一接口 =========
+        public void SetLockMovement(bool lockMovement)
+        {
+            if (InputLock == lockMovement) return;
+            InputLock = lockMovement;
+
+            if (Gamepad.current != null)
+                Gamepad.current.SetMotorSpeeds(0f, 0f);
+
+            if (InputLock)
+            {
+                StopHoldRumble();
+                ForceStopContinuousGameplayStates();
+                ClearGameplayFlags();
+            }
+        }
+
 
         public void ResetJump() => JumpPressed = false;
         public void ResetDash() => DashPressed = false;
 
-        // ===== 吸收（按住） =====
+        // ========= 內部工具 =========
+        private void ForceStopContinuousGameplayStates()
+        {
+            if (IsCollecting && interaction != null)
+                interaction.Input_Drop();
+
+            IsCollecting = false;
+            IsAiming = false;
+        }
+
+        private void ClearGameplayFlags()
+        {
+            MoveInput = Vector2.zero;
+            MoveSpeedMultiplier = 1f;
+
+            JumpPressed = false;
+            DashPressed = false;
+            ShootPressed = false;
+            SkillPressed = false;
+            IsTargetPressed = false;
+        }
+
+        // ========= Callback（僅 gameplay 才看 InputLock） =========
+
         private void OnCollectStarted(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
 
             IsCollecting = true;
             interaction.Input_StartAbsorbHold();
+
+            // 按住期間持續震動（低頻+低高頻，自己再微調強度）
+            StartHoldRumble(0.15f, 0.30f);
         }
 
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            StopHoldRumble();
 
+            // 即使鎖了也要收尾，避免卡「吸收中」
             IsCollecting = false;
-            interaction.Input_Drop();
+            if (interaction != null)
+                interaction.Input_Drop();
         }
 
-        // ===== 其他 =====
-        private void OnAimStarted(InputAction.CallbackContext ctx) => IsAiming = true;
-        private void OnAimCanceled(InputAction.CallbackContext ctx) => IsAiming = false;
+
+        private void OnAimStarted(InputAction.CallbackContext ctx)
+        {
+            if (InputLock) return;
+            IsAiming = true;
+        }
+
+        private void OnAimCanceled(InputAction.CallbackContext ctx)
+        {
+            IsAiming = false;
+        }
 
         private void OnJumpPerformed(InputAction.CallbackContext ctx)
         {
+            if (InputLock) return;
             JumpPressed = true;
             OnJump?.Invoke();
         }
 
-        private void OnSkillPerformed(InputAction.CallbackContext ctx) => OnSkill?.Invoke();
-        //private void OnSkillUIPerformed(InputAction.CallbackContext ctx) => IsSkillUIOpen = !IsSkillUIOpen;
-        private void OnSettingPerformed(InputAction.CallbackContext ctx) => IsSettingPressed = !IsSettingPressed;
+        private void OnSkillPerformed(InputAction.CallbackContext ctx)
+        {
+            if (InputLock) return;
+            SkillPressed = true;
+            OnSkill?.Invoke();
+        }
 
         private void OnDashPerformed(InputAction.CallbackContext ctx)
         {
+            if (InputLock) return;
             DashPressed = true;
             OnDash?.Invoke();
         }
 
-        // 投擲（有持有物才會成功；會自動瞄準，沒有就直前）
         private void OnShootPerformed(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
 
             ShootPressed = true;
             interaction.Input_Throw();
             StartCoroutine(ClearShootFlagNextFrame());
+
+            Rumble(0.3f, 0.7f, 0.1f);
         }
 
-        // 丟下（不投擲）
+
+        /// <summary>
+        /// 注意：這裡只處理「丟下物件」的 Gameplay 版本。
+        /// 對話 / UI 請讀取 InteractPressed 屬性自己用，不會被 InputLock 擋。
+        /// </summary>
         private void OnInteractPerformed(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock || interaction == null) return;
+
             interaction.Input_Drop();
         }
-        
+
         private void OnTargetPerformed(InputAction.CallbackContext ctx)
         {
-            if (cannotMove || interaction == null) return;
+            if (InputLock) return;
             IsTargetPressed = !IsTargetPressed;
         }
 
@@ -191,8 +291,52 @@ namespace Player
 
         public void SetSpellType(SpellType newSpellType)
         {
-            // 若未使用可留空或保留原設計
-            // spellPrefab.GetComponent<Spell>().spellType = newSpellType;
+            // 
         }
+        
+        private bool _isRumbling;
+        private float _rumbleLow;
+        private float _rumbleHigh;
+
+        private void StartHoldRumble(float low, float high)
+        {
+            if (_playerInput.currentControlScheme != "Gamepad") return;
+            var pad = Gamepad.current;
+            if (pad == null) return;
+
+            _rumbleLow = low;
+            _rumbleHigh = high;
+            _isRumbling = true;
+
+            pad.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
+        }
+
+        private void StopHoldRumble()
+        {
+            _isRumbling = false;
+
+            var pad = Gamepad.current;
+            if (pad != null)
+                pad.SetMotorSpeeds(0f, 0f);
+        }
+
+        private void Rumble(float low, float high, float duration)
+        {
+            if (_playerInput.currentControlScheme != "Gamepad") return;
+
+            var pad = Gamepad.current;
+            if (pad == null) return;
+
+            pad.SetMotorSpeeds(low, high);
+            StartCoroutine(StopRumbleAfter(duration));
+        }
+
+        private IEnumerator StopRumbleAfter(float t)
+        {
+            yield return new WaitForSecondsRealtime(t);
+            if (Gamepad.current != null)
+                Gamepad.current.SetMotorSpeeds(0f, 0f);
+        }
+
     }
 }

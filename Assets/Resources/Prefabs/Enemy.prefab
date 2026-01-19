@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -0.115, y: 0.022}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 2, y: 2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5874663604897893685
 CanvasRenderer:
@@ -273,6 +273,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6156742016354390888}
+  - {fileID: 114683963434819495}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6311643157205496959
@@ -307,6 +308,7 @@ MeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: a636b497918b9dc48887a1ac1a785003, type: 2}
+  - {fileID: 2100000, guid: f1936bd8f7de0ab4f8e1c414d56bba15, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -404,7 +406,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 686bc7f623bf469eb8a99eedb1d9f676, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  aimAnchor: {fileID: 114683963434819495}
   mainCollider: {fileID: 5813953770506254208}
+  preferRendererBounds: 1
+  aimHeight01: 0.5
   outlineScript: {fileID: 2550481835127764661}
   outlineObject: {fileID: 3207997164315031326}
 --- !u!114 &2550481835127764661
@@ -421,7 +426,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   outlineMode: 0
   outlineColor: {r: 1, g: 0.18196467, b: 0, a: 1}
-  outlineWidth: 9.24
+  outlineWidth: 3.3
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []
@@ -504,7 +509,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 10, y: 10}
+  m_SizeDelta: {x: 3, y: 3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &8785867870602602389
 Canvas:
@@ -581,6 +586,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6b584ed28df4824a942412b15fccbd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &6736247615657464594
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 114683963434819495}
+  m_Layer: 12
+  m_Name: AimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &114683963434819495
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6736247615657464594}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.093}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2659852265684337264}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7424602744836322336
 GameObject:
   m_ObjectHideFlags: 0
@@ -716,7 +752,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -0.115, y: 0.022}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 2, y: 2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8013741912016868178
 CanvasRenderer:

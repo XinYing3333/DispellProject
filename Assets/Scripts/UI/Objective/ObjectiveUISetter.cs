@@ -8,54 +8,50 @@ public class ObjectiveUISetter : MonoBehaviour
     [Header("Refs")]
     [SerializeField] private Animator animator;
     [SerializeField] private TMP_Text objectiveText;
-    [SerializeField] private ObjectiveStore store; // 可不填，會自動找單例
 
     private static readonly int ShowHash  = Animator.StringToHash("show");
     private static readonly int CloseHash = Animator.StringToHash("close");
 
     private EventBinding<RevealObjective> _bindReveal;
-    private EventBinding<HideObjective>   _bindHide;
+    private EventBinding<SetObjective> _bindSet;
 
     private void Reset()
     {
         animator = GetComponent<Animator>();
-        store = FindObjectOfType<ObjectiveStore>();
     }
 
     private void OnEnable()
     {
-        if (!store) store = ObjectiveStore.Instance;
-
         _bindReveal = new EventBinding<RevealObjective>(_ => Reveal());
-        _bindHide   = new EventBinding<HideObjective>(_ => Hide());
+        _bindSet = new EventBinding<SetObjective>(Set);
 
         EventBus<RevealObjective>.Register(_bindReveal);
-        EventBus<HideObjective>.Register(_bindHide);
+        EventBus<SetObjective>.Register(_bindSet);  
     }
 
     private void OnDisable()
     {
         EventBus<RevealObjective>.Deregister(_bindReveal);
-        EventBus<HideObjective>.Deregister(_bindHide);
-        _bindReveal = null; _bindHide = null;
+        EventBus<SetObjective>.Deregister(_bindSet);
+        _bindReveal = null; _bindSet =  null;
     }
 
-    private void Reveal()
+    private void Set(SetObjective so)
     {
-        var text = store ? store.CurrentText : "";
-        if (objectiveText) objectiveText.text = text;
+        // 直接用事件傳來的字串
+        if (objectiveText)
+            objectiveText.text = so.Text;
 
         animator.ResetTrigger(CloseHash);
         animator.SetTrigger(ShowHash);
     }
 
-    private void Hide()
+    private void Reveal()
     {
-        animator.ResetTrigger(ShowHash);
-        animator.SetTrigger(CloseHash);
-    }
+        var text = ObjectiveStore.Instance.HasObjective ? ObjectiveStore.Instance.CurrentText : "";
+        if (objectiveText) objectiveText.text = text;
 
-    // 仍保留直接 API（可選）
-    public void ShowObjectiveNow() => Reveal();
-    public void CloseObjectiveNow() => Hide();
+        animator.ResetTrigger(CloseHash);
+        animator.SetTrigger(ShowHash);
+    }
 }

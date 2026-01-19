@@ -184,7 +184,7 @@ public class DialogueManager : MonoBehaviour
 
     public void EnterDialogueMode(TextAsset inkJSON, Animator emoteAnimator = null, bool autoDisplay = false, bool lockMovement = true) 
     {
-        if (lockMovement) PlayerInputHandler.Instance.cannotMove = true;
+        if (lockMovement) PlayerInputHandler.Instance.SetLockMovement(true);
         
         EventBus<OnDialogueStarted>.Raise(new OnDialogueStarted());
         
@@ -211,7 +211,7 @@ public class DialogueManager : MonoBehaviour
         
         inkExternalFunctions.Unbind(currentStory);
         Debug.Log("Exiting dialogue mode");
-        PlayerInputHandler.Instance.cannotMove = false;
+        PlayerInputHandler.Instance.SetLockMovement(false);
         EventBus<OnDialogueEnded>.Raise(new OnDialogueEnded());
 
         dialogueVariables.StopListening(currentStory);
@@ -264,8 +264,10 @@ public class DialogueManager : MonoBehaviour
         HideChoices();
         canContinueToNextLine = false;
 
-        LockSubmit(0.05f);               
-        //yield return null;
+        LockSubmit(0.05f);
+
+        // ★★★ 這一行是新的：一整句只播一聲
+        PlayDialogueLineSound();
 
         bool isAddingRichTextTag = false;
 
@@ -274,13 +276,11 @@ public class DialogueManager : MonoBehaviour
             if (SubmitPressedNow)
             {
                 dialogueText.maxVisibleCharacters = line.Length;
-                //LockSubmit(0.08f);
                 break;
             }
 
             char c = line[i];
 
-            // 富文本標籤：不等待，直接灌
             if (c == '<' || isAddingRichTextTag)
             {
                 isAddingRichTextTag = true;
@@ -290,76 +290,100 @@ public class DialogueManager : MonoBehaviour
                 continue;
             }
 
-            // 一般字元：逐字 + 音效 + 等待
-            PlayDialogueSound(dialogueText.maxVisibleCharacters, c);
+            // ★★★ 這裡就不要再播音了（拿掉原本的 PlayDialogueSound）
             i++;
             dialogueText.maxVisibleCharacters = i;
             yield return new WaitForSeconds(typingSpeed);
         }
 
-        if(isAutoDisplay)yield return new WaitForSeconds(1f);
-        // === 3) 行尾：顯示選項/提示，允許進入下一步；再小鎖一下避免連觸 ===
-        continueIcon.SetActive(true);
+        if(isAutoDisplay) yield return new WaitForSeconds(0.8f);
+
+        if (!isAutoDisplay)
+        {
+            continueIcon.SetActive(true);
+        }
+        
         DisplayChoices();
         canContinueToNextLine = true;
-        //LockSubmit(0.08f);
     }
 
-
-    private void PlayDialogueSound(int currentDisplayedCharacterCount, char currentCharacter)
+    private void PlayDialogueLineSound()
     {
-        // set variables for the below based on our config
-        AudioClip[] dialogueTypingSoundClips = currentAudioInfo.dialogueTypingSoundClips;
-        int frequencyLevel = currentAudioInfo.frequencyLevel;
-        float minPitch = currentAudioInfo.minPitch;
-        float maxPitch = currentAudioInfo.maxPitch;
-        bool stopAudioSource = currentAudioInfo.stopAudioSource;
+        // 用目前的 audioInfo
+        AudioClip[] clips = currentAudioInfo.dialogueTypingSoundClips;
+        if (clips == null || clips.Length == 0) return;
 
-        // play the sound based on the config
-        if (currentDisplayedCharacterCount % frequencyLevel == 0)
+        // 要不要停掉前一個
+        if (currentAudioInfo.stopAudioSource)
+            audioSource.Stop();
+
+        // 一句播一個就好，這裡就隨機或可預測都可以
+        AudioClip clip = clips[0]; // 固定第一個
+        if (!makePredictable)
         {
-            if (stopAudioSource) 
-            {
-                audioSource.Stop();
-            }
-            AudioClip soundClip = null;
-            // create predictable audio from hashing
-            if (makePredictable) 
-            {
-                int hashCode = currentCharacter.GetHashCode();
-                // sound clip
-                int predictableIndex = hashCode % dialogueTypingSoundClips.Length;
-                soundClip = dialogueTypingSoundClips[predictableIndex];
-                // pitch
-                int minPitchInt = (int) (minPitch * 100);
-                int maxPitchInt = (int) (maxPitch * 100);
-                int pitchRangeInt = maxPitchInt - minPitchInt;
-                // cannot divide by 0, so if there is no range then skip the selection
-                if (pitchRangeInt != 0) 
-                {
-                    int predictablePitchInt = (hashCode % pitchRangeInt) + minPitchInt;
-                    float predictablePitch = predictablePitchInt / 100f;
-                    audioSource.pitch = predictablePitch;
-                }
-                else 
-                {
-                    audioSource.pitch = minPitch;
-                }
-            }
-            // otherwise, randomize the audio
-            else 
-            {
-                // sound clip
-                int randomIndex = Random.Range(0, dialogueTypingSoundClips.Length);
-                soundClip = dialogueTypingSoundClips[randomIndex];
-                // pitch
-                audioSource.pitch = Random.Range(minPitch, maxPitch);
-            }
-            
-            // play sound
-            audioSource.PlayOneShot(soundClip);
+            int rand = Random.Range(0, clips.Length);
+            clip = clips[rand];
         }
+
+        // pitch 一樣用你的設定
+        audioSource.pitch = Random.Range(currentAudioInfo.minPitch, currentAudioInfo.maxPitch);
+        audioSource.PlayOneShot(clip);
     }
+
+    // private void PlayDialogueSound(int currentDisplayedCharacterCount, char currentCharacter)
+    // {
+    //     // set variables for the below based on our config
+    //     AudioClip[] dialogueTypingSoundClips = currentAudioInfo.dialogueTypingSoundClips;
+    //     int frequencyLevel = currentAudioInfo.frequencyLevel;
+    //     float minPitch = currentAudioInfo.minPitch;
+    //     float maxPitch = currentAudioInfo.maxPitch;
+    //     bool stopAudioSource = currentAudioInfo.stopAudioSource;
+    //
+    //     // play the sound based on the config
+    //     if (currentDisplayedCharacterCount % frequencyLevel == 0)
+    //     {
+    //         if (stopAudioSource) 
+    //         {
+    //             audioSource.Stop();
+    //         }
+    //         AudioClip soundClip = null;
+    //         // create predictable audio from hashing
+    //         if (makePredictable) 
+    //         {
+    //             int hashCode = currentCharacter.GetHashCode();
+    //             // sound clip
+    //             int predictableIndex = hashCode % dialogueTypingSoundClips.Length;
+    //             soundClip = dialogueTypingSoundClips[predictableIndex];
+    //             // pitch
+    //             int minPitchInt = (int) (minPitch * 100);
+    //             int maxPitchInt = (int) (maxPitch * 100);
+    //             int pitchRangeInt = maxPitchInt - minPitchInt;
+    //             // cannot divide by 0, so if there is no range then skip the selection
+    //             if (pitchRangeInt != 0) 
+    //             {
+    //                 int predictablePitchInt = (hashCode % pitchRangeInt) + minPitchInt;
+    //                 float predictablePitch = predictablePitchInt / 100f;
+    //                 audioSource.pitch = predictablePitch;
+    //             }
+    //             else 
+    //             {
+    //                 audioSource.pitch = minPitch;
+    //             }
+    //         }
+    //         // otherwise, randomize the audio
+    //         else 
+    //         {
+    //             // sound clip
+    //             int randomIndex = Random.Range(0, dialogueTypingSoundClips.Length);
+    //             soundClip = dialogueTypingSoundClips[randomIndex];
+    //             // pitch
+    //             audioSource.pitch = Random.Range(minPitch, maxPitch);
+    //         }
+    //         
+    //         // play sound
+    //         audioSource.PlayOneShot(soundClip);
+    //     }
+    // }
 
     private void HideChoices() 
     {

@@ -38,7 +38,6 @@ public class TargetFocusSystem : MonoBehaviour
     // 狀態
     private Transform _tempFollow;                    
     private Transform _origFollow;                    
-    private Transform _origLookAt;                    
     private bool _locking;
     private float _timer;
     private bool _hasPressedSinceLastLock;
@@ -66,7 +65,6 @@ public class TargetFocusSystem : MonoBehaviour
         if (freeLook)
         {
             _origFollow = freeLook.Follow;
-            _origLookAt = freeLook.LookAt;
 
             _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
             _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
@@ -193,9 +191,7 @@ public class TargetFocusSystem : MonoBehaviour
         }
 
         _origFollow = freeLook.Follow;
-        _origLookAt = freeLook.LookAt;
         freeLook.Follow = _tempFollow;
-        freeLook.LookAt = target;
 
         _origXSpeed = freeLook.m_XAxis.m_MaxSpeed;
         _origYSpeed = freeLook.m_YAxis.m_MaxSpeed;
@@ -229,7 +225,6 @@ public class TargetFocusSystem : MonoBehaviour
         if (!freeLook) return;
 
         freeLook.Follow = _origFollow;
-        freeLook.LookAt = _origLookAt;
 
         freeLook.m_XAxis.m_MaxSpeed = _origXSpeed;
         freeLook.m_YAxis.m_MaxSpeed = _origYSpeed;
@@ -249,7 +244,6 @@ public class TargetFocusSystem : MonoBehaviour
             o.m_Radius = _origRadii[i];
             freeLook.m_Orbits[i] = o;
         }
-        EventBus<HideObjective>.Raise(new HideObjective());
     }
     
     void UpdateTargetUI()
@@ -340,45 +334,45 @@ public class TargetFocusSystem : MonoBehaviour
     }
 
     // ✅ 可視化：即使在編輯模式也能看
-    void OnDrawGizmos()
-    {
-        if (!_hasPoints) return;
-
-        Vector3 playerPos = transform.position;
-        Vector3 targetPos = target ? target.position : playerPos + Vector3.forward * 3f;
-
-        Gizmos.color = new Color(1f, 0.85f, 0f, 0.8f);
-        Gizmos.DrawWireSphere(playerPos, playerRadius);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(playerPos, targetPos);
-
-        Gizmos.color = Color.white;
-        Gizmos.DrawSphere(targetPos, 0.08f);
-
-        Gizmos.color = Color.gray;
-        Gizmos.DrawSphere(playerPos, 0.08f);
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawSphere(_pointC, 0.12f);
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(_pointB, 0.12f);
-
-        Vector3 bTop = _pointB + Vector3.up * cameraOffset;
-        Gizmos.color = new Color(0.6f, 0f, 1f, 0.8f);
-        Gizmos.DrawLine(_pointB, bTop);
-        Gizmos.DrawSphere(bTop, 0.12f);
-
-        Gizmos.color = new Color(0f, 1f, 0.3f, 0.6f);
-        Gizmos.DrawLine(targetPos, _pointC);
-        Gizmos.DrawLine(_pointC, _pointB);
-
-        if (freeLook && _tempFollow)
-        {
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(_tempFollow.position, 0.1f);
-            Gizmos.DrawLine(_pointB, _tempFollow.position);
-        }
-    }
+    // void OnDrawGizmos()
+    // {
+    //     if (!_hasPoints) return;
+    //
+    //     Vector3 playerPos = transform.position;
+    //     Vector3 targetPos = target ? target.position : playerPos + Vector3.forward * 3f;
+    //
+    //     Gizmos.color = new Color(1f, 0.85f, 0f, 0.8f);
+    //     Gizmos.DrawWireSphere(playerPos, playerRadius);
+    //
+    //     Gizmos.color = Color.red;
+    //     Gizmos.DrawLine(playerPos, targetPos);
+    //
+    //     Gizmos.color = Color.white;
+    //     Gizmos.DrawSphere(targetPos, 0.08f);
+    //
+    //     Gizmos.color = Color.gray;
+    //     Gizmos.DrawSphere(playerPos, 0.08f);
+    //
+    //     Gizmos.color = Color.green;
+    //     Gizmos.DrawSphere(_pointC, 0.12f);
+    //
+    //     Gizmos.color = Color.cyan;
+    //     Gizmos.DrawSphere(_pointB, 0.12f);
+    //
+    //     Vector3 bTop = _pointB + Vector3.up * cameraOffset;
+    //     Gizmos.color = new Color(0.6f, 0f, 1f, 0.8f);
+    //     Gizmos.DrawLine(_pointB, bTop);
+    //     Gizmos.DrawSphere(bTop, 0.12f);
+    //
+    //     Gizmos.color = new Color(0f, 1f, 0.3f, 0.6f);
+    //     Gizmos.DrawLine(targetPos, _pointC);
+    //     Gizmos.DrawLine(_pointC, _pointB);
+    //
+    //     if (freeLook && _tempFollow)
+    //     {
+    //         Gizmos.color = Color.magenta;
+    //         Gizmos.DrawSphere(_tempFollow.position, 0.1f);
+    //         Gizmos.DrawLine(_pointB, _tempFollow.position);
+    //     }
+    // }
 }

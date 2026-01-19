@@ -28,7 +28,7 @@ private EventBinding<OnEventCalled> _binding;
 
     private void OnEnable()
     {
-        _binding = new EventBinding<OnEventCalled>(OnSomethingCalled);
+        _binding = new EventBinding<OnEventCalled>(CallSomething);
         EventBus<OnEventCalled>.Register(_binding);
     } 
     
@@ -39,6 +39,6 @@ private EventBinding<OnEventCalled> _binding;
         _binding = null; //Optional
     }
     
-    OnSomethingCalled(){
+    void CallSomething(){
     //execute somethings.
     }

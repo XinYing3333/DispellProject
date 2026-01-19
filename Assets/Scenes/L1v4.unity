@@ -8098,11 +8098,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1722568449}
   m_LocalEulerAnglesHint: {x: 0, y: -16.113, z: 0}
---- !u!137 &372597098 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 1182836783596607037, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 454553310}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &381862627
 GameObject:
   m_ObjectHideFlags: 0
@@ -13558,10 +13553,10 @@ MonoBehaviour:
   invulnDuration: 0.8
   flashOnHit: 1
   flashTargets:
-  - {fileID: 1226752295}
-  - {fileID: 372597098}
-  - {fileID: 1409870229}
-  - {fileID: 1512750354}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   enableKnockback: 1
   knockbackDuration: 0.2
   knockbackEase:
@@ -16715,8 +16710,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &580892816
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -16839,8 +16834,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &580898774
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -17793,6 +17788,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee732f81ef4e8bba8b3e72fd146b07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  id: 
   spawnPointOverride: {fileID: 0}
   showGizmo: 1
   gizmoColor: {r: 0, g: 0.75, b: 1, a: 0.4}
@@ -17901,8 +17897,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &610831938
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -23110,8 +23106,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &775163184
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -23824,8 +23820,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &797626958
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -24300,8 +24296,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &801138764
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -27250,11 +27246,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultSpawnPoint: {fileID: 107627961}
-  snapToGround: 1
-  groundCheckDown: 5
-  groundMask:
-    serializedVersion: 2
-    m_Bits: 8
 --- !u!1 &898689474
 GameObject:
   m_ObjectHideFlags: 0
@@ -30818,6 +30809,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ee732f81ef4e8bba8b3e72fd146b07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  id: 
   spawnPointOverride: {fileID: 0}
   showGizmo: 1
   gizmoColor: {r: 0, g: 0.75, b: 1, a: 0.4}
@@ -33569,6 +33561,10 @@ MonoBehaviour:
   tickInterval: 0.5
   useHitForward: 1
   directionRef: {fileID: 0}
+  _lockDamage: 0
+  onInvoke:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!65 &1106331517
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -34252,8 +34248,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &1173937730
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -35249,16 +35245,6 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
---- !u!65 &1212993335 stripped
-BoxCollider:
-  m_CorrespondingSourceObject: {fileID: 7517394398212703091, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
-  m_PrefabInstance: {fileID: 1939659304}
-  m_PrefabAsset: {fileID: 0}
---- !u!137 &1226752295 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 7716477437071351217, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 454553310}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1244174786
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -40033,11 +40019,6 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
---- !u!137 &1409870229 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 1511374084949595526, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 454553310}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1440010600
 GameObject:
   m_ObjectHideFlags: 0
@@ -41147,9 +41128,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 454553325}
-  heartPrefab: {fileID: 2063758929}
-  fullHeart: {fileID: 21300000, guid: 047fbf48413a25b47a188b7a4257a310, type: 3}
-  emptyHeart: {fileID: 21300000, guid: 92cb7c815400ba841ace40292679cac1, type: 3}
+  heartImage: {fileID: 0}
+  heartStages: []
+  slideFrom: 0
+  enterDuration: 0.35
+  exitDuration: 0.3
+  autoHideDelay: 1.6
+  offscreenPadding: 60
+  enterEase: 9
+  exitEase: 8
+  useUnscaledTime: 1
+  lowHpThreshold: 2
+  lowBeatScale: 1.08
+  lowBeatPeriod: 0.6
+  hitBounceScale: 1.18
+  hitBounceDuration: 0.18
+  hitBounceEase: 27
+  showOnEnable: 1
 --- !u!114 &1455396683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42448,11 +42443,6 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!137 &1512750354 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 2540380136212149696, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 454553310}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1557663350
 GameObject:
   m_ObjectHideFlags: 0
@@ -45092,8 +45082,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &1659604262
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -49830,6 +49820,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effect: {fileID: 324947701}
+  effectToTransparent: {fileID: 0}
   holdBlack: 0.3
   slowMoOnDeath: 1
   slowMoScale: 0.2
@@ -50308,11 +50299,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 622b286e4a4b404f8d34189cce8a707e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  driftDirection: {x: 0.6, y: 0, z: 0.1}
+  startPoint: {fileID: 0}
+  endPoint: {fileID: 0}
   driftSpeed: 1
-  floatAmplitude: 0.2
-  floatFrequency: 1
-  rotationSpeed: 10
+  randomizeStartT: 1
+  maxSideOffset: 0.4
+  usePathRightAsSide: 1
+  floatAmplitudeMin: 0.1
+  floatAmplitudeMax: 0.3
+  floatFrequencyMin: 0.5
+  floatFrequencyMax: 1.5
+  rotationSpeedMin: -15
+  rotationSpeedMax: 15
+  perItemSpeedJitter: 0.15
 --- !u!1 &1852860535
 GameObject:
   m_ObjectHideFlags: 0
@@ -50382,8 +50381,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bounceForce: 12
-  cooldownTime: 3
-  visual: {fileID: 0}
+  padAnimator: {fileID: 0}
+  triggerParam: Trigger
 --- !u!23 &1852860539
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -53290,7 +53289,7 @@ PrefabInstance:
     - target: {fileID: 2196614299199329421, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
       propertyPath: 'damageColliders.Array.data[0]'
       value: 
-      objectReference: {fileID: 1212993335}
+      objectReference: {fileID: 0}
     - target: {fileID: 2349021655955483566, guid: 4bc65a56f16fd1544a56f37ccbaba76d, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -53563,6 +53562,10 @@ MonoBehaviour:
   tickInterval: 0.5
   useHitForward: 1
   directionRef: {fileID: 0}
+  _lockDamage: 0
+  onInvoke:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!65 &1962763289
 BoxCollider:
   m_ObjectHideFlags: 0

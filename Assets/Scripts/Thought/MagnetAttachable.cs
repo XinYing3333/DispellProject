@@ -14,8 +14,11 @@ public class MagnetAttachable : MonoBehaviour, IMagnetAttachable, IThrowable
         rb.isKinematic = true;
         rb.useGravity = false;
         rb.detectCollisions = false;
-        transform.SetParent(parent, false);
+
+        // 關鍵修改：保持世界座標（貼在 anchor 位置）
+        transform.SetParent(parent, true);
     }
+
 
     public void OnMagnetDetached()
     {

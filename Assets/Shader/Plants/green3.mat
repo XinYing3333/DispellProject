@@ -58,15 +58,19 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _Reflect: 1
+    - _ReflectPower: 1.5
     - _SrcBlend: 1
     - _Surface: 0
+    - _Texture_On: 0
     - _WorkflowMode: 1
     - _ZTest: 4
     - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.2175086, g: 0.38679248, b: 0.085386254, a: 0}
+    - _Color: {r: 0.8246105, g: 1, b: 0.37647057, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _ReflectColor: {r: 0.2941177, g: 0.41934654, b: 0.9607843, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &4125316218869781698

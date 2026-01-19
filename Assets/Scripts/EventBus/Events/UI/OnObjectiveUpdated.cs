@@ -11,5 +11,5 @@ namespace DefaultNamespace.EventBus.Events.UI
     public readonly struct RevealObjective : IEvent {}
 
     // 3) 玩家要求隱藏（輸入系統發）
-    public readonly struct HideObjective : IEvent {}
+    //public readonly struct HideObjective : IEvent {}
 }

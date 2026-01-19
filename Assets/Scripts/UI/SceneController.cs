@@ -1,223 +1,243 @@
 using System.Collections;
-using Player;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
+#if DOTWEEN
+using DG.Tweening;
+#endif
+
 /// <summary>
-/// 控制場景中的 UI 面板顯示與場景切換邏輯，支援設定面板與技能選擇面板。
+/// 控制場景切換 + Loading 面板顯示/隱藏。
+/// 建議把 loadingPanel 設為 SceneController 的子物件，SceneController 設為 DontDestroyOnLoad。
 /// </summary>
 public class SceneController : MonoBehaviour
 {
     public static SceneController Instance { get; private set; }
 
-    [Header("Setting UI")]
-    [SerializeField] private GameObject settingPanel;
-    [SerializeField] private CanvasGroup settingCanvasGroup;
-    [SerializeField] private GameObject settingFirstButton;
-
-    [Header("Skill UI")]
-    [SerializeField] private GameObject skillPanel;
-    [SerializeField] private CanvasGroup skillCanvasGroup;
-    [SerializeField] private GameObject skillFirstButton;
-    
-    [Header("Loading UI")]
+    [Header("Loading UI (作為此物件的子物件)")]
     [SerializeField] private GameObject loadingPanel;
     [SerializeField] private CanvasGroup loadingCanvasGroup;
-    [SerializeField] private float minimumLoadingTime = 2f; // 最少顯示時間（秒）
 
+    [Header("顯示時間")]
+    [Tooltip("Loading 至少要顯示多久（秒）")]
+    [SerializeField] private float minimumLoadingTime = 2f;
 
-    private bool wasSettingOpen = false;
-    private bool wasSkillOpen = false;
+    [Header("可選：淡出動畫（需 DOTween）")]
+    [SerializeField] private bool useFadeOut = true;
+    [SerializeField, Tooltip("淡出秒數")]
+    private float fadeOutDuration = 0.35f;
 
-    void Awake()
+    // 內部旗標：避免重複載入或重入問題
+    private bool _isLoading;
+
+    private void Awake()
     {
+        // 單例
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
-        DontDestroyOnLoad(gameObject); // 保留此物件跨場景
+
+        DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        // 初始化 Loading 參考
+        EnsureLoadingRefs();
+        // 一開始關閉
+        HideLoadingImmediate();
     }
-    
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// 場景載入完成後，下一幀關掉 Loading（保證不殘留 alpha）。
+    /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        string sceneName = scene.name;
-
-        AudioManager.Instance.OnSceneLoaded();
-
-        switch (sceneName)
+        // 這裡若有 AudioManager 就播 BGM（防呆）
+        if (AudioManager.Instance != null)
         {
-            case "MainMenu":
-                AudioManager.Instance.PlayBGM(BGMType.MainMenu);
-                InitCanvasGroup(settingPanel, ref settingCanvasGroup);
-                InitCanvasGroup(loadingPanel, ref loadingCanvasGroup);
-                break;
+            AudioManager.Instance.OnSceneLoaded();
 
-            case "L1v4":
-                AudioManager.Instance.PlayBGM(BGMType.FirstLevel);
-                InitCanvasGroup(settingPanel, ref settingCanvasGroup);
-                InitCanvasGroup(skillPanel, ref skillCanvasGroup);
-                InitCanvasGroup(loadingPanel, ref loadingCanvasGroup);
-                break;
+            switch (scene.name)
+            {
+                case "MainMenu":
+                    AudioManager.Instance.PlayBGM(BGMType.MainMenu);
+                    break;
+                case "L1v5":
+                    AudioManager.Instance.PlayBGM(BGMType.FirstLevel);
+                    break;
+                default:
+                    // 其他場景可視需要播放對應 BGM
+                    break;
+            }
         }
 
+        // 下一幀再關閉，避免與場景內 UI 初始化衝突
+        StartCoroutine(HideLoadingNextFrame());
     }
 
-
-    void Update()
-    {
-        // 快捷鍵測試切場景/重啟/重生/退出
-        if (Input.GetKeyDown(KeyCode.F1)) SceneManager.LoadScene("MainMenu");
-        if (Input.GetKeyDown(KeyCode.F2)) SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        if (Input.GetKeyDown(KeyCode.F3))
-        {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            Transform checkPoint = GameObject.FindGameObjectWithTag("CheckPoint")?.transform;
-            if (player && checkPoint) player.transform.position = checkPoint.position;
-        }
-        if (Input.GetKeyDown(KeyCode.Escape)) QuitGame();
-
-        // 控制面板開關
-        string sceneName = SceneManager.GetActiveScene().name; // TODO：每幀觸發要修改
-        //if (sceneName == "MainMenu") SetSettingPanelInMainMenu();
-        //else 
-        if (sceneName == "L1v4")
-        {
-            SetSkillPanel();
-            SetSettingPanel();
-        }
-    }
-
-    public static void LoadScene(string sceneName) => SceneManager.LoadScene(sceneName);
-    public static void LoadSceneAsync(string sceneName) => SceneManager.LoadSceneAsync(sceneName);
-    public static void QuitGame() => Application.Quit();
+    // =========================
+    // 對外 API
+    // =========================
 
     /// <summary>
-    /// 控制設定面板的顯示狀態
+    /// 以同步方式切換（不建議顯示 loading）
     /// </summary>
-    public void SetSettingPanelInMainMenu()
+    public void LoadScene(string sceneName)
     {
-        if (!wasSettingOpen)
-        {
-            SetCanvasGroup(settingCanvasGroup, true);
-            EventSystem.current?.SetSelectedGameObject(settingFirstButton);
-        }
-        else if (wasSettingOpen || !settingPanel.activeSelf)
-        {
-            SetCanvasGroup(settingCanvasGroup, false);
-        }
-        wasSettingOpen = !wasSettingOpen;
+        SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
+    /// 以非同步 + 簡易 Loading UI 切換
+    /// </summary>
+    public void LoadSceneWithLoading(string sceneName)
+    {
+        if (!_isLoading)
+            StartCoroutine(LoadSceneWithSimpleLoadingUI(sceneName));
+    }
+
+    /// <summary>
+    /// 播放一般 UI 點擊音效（可被 Button 事件綁定）
+    /// </summary>
+    public void SoundOnClick()
+    {
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX(SFXType.Click);
     }
     
-    /// <summary>
-    /// 控制設定面板的顯示狀態
-    /// </summary>
-    public void SetSettingPanel()
+    public void ExitGame()
     {
-        bool nowOpen = PlayerInputHandler.Instance.IsSettingPressed;
+        Application.Quit();
+    }
+    // =========================
+    // 內部流程
+    // =========================
 
-        if (nowOpen && !wasSettingOpen)
-        {
-            SetCanvasGroup(settingCanvasGroup, true);
-            EventSystem.current?.SetSelectedGameObject(settingFirstButton);
-            Time.timeScale = 0f;
-        }
-        else if (!nowOpen && wasSettingOpen || !settingPanel.activeSelf)
-        {
-            SetCanvasGroup(settingCanvasGroup, false);
-            Time.timeScale = 1f;
-        }
+    private IEnumerator LoadSceneWithSimpleLoadingUI(string sceneName)
+    {
+        _isLoading = true;
 
-        wasSettingOpen = nowOpen;
+        EnsureLoadingRefs();
+        ShowLoadingImmediate();
+
+        float start = Time.time;
+
+        // 開始非同步載入，但先不切換場景
+        AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
+        op.allowSceneActivation = false;
+
+        // 等待到 0.9（Unity 約定：抵達 0.9 表示就緒）
+        while (op.progress < 0.9f)
+            yield return null;
+
+        // 保證顯示最少時間
+        float elapsed = Time.time - start;
+        if (elapsed < minimumLoadingTime)
+            yield return new WaitForSeconds(minimumLoadingTime - elapsed);
+
+        // 允許切換，OnSceneLoaded 會負責關閉 Loading
+        op.allowSceneActivation = true;
+
+        _isLoading = false;
     }
 
-    /// <summary>
-    /// 控制技能面板的顯示狀態
-    /// </summary>
-    public void SetSkillPanel()
+    private IEnumerator HideLoadingNextFrame()
     {
-        bool nowOpen = PlayerInputHandler.Instance.IsSkillUIOpen;
-
-        if (nowOpen && !wasSkillOpen)
-        {
-            SetCanvasGroup(skillCanvasGroup, true);
-            EventSystem.current?.SetSelectedGameObject(skillFirstButton);
-            Time.timeScale = 0.005f;
-            Time.fixedDeltaTime = 0.2f * Time.timeScale;
-        }
-        else if (!nowOpen && wasSkillOpen)
-        {
-            SetCanvasGroup(skillCanvasGroup, false);
-            Time.timeScale = 1f;
-        }
-
-        wasSkillOpen = nowOpen;
+        yield return null; // 等一幀，等場景內 UI/Canvas 初始化
+        HideLoadingAnimatedOrImmediate();
     }
 
-    /// <summary>
-    /// 播放 UI 點擊音效
-    /// </summary>
-    public void SoundOnClick() => AudioManager.Instance.PlaySFX(SFXType.Click);
+    // =========================
+    // 顯示/隱藏輔助
+    // =========================
 
     /// <summary>
-    /// 快速設定 CanvasGroup 開關
+    /// 確保有 loadingPanel + CanvasGroup。若無則自動補。
     /// </summary>
+    private void EnsureLoadingRefs()
+    {
+        if (!loadingPanel)
+        {
+            Debug.LogWarning("[SceneController] loadingPanel 未指定，請在 Inspector 指到 SceneController 的子物件。");
+            return;
+        }
+
+        if (!loadingCanvasGroup)
+        {
+            if (!loadingPanel.TryGetComponent(out loadingCanvasGroup))
+                loadingCanvasGroup = loadingPanel.AddComponent<CanvasGroup>();
+        }
+    }
+
     private void SetCanvasGroup(CanvasGroup group, bool isOn)
     {
-        if (group == null) return;
+        if (!group) return;
         group.alpha = isOn ? 1f : 0f;
         group.blocksRaycasts = isOn;
         group.interactable = isOn;
     }
 
-    /// <summary>
-    /// 初始化 CanvasGroup 組件
-    /// </summary>
-    private void InitCanvasGroup(GameObject obj, ref CanvasGroup group)
+    private void ShowLoadingImmediate()
     {
-        if (obj != null)
-        {
-            if (!obj.TryGetComponent(out group))
-                group = obj.AddComponent<CanvasGroup>();
-            
-            SetCanvasGroup(group, false);
-        }
-    }
-    
-    public void LoadSceneWithLoading(string sceneName)
-    {
-        StartCoroutine(LoadSceneWithSimpleLoadingUI(sceneName));
-    }
+        if (!loadingPanel || !loadingCanvasGroup) return;
 
-    private IEnumerator LoadSceneWithSimpleLoadingUI(string sceneName)
-    {
+        loadingPanel.SetActive(true);
         SetCanvasGroup(loadingCanvasGroup, true);
-        loadingPanel?.SetActive(true);
 
-        float loadingStartTime = Time.time;
-
-        yield return null;
-
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
-        asyncLoad.allowSceneActivation = false;
-
-        while (asyncLoad.progress < 0.9f)
-        {
-            yield return null;
-        }
-
-        // 保證至少顯示一段時間
-        float elapsedTime = Time.time - loadingStartTime;
-        float remainingTime = minimumLoadingTime - elapsedTime;
-
-        if (remainingTime > 0)
-            yield return new WaitForSeconds(remainingTime);
-
-        asyncLoad.allowSceneActivation = true;
+        // 若先前有動畫，重置一下
+        #if DOTWEEN
+        if (useFadeOut) loadingCanvasGroup.DOKill();
+        #endif
     }
 
+    private void HideLoadingImmediate()
+    {
+        if (!loadingPanel || !loadingCanvasGroup) return;
+
+        #if DOTWEEN
+        if (useFadeOut) loadingCanvasGroup.DOKill();
+        #endif
+
+        SetCanvasGroup(loadingCanvasGroup, false);
+        loadingPanel.SetActive(false);
+    }
+
+    private void HideLoadingAnimatedOrImmediate()
+    {
+        if (!loadingPanel || !loadingCanvasGroup)
+            return;
+
+        #if DOTWEEN
+        if (useFadeOut && fadeOutDuration > 0f)
+        {
+            loadingCanvasGroup.DOKill();
+            loadingCanvasGroup.DOFade(0f, fadeOutDuration)
+                .OnStart(() =>
+                {
+                    // 在某些切換時機，alpha 可能仍是 1；保險起見先打開
+                    loadingPanel.SetActive(true);
+                    loadingCanvasGroup.blocksRaycasts = false;
+                    loadingCanvasGroup.interactable = false;
+                })
+                .OnComplete(() =>
+                {
+                    loadingPanel.SetActive(false);
+                });
+            return;
+        }
+        #endif
+
+        // 沒有 DOTween 或不使用淡出時
+        HideLoadingImmediate();
+    }
 }

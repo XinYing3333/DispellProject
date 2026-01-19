@@ -95,10 +95,10 @@ namespace DialogSystem
             Interact();
         }
     
-        private void OnTriggerEnter(Collider other)
+        private void OnCollisionEnter(Collision collision)
         {
             if (mode != TriggerMode.AutoOnEnter) return;
-            if (!other.CompareTag("Player")) return;
+            if (!collision.gameObject.CompareTag("Player")) return;
             Interact(); // 直接觸發
         }
 

@@ -13,8 +13,16 @@ public class ThrowingSystem
     private float throwSpeed;
 
     public ThrowArcMode ArcMode { get; set; } = ThrowArcMode.ToTarget;
+
+    // FixedAngle fallback
     public float LaunchAngleDegrees { get; set; } = 35f;
-    public bool PreferHighArc { get; set; } = true;
+
+    // Ballistic solve options
+    public bool PreferHighArc { get; set; } = true;          // ★選高拋或低拋
+    public float MinPitchDeg { get; set; } = 12f;            // ★最低仰角，避免貼地
+    public float MaxPitchDeg { get; set; } = 70f;            // ★最高仰角上限（避免太陡）
+    public bool ClampPitchIfTooLow { get; set; } = true;     // ★若解出來太低，硬抬到 MinPitchDeg
+
     public bool OrientToVelocity { get; set; } = true;
     public bool UseGravity { get; set; } = true;
 
@@ -36,157 +44,218 @@ public class ThrowingSystem
         rb.useGravity = UseGravity;
         rb.detectCollisions = true;
 
-        // ★ 用實際出手位置
-        Vector3 origin = rb.position;
-        
+        // ★ 出手點必須以 throwOrigin 為準（你原本用 rb.position 會導致 y 偏差、pitch 被壓低）
+        Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
+
         if (throwOrigin)
         {
             rb.position = throwOrigin.position;
             rb.rotation = throwOrigin.rotation;
         }
-        
+
         Vector3 v0;
 
         if (ArcMode == ThrowArcMode.ToTarget && aimAssist && aimAssist.CurrentTarget)
         {
             Vector3 target = aimAssist.CurrentTarget.GetAimPoint();
 
-            const float MaxPitch = 70f;
-            bool ok = TrySolveBallisticBest(origin, target, throwSpeed, MaxPitch,
+            bool ok = TrySolveBallisticWithPitchLimits(
+                origin, target, throwSpeed,
+                PreferHighArc, MinPitchDeg, MaxPitchDeg, ClampPitchIfTooLow,
                 out v0, out float usedPitchDeg, out string reason);
 
 #if UNITY_EDITOR
             if (ok) Debug.Log($"[Throw] choose ballistic: pitch={usedPitchDeg:F1}°, speed={throwSpeed:F1}");
             else    Debug.Log($"[Throw] ballistic fallback: {reason}");
 #endif
-            if (!ok) v0 = FallbackFixedAngle(player); // 退回固定角
+            if (!ok) v0 = FallbackFixedAngle(player);
         }
         else
         {
 #if UNITY_EDITOR
             Debug.Log("[Throw] no target → FixedAngle");
-            
 #endif
             v0 = FallbackFixedAngle(player);
         }
 
+#if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = v0;
+#else
+        rb.velocity = v0;
+#endif
 
         if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
             rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
+
 #if UNITY_EDITOR
-// 取樣 1 秒軌跡
+        // 取樣 1 秒軌跡
         Vector3 p = origin;
-        Vector3 vel = v0;
-        Vector3 g = Physics.gravity;
+        Vector3 gAcc = Physics.gravity;
         float step = 0.02f;
         for (float t = 0; t < 1.0f; t += step)
         {
-            Vector3 pNext = origin + vel * t + 0.5f * g * (t * t);
+            Vector3 pNext = origin + v0 * t + 0.5f * gAcc * (t * t);
             Debug.DrawLine(p, pNext, Color.red, 1.0f);
             p = pNext;
         }
 #endif
-
     }
-
-
 
     private Vector3 FallbackFixedAngle(Transform player)
     {
         Vector3 look = aimAssist
             ? aimAssist.GetAimDirection()
             : (player ? player.forward : Vector3.forward);
-        Vector3 horiz = Vector3.ProjectOnPlane(look, Vector3.up).normalized;
-        float rad = LaunchAngleDegrees * Mathf.Deg2Rad;
+
+        Vector3 horiz = Vector3.ProjectOnPlane(look, Vector3.up);
+        if (horiz.sqrMagnitude < 1e-6f) horiz = Vector3.forward;
+        horiz.Normalize();
+
+        float angle = Mathf.Max(LaunchAngleDegrees, MinPitchDeg);
+        float rad = angle * Mathf.Deg2Rad;
+
         return horiz * (throwSpeed * Mathf.Cos(rad)) + Vector3.up * (throwSpeed * Mathf.Sin(rad));
     }
 
-    // 固定初速度 s，從 origin 擲到 target 的 v0（可選高/低拋）
-    private static bool TrySolveBallisticBest(
-        Vector3 origin, Vector3 target, float speed, float maxPitchDeg,
-        out Vector3 bestV0, out float bestPitchDeg, out string failReason)
+    private static bool TrySolveBallisticWithPitchLimits(
+        Vector3 origin, Vector3 target, float speed,
+        bool preferHighArc,
+        float minPitchDeg, float maxPitchDeg,
+        bool clampIfTooLow,
+        out Vector3 v0, out float usedPitchDeg, out string failReason)
     {
-        bestV0 = Vector3.zero;
-        bestPitchDeg = 0f;
+        v0 = Vector3.zero;
+        usedPitchDeg = 0f;
         failReason = "";
 
         Vector3 to = target - origin;
         Vector3 toXZ = Vector3.ProjectOnPlane(to, Vector3.up);
         float x = toXZ.magnitude;
         float y = to.y;
-        float g = Physics.gravity.y; // negative
 
-        // 極近距：直接直射，避免 0 除
+        // 極近距：直接朝向（再做最小仰角）
         const float MinHoriz = 0.25f;
         if (x < MinHoriz)
         {
             Vector3 dir = (to.sqrMagnitude > 1e-6f) ? to.normalized : Vector3.forward;
-            bestV0 = dir * speed;
-            bestPitchDeg = 0f; // 不重要
+            v0 = dir * speed;
+            v0 = EnforceMinPitch(v0, minPitchDeg);
+            usedPitchDeg = PitchDeg(v0);
             return true;
         }
 
-        float s2 = speed * speed;
-        float under = s2 * s2 - g * (g * x * x + 2f * y * s2);
-        if (under < 0f)
+        float gMag = -Physics.gravity.y; // 正值
+        if (gMag <= 0.0001f)
+        {
+            failReason = "gravity invalid";
+            return false;
+        }
+
+        float v2 = speed * speed;
+        float v4 = v2 * v2;
+
+        // disc = v^4 - g (g x^2 + 2 y v^2)
+        float disc = v4 - gMag * (gMag * x * x + 2f * y * v2);
+        if (disc < 0f)
         {
             failReason = "discriminant<0 (speed too low or height gap too large)";
             return false;
         }
 
-        float sqrt = Mathf.Sqrt(under);
+        float sqrt = Mathf.Sqrt(disc);
 
-        // 兩個解：高拋(+)、低拋(-)
-        bool haveAny = false;
-        Vector3 candidateV0High = Vector3.zero;
-        float pitchHigh = float.MaxValue;
-        Vector3 candidateV0Low = Vector3.zero;
-        float pitchLow = float.MaxValue;
+        // tanθ 兩解（g 正值）
+        float tanLow  = (v2 - sqrt) / (gMag * x);
+        float tanHigh = (v2 + sqrt) / (gMag * x);
 
-        // helper：由 tanθ 算向量與 pitch
-        bool BuildCandidate(float tan, out Vector3 v0, out float pitchDeg)
-        {
-            float cos = 1f / Mathf.Sqrt(1f + tan * tan);
-            float sin = tan * cos;
-            Vector3 dirXZ = toXZ / x;
-            v0 = dirXZ * (speed * cos) + Vector3.up * (speed * sin);
+        BuildCandidate(origin, toXZ, x, speed, tanLow,  out Vector3 vLow,  out float pitchLow);
+        BuildCandidate(origin, toXZ, x, speed, tanHigh, out Vector3 vHigh, out float pitchHigh);
 
-            float horizMag = (speed * cos);
-            pitchDeg = Mathf.Rad2Deg * Mathf.Atan2(speed * sin, Mathf.Max(1e-5f, horizMag));
-            return true;
-        }
-
-        // g < 0，所以分母取 (-g * x)
-        float tanHigh = (s2 + sqrt) / (-g * x);
-        float tanLow = (s2 - sqrt) / (-g * x);
-
-        BuildCandidate(tanHigh, out candidateV0High, out pitchHigh);
-        BuildCandidate(tanLow, out candidateV0Low, out pitchLow);
-
-        // 先嘗試選擇「pitch <= 上限」中較小的那個；都超過就失敗（交給外面 fallback）
+        bool lowOk  = pitchLow  <= maxPitchDeg;
         bool highOk = pitchHigh <= maxPitchDeg;
-        bool lowOk = pitchLow <= maxPitchDeg;
 
-        if (lowOk && (!highOk || pitchLow <= pitchHigh))
+        // 依偏好選解：先選 Prefer 的；不行再退另一個
+        bool picked = false;
+        if (preferHighArc && highOk)
         {
-            bestV0 = candidateV0Low;
-            bestPitchDeg = pitchLow;
-            haveAny = true;
+            v0 = vHigh; usedPitchDeg = pitchHigh; picked = true;
+        }
+        else if (!preferHighArc && lowOk)
+        {
+            v0 = vLow; usedPitchDeg = pitchLow; picked = true;
         }
         else if (highOk)
         {
-            bestV0 = candidateV0High;
-            bestPitchDeg = pitchHigh;
-            haveAny = true;
+            v0 = vHigh; usedPitchDeg = pitchHigh; picked = true;
+        }
+        else if (lowOk)
+        {
+            v0 = vLow; usedPitchDeg = pitchLow; picked = true;
         }
 
-        if (!haveAny)
+        if (!picked)
         {
-            failReason = $"both pitches too steep (low={pitchLow:F1}°, high={pitchHigh:F1}° > {maxPitchDeg}°)";
+            failReason = $"both pitches too steep (low={pitchLow:F1}°, high={pitchHigh:F1}° > {maxPitchDeg:F1}°)";
             return false;
         }
 
+        // ★最小仰角：解出來太低就抬高（維持速度大小）
+        if (clampIfTooLow)
+        {
+            v0 = EnforceMinPitch(v0, minPitchDeg);
+            usedPitchDeg = PitchDeg(v0);
+        }
+        else
+        {
+            // 不硬抬時：若 pitch < minPitch 直接判定失敗（交給 fallback）
+            if (usedPitchDeg < minPitchDeg)
+            {
+                failReason = $"pitch too low ({usedPitchDeg:F1}° < {minPitchDeg:F1}°)";
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    private static void BuildCandidate(Vector3 origin, Vector3 toXZ, float x, float speed, float tan,
+        out Vector3 v0, out float pitchDeg)
+    {
+        float cos = 1f / Mathf.Sqrt(1f + tan * tan);
+        float sin = tan * cos;
+
+        Vector3 dirXZ = toXZ / x;
+
+        float vHoriz = speed * cos;
+        float vY = speed * sin;
+
+        v0 = dirXZ * vHoriz + Vector3.up * vY;
+        pitchDeg = Mathf.Rad2Deg * Mathf.Atan2(vY, Mathf.Max(1e-5f, vHoriz));
+    }
+
+    private static float PitchDeg(Vector3 v)
+    {
+        float flat = new Vector2(v.x, v.z).magnitude;
+        return Mathf.Atan2(v.y, Mathf.Max(1e-5f, flat)) * Mathf.Rad2Deg;
+    }
+
+    private static Vector3 EnforceMinPitch(Vector3 v, float minPitchDeg)
+    {
+        float speed = v.magnitude;
+        if (speed < 1e-5f) return v;
+
+        float flat = new Vector2(v.x, v.z).magnitude;
+        if (flat < 1e-6f) return v; // 幾乎垂直，不調
+
+        float pitch = Mathf.Atan2(v.y, flat) * Mathf.Rad2Deg;
+        if (pitch >= minPitchDeg) return v;
+
+        float pitchRad = minPitchDeg * Mathf.Deg2Rad;
+
+        float newY = speed * Mathf.Sin(pitchRad);
+        float newFlat = speed * Mathf.Cos(pitchRad);
+
+        Vector2 xz = new Vector2(v.x, v.z).normalized * newFlat;
+        return new Vector3(xz.x, newY, xz.y);
     }
 }

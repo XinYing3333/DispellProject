@@ -1,0 +1,196 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3879607999018148984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8687256018834922491}
+  - component: {fileID: 9172476855242021615}
+  m_Layer: 0
+  m_Name: IntroCS
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8687256018834922491
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3879607999018148984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7639271196649647759}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!320 &9172476855242021615
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3879607999018148984}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
+  m_InitialState: 0
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 2
+  m_InitialTime: 0
+  m_SceneBindings:
+  - key: {fileID: -7769262343159237564, guid: 751c756cd864ec04c80f0050696420be, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 8197576760331771495, guid: 751c756cd864ec04c80f0050696420be, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 8197576760331771495, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: -7769262343159237564, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 8847107500560628300, guid: 2108bcaab8cac014494d8cefa432ea98, type: 2}
+    value: {fileID: 0}
+  m_ExposedReferences:
+    m_References:
+    - c908e2238ca592e438dfae38c12ad852: {fileID: 0}
+    - 448124de7979b3d46bd90ea0214bc3b0: {fileID: 0}
+--- !u!1 &4763152967922311980
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6520227901527637615}
+  - component: {fileID: 567123349714506362}
+  m_Layer: 0
+  m_Name: S1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6520227901527637615
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4763152967922311980}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7639271196649647759}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!320 &567123349714506362
+PlayableDirector:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4763152967922311980}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_PlayableAsset: {fileID: 11400000, guid: 751c756cd864ec04c80f0050696420be, type: 2}
+  m_InitialState: 0
+  m_WrapMode: 2
+  m_DirectorUpdateMode: 2
+  m_InitialTime: 0
+  m_SceneBindings:
+  - key: {fileID: -7769262343159237564, guid: 751c756cd864ec04c80f0050696420be, type: 2}
+    value: {fileID: 0}
+  - key: {fileID: 8197576760331771495, guid: 751c756cd864ec04c80f0050696420be, type: 2}
+    value: {fileID: 0}
+  m_ExposedReferences:
+    m_References:
+    - 448124de7979b3d46bd90ea0214bc3b0: {fileID: 0}
+--- !u!1 &7001468348989433537
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7639271196649647759}
+  - component: {fileID: 8287934423922235709}
+  - component: {fileID: 3528495195845522344}
+  m_Layer: 0
+  m_Name: SequenceTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7639271196649647759
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7001468348989433537}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 25.14, y: 6.3, z: 37.51}
+  m_LocalScale: {x: 0.71, y: 6.62, z: 14.872168}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6520227901527637615}
+  - {fileID: 8687256018834922491}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8287934423922235709
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7001468348989433537}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3528495195845522344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7001468348989433537}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a9bc2c4971049e2b0fe2748b26a534b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnEnter: 1
+  requiredTag: Player
+  cooldown: 0.5
+  onlyOnce: 1
+  persistId: 
+  steps: []
+  showGizmo: 1
+  onceGizmoColor: {r: 1, g: 0.6, b: 0.2, a: 0.57254905}
+  onceGizmoWireColor: {r: 1, g: 0.20392157, b: 0.2, a: 1}
+  gizmoColor: {r: 0.54337645, g: 0, b: 1, a: 0.41960785}
+  gizmoWireColor: {r: 0.428514, g: 0, b: 1, a: 1}

@@ -2143,7 +2143,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_sharedMaterial: {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -4681,6 +4682,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effect: {fileID: 1341628951}
+  effectToTransparent: {fileID: 0}
   holdBlack: 0.3
   slowMoOnDeath: 1
   slowMoScale: 0.2
@@ -7299,6 +7301,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effect: {fileID: 1016474532}
+  effectToTransparent: {fileID: 0}
   holdBlack: 0.3
   slowMoOnDeath: 1
   slowMoScale: 0.2
@@ -14058,7 +14061,7 @@ PrefabInstance:
       insertIndex: 6
       addedObject: {fileID: 1348988443}
     - targetCorrespondingSourceObject: {fileID: 172986323484736848, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-      insertIndex: 8
+      insertIndex: 7
       addedObject: {fileID: 1348988442}
     - targetCorrespondingSourceObject: {fileID: 172986323484736848, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
       insertIndex: -1
@@ -14089,17 +14092,6 @@ Rigidbody:
   m_CorrespondingSourceObject: {fileID: 1863769368042349058, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
   m_PrefabInstance: {fileID: 1348988430}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1348988436 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 565717469823576011, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 1348988430}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1348988440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97a84d8fb0377384b9294126cb66fc8e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1348988437 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9165629142308398503, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
@@ -14109,17 +14101,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8a7b179e8a10bcb438e8dc64d94ad82d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1348988438 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2222260344463854279, guid: 94b29763c089ad64d874ffd475804fd4, type: 3}
-  m_PrefabInstance: {fileID: 1348988430}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1348988440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!4 &1348988439 stripped
@@ -14204,10 +14185,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f600130c89470d04c9902535639da37c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputScript: {fileID: 1348988438}
+  inputScript: {fileID: 0}
   movementScripts:
   - {fileID: 1348988437}
-  - {fileID: 1348988436}
+  - {fileID: 0}
   - {fileID: 1348988442}
   rb: {fileID: 1348988435}
 --- !u!114 &1348988444
@@ -14240,34 +14221,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   freeLook: {fileID: 87579102}
-  player: {fileID: 1348988431}
   target: {fileID: 0}
-  gameCamera: {fileID: 438383746}
-  markerUI: {fileID: 2142733761}
-  focusKey: 116
-  focusHoldTime: 1.2
-  useLookAtHelper: 0
-  helperDistance: 6
-  helperHeight: 1.5
-  helperTargetBlend: 0.25
-  enableHeadingRecentering: 1
-  headingRecenteringTime: 0.35
-  headingRecenteringWait: 0
-  enableYAxisRecentering: 1
-  yRecenteringTime: 0.35
-  yRecenteringWait: 0
-  focusYHeight: 0.45
-  smoothTurn: 1
-  turnSpeedDegPerSec: 360
-  turnEase: 0.18
-  smoothY: 0
-  desiredYOnFocus: 0.45
-  ySmoothTime: 0.2
-  markerWorldOffset: {x: 0, y: 1.5, z: 0}
+  playerRadius: 2
+  lockSeconds: 2
+  cameraOffset: 3
+  iconPrefab: {fileID: 0}
+  uiCanvas: {fileID: 0}
+  uiWorldOffset: {x: 0, y: 1.5, z: 0}
   screenEdgePadding: 24
-  rotateOffscreenArrow: 1
-  restoreLookAtOnStop: 1
-  restoreFollowOnStop: 0
+  uiShowDuration: 4
+  uiFadeDuration: 0.6
 --- !u!1 &1349292136 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -939389660634997258, guid: efcc9753d1ecadf4b934bf4561908769, type: 3}
@@ -15020,9 +14983,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 1348988441}
-  heartPrefab: {fileID: 354781009}
-  fullHeart: {fileID: 21300000, guid: 047fbf48413a25b47a188b7a4257a310, type: 3}
-  emptyHeart: {fileID: 21300000, guid: 92cb7c815400ba841ace40292679cac1, type: 3}
+  heartImage: {fileID: 0}
+  heartStages: []
+  slideFrom: 0
+  enterDuration: 0.35
+  exitDuration: 0.3
+  autoHideDelay: 1.6
+  offscreenPadding: 60
+  enterEase: 9
+  exitEase: 8
+  useUnscaledTime: 1
+  lowHpThreshold: 2
+  lowBeatScale: 1.08
+  lowBeatPeriod: 0.6
+  hitBounceScale: 1.18
+  hitBounceDuration: 0.18
+  hitBounceEase: 27
+  showOnEnable: 1
 --- !u!114 &1449014131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15500,7 +15477,8 @@ MonoBehaviour:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_sharedMaterial: {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
-  m_fontSharedMaterials: []
+  m_fontSharedMaterials:
+  - {fileID: 951524724943139926, guid: aaaf5353b5f0e6c4fa879799b0c917a1, type: 2}
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
@@ -16602,9 +16580,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 0}
-  heartPrefab: {fileID: 1083051644}
-  fullHeart: {fileID: 21300000, guid: 047fbf48413a25b47a188b7a4257a310, type: 3}
-  emptyHeart: {fileID: 21300000, guid: 92cb7c815400ba841ace40292679cac1, type: 3}
+  heartImage: {fileID: 0}
+  heartStages: []
+  slideFrom: 0
+  enterDuration: 0.35
+  exitDuration: 0.3
+  autoHideDelay: 1.6
+  offscreenPadding: 60
+  enterEase: 9
+  exitEase: 8
+  useUnscaledTime: 1
+  lowHpThreshold: 2
+  lowBeatScale: 1.08
+  lowBeatPeriod: 0.6
+  hitBounceScale: 1.18
+  hitBounceDuration: 0.18
+  hitBounceEase: 27
+  showOnEnable: 1
 --- !u!114 &1586891229
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4321619813945176072
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: WaterObjectScene_Water_09
+  m_Shader: {fileID: 4800000, guid: efcaf526ceb1f4efd9eb4e4c30c6ade6, type: 3}
+  m_Parent: {fileID: 2100000, guid: ea6e499924d1c4de8b13906cf21a9173, type: 2}
+  m_ModifiedSerializedProperties: 16
+  m_ValidKeywords:
+  - _COLORMODE_LINEAR
+  - _FOAMMODE_GRADIENT_NOISE
+  - _NOISESOURCE_WORLD_SPACE
+  - _WAVEMODE_ROUND
+  m_InvalidKeywords:
+  - _ALLOWALPHAOVERFLOW_OFF
+  - _OPAQUE_OFF
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _CrestSharpness: 0
+    - _CrestSize: 0
+    - _FadeDistance: 0.3
+    - _FoamAmount: 0.48
+    - _FoamDepth: 0.01
+    - _FoamNoiseAmount: 1
+    - _FoamScale: 0.03
+    - _FoamSharpness: 0.14
+    - _FoamStretchX: 3.7
+    - _FoamStretchY: 0.4
+    - _RefractionAmplitude: -0.28
+    - _RefractionFrequency: 0.15
+    - _RefractionScale: 3
+    - _RefractionSpeed: 0.01
+    - _ShadowStrength: 0.25
+    - _SpecularPower: 1
+    - _SpecularStrength: 0.1
+    - _WaterClearness: 0.444
+    - _WaterDepth: 80.8
+    - _WaveAmplitude: -0.37
+    - _WaveDirection: -1.64
+    - _WaveFrequency: 2.48
+    - _WaveMode: 1
+    - _WaveNoise: 0
+    - _WaveSpeed: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _ColorDeep: {r: 0.48658654, g: 0.8301887, b: 0, a: 1}
+    - _ColorShallow: {r: 0.11655898, g: 0.49056596, b: 0, a: 1}
+    - _ColorTop: {r: 1, g: 1, b: 1, a: 0.62352943}
+    - _FoamColor: {r: 1, g: 1, b: 1, a: 0.19215687}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

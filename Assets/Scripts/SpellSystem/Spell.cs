@@ -37,7 +37,7 @@ public class Spell : MonoBehaviour
     [Tooltip("煙霧持續時間(秒)，到時自動銷毀FX與本彈體")]
     public float smokeDuration = 2.0f;
     [Tooltip("引爆後延遲多少秒再Destroy(給FX收尾)")]
-    public float cleanupDelay = 0.15f;
+    public float cleanupDelay = 0.08f;
 
     [Header("Optional")]
     public SpellType spellType = SpellType.AttackSpell; // 仍保留你的型別
@@ -66,8 +66,8 @@ public class Spell : MonoBehaviour
     void Start()
     {
         // 飛行尾焰
-        if (travelFxPrefab)
-            _travelFxInst = Instantiate(travelFxPrefab, transform);
+        // if (travelFxPrefab)
+        //     _travelFxInst = Instantiate(travelFxPrefab, transform);
 
         // （可選）依SpellType給個快速著色或特效開關
         if (_mesh)
