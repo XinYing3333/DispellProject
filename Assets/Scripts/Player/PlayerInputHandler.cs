@@ -120,6 +120,8 @@ namespace Player
             _skill.performed  -= OnSkillPerformed;
             _interact.performed -= OnInteractPerformed;
             _target.performed -= OnTargetPerformed;
+            
+            StopHoldRumble();
         }
 
         private void Update()
@@ -138,6 +140,19 @@ namespace Player
             MoveSpeedMultiplier = (controlScheme == "Gamepad")
                 ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
                 : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
+            
+            if (_isRumbling)
+            {
+                if (_playerInput.currentControlScheme != "Gamepad" || Gamepad.current == null)
+                {
+                    StopHoldRumble();
+                }
+                else
+                {
+                    Gamepad.current.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
+                }
+            }
+
         }
 
         // ========= 只鎖「行動系統」的統一接口 =========
@@ -146,15 +161,17 @@ namespace Player
             if (InputLock == lockMovement) return;
             InputLock = lockMovement;
 
+            if (Gamepad.current != null)
+                Gamepad.current.SetMotorSpeeds(0f, 0f);
+
             if (InputLock)
             {
-                // 關掉進行中的 gameplay 行為（吸收、瞄準等）
+                StopHoldRumble();
                 ForceStopContinuousGameplayStates();
-                // 清除一次性 gameplay flag，避免解鎖後誤觸發
                 ClearGameplayFlags();
             }
-            // 解鎖時不用動 UI / 對話輸入，只是從下一幀開始重新讀取 Move / 行為
         }
+
 
         public void ResetJump() => JumpPressed = false;
         public void ResetDash() => DashPressed = false;
@@ -189,15 +206,21 @@ namespace Player
 
             IsCollecting = true;
             interaction.Input_StartAbsorbHold();
+
+            // 按住期間持續震動（低頻+低高頻，自己再微調強度）
+            StartHoldRumble(0.15f, 0.30f);
         }
 
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
-            // 這裡即使鎖了也要確保能收尾，避免卡「吸收中」
+            StopHoldRumble();
+
+            // 即使鎖了也要收尾，避免卡「吸收中」
             IsCollecting = false;
             if (interaction != null)
                 interaction.Input_Drop();
         }
+
 
         private void OnAimStarted(InputAction.CallbackContext ctx)
         {
@@ -238,7 +261,10 @@ namespace Player
             ShootPressed = true;
             interaction.Input_Throw();
             StartCoroutine(ClearShootFlagNextFrame());
+
+            Rumble(0.3f, 0.7f, 0.1f);
         }
+
 
         /// <summary>
         /// 注意：這裡只處理「丟下物件」的 Gameplay 版本。
@@ -267,5 +293,50 @@ namespace Player
         {
             // 
         }
+        
+        private bool _isRumbling;
+        private float _rumbleLow;
+        private float _rumbleHigh;
+
+        private void StartHoldRumble(float low, float high)
+        {
+            if (_playerInput.currentControlScheme != "Gamepad") return;
+            var pad = Gamepad.current;
+            if (pad == null) return;
+
+            _rumbleLow = low;
+            _rumbleHigh = high;
+            _isRumbling = true;
+
+            pad.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
+        }
+
+        private void StopHoldRumble()
+        {
+            _isRumbling = false;
+
+            var pad = Gamepad.current;
+            if (pad != null)
+                pad.SetMotorSpeeds(0f, 0f);
+        }
+
+        private void Rumble(float low, float high, float duration)
+        {
+            if (_playerInput.currentControlScheme != "Gamepad") return;
+
+            var pad = Gamepad.current;
+            if (pad == null) return;
+
+            pad.SetMotorSpeeds(low, high);
+            StartCoroutine(StopRumbleAfter(duration));
+        }
+
+        private IEnumerator StopRumbleAfter(float t)
+        {
+            yield return new WaitForSecondsRealtime(t);
+            if (Gamepad.current != null)
+                Gamepad.current.SetMotorSpeeds(0f, 0f);
+        }
+
     }
 }

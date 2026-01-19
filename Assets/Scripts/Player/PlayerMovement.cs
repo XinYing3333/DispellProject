@@ -15,6 +15,7 @@ public class PlayerMovement : MonoBehaviour
 
     private PlayerInputHandler input;
     private Rigidbody _rb;
+    private Collider _col;
 
     [Header("Camera Settings")]
     [SerializeField] private CinemachineFreeLook mainCam;
@@ -32,31 +33,50 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private int maxJumpCount = 2;
-    [SerializeField] private PhysicsMaterial defaultMaterial;
-    [SerializeField] private PhysicsMaterial noFrictionMaterial;
+    [SerializeField] private PhysicsMaterial defaultMaterial;     // 保留欄位
+    [SerializeField] private PhysicsMaterial noFrictionMaterial;  // 方案A：角色碰撞器一律使用它
+
+    // ===== 方案A：程式抓地（取代 PhysicMaterial 摩擦手感）=====
+    [Header("Ground Control (Scheme A)")]
+    [SerializeField, Tooltip("可站立地面最大角度")] private float maxGroundAngle = 45f;
+    [SerializeField, Tooltip("地面加速（Acceleration 模式）")] private float groundAccel = 55f;
+    [SerializeField, Tooltip("地面煞車（無輸入時減速）")] private float groundBrake = 70f;
+    [SerializeField, Tooltip("空中水平控制力")] private float airAccel = 18f;
+    [SerializeField, Tooltip("貼地力（讓坡面更穩，不影響跳躍）")] private float stickToGroundForce = 25f;
+
+    // ===== 方案A：可控貼牆（保留黏感但不靠解算器卡住）=====
+    [Header("Wall Clamp (Scheme A)")]
+    [SerializeField, Tooltip("法線與Up的dot越小越像牆")] private float wallNormalUpDotMax = 0.22f; // 0~1
+    [SerializeField, Tooltip("避免把陡斜面當牆：牆法線與Up的角度需大於此值")] private float wallMinAngleFromUp = 80f;
+    [SerializeField, Tooltip("貼牆力度（越大越黏，沿牆更難脫離）")] private float wallStickStrength = 10f;
+    [SerializeField, Tooltip("貼牆時最大下落速度（做出貼牆滑）")] private float wallSlideDownSpeed = 3.5f;
+    [SerializeField, Tooltip("水平速度太大時不吸（避免Dash擦牆被吸死）")] private float wallReleaseSpeed = 5f;
+    [SerializeField, Tooltip("上升速度低於此值才允許黏（0=上升也黏）")] private float wallMinUpVelToStick = 0f;
+    [SerializeField, Tooltip("玩家持續往牆推時，強制下滑速度（>0）")] 
+    private float wallForcedSlideSpeed = 6f;
+
+    [SerializeField, Tooltip("判定為「在推牆」：moveDir 與 -wallNormal 的點積門檻")] 
+    private float wallPressDotThreshold = 0.25f; // 0.2~0.4 常用
+
+
+    private bool _touchingWall = false;
+    private Vector3 _wallNormal = Vector3.zero;
 
     [Header("Dash Settings")]
     [SerializeField] private float dashSpeed = 12f;
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 0.6f;
 
-    // [Header("Grab Settings")]
-    // [SerializeField] private LayerMask ledgeLayer;
-    // [SerializeField] private float grabOffset = 1.5f;
-    // [SerializeField] private float grabDetectionHeight = 1.2f;
-    // [SerializeField] private float ledgeCheckDistance = 0.5f;
-
     [Header("Detect Lock")]
     [SerializeField] public bool isWalkOnly = false;
     [SerializeField] public bool lockJumpInWalkOnly = false;
     [SerializeField] public bool lockDashInWalkOnly = false;
 
-    // 在 PlayerMovement 裡加入：
     [Header("Safe Ground Tracker")]
-    [SerializeField] private float stableTimeThreshold = 0.2f;  // 站穩多久才算安全
-    [SerializeField] private float maxHorizontalSpeed = 7f;     // 移動太快不記錄
-    [SerializeField] private LayerMask safeGroundMask;          // 可踩的地面層（可用原 groundLayer）
-    
+    [SerializeField] private float stableTimeThreshold = 0.2f;
+    [SerializeField] private float maxHorizontalSpeed = 7f;
+    [SerializeField] private LayerMask safeGroundMask;
+
     [Header("Landing Buffer")]
     [SerializeField] private bool enableLandingBuffer = true;
     [SerializeField, Tooltip("依落地衝擊決定恢復時長的下限/上限（秒）")]
@@ -73,15 +93,13 @@ public class PlayerMovement : MonoBehaviour
     private bool _landingRecoverActive = false;
     private float _landingRecoverElapsed = 0f;
     private float _landingRecoverDuration = 0f;
-    private float _airPeakDownVel = 0f; // 在空中記錄過的最小 y 速度（最向下）
-
+    private float _airPeakDownVel = 0f;
 
     private float stableTimer = 0f;
     private bool hasSafeGround = false;
     private Vector3 lastSafePos;
     private Quaternion lastSafeRot;
-    
-    // 狀態
+
     private bool isGrabbing;
     private bool isFinishClimb;
     private bool isPushing;
@@ -91,42 +109,43 @@ public class PlayerMovement : MonoBehaviour
     private bool isDashing = false;
 
     private bool isFootstepPlaying = false;
-    private bool isOnGround = false;     // 由 IsGrounded() 得到
-    private bool wasOnGround = false;    // 邊界觸發用
+    private bool isOnGround = false;
+    private bool wasOnGround = false;
 
-    private Vector3 _rawInputMovement;   // 相機相對方向
+    private Vector3 _rawInputMovement;
     private float _currentSpeed;
 
     private bool hasPlayedGroundedVFX = false;
 
-    // 腳步聲/材質
     private string currentSurface = "Default";
     private SFXType currentMoveState;
 
-    // 跨幀記錄：相機 recentre 切換
     private bool _wasMoving = false;
 
-    // 跨幀記錄：Dash 方向（由協程決定，FixedUpdate 消費）
     private bool _dashActive = false;
     private Vector3 _dashDir = Vector3.zero;
 
-    // 跨幀記錄：動畫速度參數（Update 計算，FixedUpdate 不碰 Animator）
     private float _animSpeedParam = 0f;
 
-    // Step 爬階
     [SerializeField] private float maxStepHeight = 0.3f;
     [SerializeField] private float stepCheckDistance = 0.4f;
 
-    // ====== 生命週期 ======
+    // 方案A：地面資訊緩存
+    private RaycastHit _groundHit;
+    private float _groundAngle = 999f;
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        //anim = GetComponent<Animator>();
+        _col = GetComponent<Collider>();
 
-        // 建議的物理設定，讓視覺更順
         _rb.interpolation = RigidbodyInterpolation.Interpolate;
         _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        _rb.freezeRotation = true; // 由我們用 MoveRotation 控制朝向
+        _rb.freezeRotation = true;
+
+        // 方案A：角色碰撞器一律低摩擦（貼牆跳不被摩擦吃掉）
+        if (noFrictionMaterial != null)
+            _col.material = noFrictionMaterial;
     }
 
     private void Start()
@@ -140,7 +159,6 @@ public class PlayerMovement : MonoBehaviour
         if (stepVFX != null) stepVFX.Stop();
     }
 
-    // ====== Update：輸入、動畫、相機切換 ======
     private void Update()
     {
         if (input.InputLock)
@@ -150,35 +168,32 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        // 讀輸入 -> 算相機相對方向（只算目標，不做物理）
         Vector2 moveInput = input.MoveInput;
+        bool isMovingInput = input.MoveInput.magnitude > 0.25f;
+
         _rawInputMovement = GetCameraRelativeMovement(moveInput);
 
-        // 目標速度
         float targetSpeed = Mathf.Lerp(movementSpeed, runSpeed, input.MoveSpeedMultiplier);
-        if (input.IsCollecting) targetSpeed *= 0.5f;
+        if (input.IsCollecting) targetSpeed *= 0.65f;
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 10f * Time.deltaTime);
 
-        // Animator 層權重
         SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 1f);
         SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 1f);
 
-        // 動畫速度參數（僅 Update 更動）
         _animSpeedParam = (_rawInputMovement.magnitude < 0.1f)
             ? 0f
             : Mathf.Lerp(anim.GetFloat("Speed"),
-                         _rawInputMovement.magnitude * (targetSpeed / runSpeed),
-                         10f * Time.deltaTime);
+                _rawInputMovement.magnitude * (targetSpeed / runSpeed),
+                10f * Time.deltaTime);
         anim.SetFloat("Speed", _animSpeedParam);
 
-        // 觸發行為（只下指令，不直接動 Rigidbody）
         if (!PlayerInputHandler.Instance.InputLock && !isGrabbing)
         {
             if (!isWalkOnly || (isWalkOnly && !lockJumpInWalkOnly))
             {
                 if (input.JumpPressed)
                 {
-                    if (cancelLandingBufferOnJump) _landingRecoverActive = false; // 允許跳躍取消
+                    if (cancelLandingBufferOnJump) _landingRecoverActive = false;
                     TryJump();
                     input.ResetJump();
                 }
@@ -188,62 +203,38 @@ public class PlayerMovement : MonoBehaviour
             {
                 if (input.DashPressed)
                 {
-                    if (cancelLandingBufferOnDash) _landingRecoverActive = false; // 允許 Dash 取消
+                    if (cancelLandingBufferOnDash) _landingRecoverActive = false;
                     StartCoroutine(DashCoroutine());
                     input.ResetDash();
                 }
             }
         }
+        
+        _wasMoving = isMovingInput;
 
-        // 抓邊流程的輸入（放這裡僅觸發，實際位移於 FixedUpdate）
-        // if (isGrabbing)
-        // {
-        //     if (input.JumpPressed)
-        //     {
-        //         StartCoroutine(ReleaseLedge());
-        //         TryJump(); // 放手後立刻跳
-        //     }
-        // }
-
-        // 相機 recentring 只在「移動/停止」切換時調一次
-        // bool isMoving = _rawInputMovement.sqrMagnitude > 0.01f;
-        // if (isMoving != _wasMoving)
-        // {
-        //     if (isMoving)
-        //     {
-        //         mainCam.m_RecenterToTargetHeading.m_enabled = true;
-        //         mainCam.m_RecenterToTargetHeading.m_WaitTime = 0.5f;
-        //         mainCam.m_RecenterToTargetHeading.m_RecenteringTime = 0.8f;
-        //     }
-        //     else
-        //     {
-        //         mainCam.m_RecenterToTargetHeading.m_enabled = false;
-        //     }
-        //     _wasMoving = isMoving;
-        // }
         TrackSafeGround();
     }
 
-    // ====== FixedUpdate：物理唯一來源 ======
     private void FixedUpdate()
     {
         if (PlayerInputHandler.Instance.InputLock)
         {
-            // 清理運動狀態
             _rb.linearVelocity = new Vector3(0, _rb.linearVelocity.y, 0);
             return;
         }
 
-        wasOnGround = isOnGround;
-        isOnGround = IsGrounded();
+        // 每個物理步先清牆接觸，靠 OnCollisionStay 填回來（避免離牆還保留黏）
+        _touchingWall = false;
+        _wallNormal = Vector3.zero;
 
-// 在空中：記錄向下速度峰值（最負的 y）
+        wasOnGround = isOnGround;
+        isOnGround = IsGrounded(out _groundHit, out _groundAngle); // 合法角度才算 grounded
+
         if (!isOnGround)
         {
             _airPeakDownVel = Mathf.Min(_airPeakDownVel, _rb.linearVelocity.y);
         }
 
-// 落地瞬間
         if (isOnGround && !wasOnGround)
         {
             if (groundedVFX != null) groundedVFX.Play();
@@ -252,83 +243,164 @@ public class PlayerMovement : MonoBehaviour
 
             if (enableLandingBuffer)
             {
-                // 衝擊強度（0~1）：把 -Vy 映射到設定的落地衝擊區間
                 float impact = Mathf.InverseLerp(landingImpactRange.x, landingImpactRange.y, -_airPeakDownVel);
-                // 決定恢復時長（下限~上限）
                 _landingRecoverDuration = Mathf.Lerp(landingDurationRange.x, landingDurationRange.y, impact);
                 _landingRecoverElapsed = 0f;
                 _landingRecoverActive = _landingRecoverDuration > 0.0001f;
             }
 
-            // 落地後重置空中峰值
             _airPeakDownVel = 0f;
         }
         else if (!isOnGround && wasOnGround)
         {
             hasPlayedGroundedVFX = false;
-            // 剛離地就把峰值歸 0，開始記錄
             _airPeakDownVel = 0f;
         }
 
-
-        // 抓邊檢測（未抓時才檢查）
-        //if (!isGrabbing) CheckForLedgeGrab();
-
-        // 牆面摩擦（若要做可在這裡切材質）
-        CheckWallFriction();
-
-        // 爬階（物理步）
         StepClimbCheck();
 
-        // Dash 期間速度由 dash 狀態主宰
         if (_dashActive)
         {
             _rb.linearVelocity = new Vector3(_dashDir.x * dashSpeed, _rb.linearVelocity.y, _dashDir.z * dashSpeed);
         }
         else if (!isGrabbing)
         {
-            // 一般移動（MovePosition）
             if (!isDashing)
             {
-                if (_rawInputMovement.sqrMagnitude > 0.01f)
+                float landMul = 1f;
+                if (_landingRecoverActive)
                 {
-                    // 計算落地恢復倍率
-                    float landMul = 1f;
-                    if (_landingRecoverActive)
+                    _landingRecoverElapsed += Time.fixedDeltaTime;
+                    float t = Mathf.Clamp01(_landingRecoverElapsed / _landingRecoverDuration);
+                    landMul = Mathf.Clamp01(landingRecoveryCurve.Evaluate(t));
+
+                    if (_landingRecoverElapsed >= _landingRecoverDuration)
                     {
-                        _landingRecoverElapsed += Time.fixedDeltaTime;
-                        float t = Mathf.Clamp01(_landingRecoverElapsed / _landingRecoverDuration);
-                        landMul = Mathf.Clamp01(landingRecoveryCurve.Evaluate(t));
-
-                        if (_landingRecoverElapsed >= _landingRecoverDuration)
-                        {
-                            _landingRecoverActive = false;
-                            landMul = 1f;
-                        }
+                        _landingRecoverActive = false;
+                        landMul = 1f;
                     }
+                }
 
-                    Vector3 move = _rawInputMovement * (_currentSpeed * landMul * Time.fixedDeltaTime);
-                    _rb.MovePosition(_rb.position + move);
+                ApplySchemeAMovement(landMul);
 
+                // 只在「明確有移動輸入」時才更新朝向
+                if (_wasMoving)
+                {
                     var targetRot = Quaternion.LookRotation(_rawInputMovement);
                     var newRot = Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime);
                     _rb.MoveRotation(newRot);
                 }
-
             }
         }
 
-        // 抓邊期間：鎖住剛體於 ledge 點附近（若有側移可在這裡做）
         if (isGrabbing)
         {
-            // 可在這裡做沿邊水平移動的 rb.MovePosition
+            // 保留
         }
 
-        // 腳步聲 state 機（根據 isOnGround + 速度狀態）
         UpdateFootstepAudio();
     }
 
-    // ====== 介面：坐騎切換 ======
+    private void ApplySchemeAMovement(float landMul)
+    {
+        Vector3 v = _rb.linearVelocity;
+        Vector3 desiredHoriz = _rawInputMovement * (_currentSpeed * landMul);
+
+        if (isOnGround)
+        {
+            Vector3 n = _groundHit.normal;
+
+            Vector3 desiredOnGround = Vector3.ProjectOnPlane(desiredHoriz, n);
+            Vector3 currentOnGround = Vector3.ProjectOnPlane(v, n);
+
+            bool hasInput = _rawInputMovement.sqrMagnitude > 0.01f;
+
+            if (hasInput)
+            {
+                Vector3 delta = desiredOnGround - currentOnGround;
+                _rb.AddForce(delta * groundAccel, ForceMode.Acceleration);
+            }
+            else
+            {
+                _rb.AddForce(-currentOnGround * groundBrake, ForceMode.Acceleration);
+            }
+
+            if (v.y <= 0.01f)
+                _rb.AddForce(-n * stickToGroundForce, ForceMode.Acceleration);
+        }
+        else
+        {
+            // 空中水平控制（不碰 y）
+            Vector3 currentHoriz = new Vector3(v.x, 0f, v.z);
+
+            // ===== 可控貼牆：黏但不塞牆 =====
+            // 退出條件：水平速度太大（例如Dash擦牆）就不要吸
+            float horizSpeed = currentHoriz.magnitude;
+            bool allowStick = _touchingWall && v.y >= wallMinUpVelToStick && horizSpeed <= wallReleaseSpeed;
+
+            if (allowStick)
+            {
+                // 牆法線水平化
+                Vector3 wn = _wallNormal;
+                wn.y = 0f;
+                if (wn.sqrMagnitude > 0.0001f) wn.Normalize();
+
+                // 判定是否「在推牆」
+                Vector3 moveDir = _rawInputMovement;
+                moveDir.y = 0f;
+                if (moveDir.sqrMagnitude > 0.0001f) moveDir.Normalize();
+
+                // -wn 是「朝牆方向」(玩家面向牆時 moveDir·(-wn) 會是正的)
+                bool pressingWall = moveDir.sqrMagnitude > 0.0001f && Vector3.Dot(moveDir, -wn) > wallPressDotThreshold;
+
+                // 移除「朝牆內推」分量，避免越推越卡
+                desiredHoriz = Vector3.ProjectOnPlane(desiredHoriz, wn);
+                currentHoriz = Vector3.ProjectOnPlane(currentHoriz, wn);
+
+                // 沿牆控制加強（保留黏感）
+                Vector3 deltaAlongWall = desiredHoriz - currentHoriz;
+                _rb.AddForce(deltaAlongWall * (airAccel + wallStickStrength), ForceMode.Acceleration);
+
+                // ===== 強制下滑（你要的核心）=====
+                if (pressingWall)
+                {
+                    // 1) 取消上升（避免一直「頂在牆上」像黏住）
+                    if (_rb.linearVelocity.y > 0f)
+                    {
+                        var vv = _rb.linearVelocity;
+                        vv.y = 0f;
+                        _rb.linearVelocity = vv;
+                    }
+
+                    // 2) 強制把 vy 拉到至少 -wallForcedSlideSpeed（比單純限速更強）
+                    if (_rb.linearVelocity.y > -wallForcedSlideSpeed)
+                    {
+                        var vv = _rb.linearVelocity;
+                        vv.y = -wallForcedSlideSpeed;
+                        _rb.linearVelocity = vv;
+                    }
+                }
+                else
+                {
+                    // 沒在推牆：維持原本「貼牆滑」的下落限速（較柔）
+                    if (_rb.linearVelocity.y < -wallSlideDownSpeed)
+                    {
+                        var vv = _rb.linearVelocity;
+                        vv.y = -wallSlideDownSpeed;
+                        _rb.linearVelocity = vv;
+                    }
+                }
+
+                return;
+            }
+
+
+            // 普通空中控制
+            Vector3 delta = desiredHoriz - currentHoriz;
+            _rb.AddForce(new Vector3(delta.x, 0f, delta.z) * airAccel, ForceMode.Acceleration);
+        }
+    }
+
     public void ApplyElephantStats()
     {
         movementSpeed = 3.5f;
@@ -347,14 +419,12 @@ public class PlayerMovement : MonoBehaviour
         anim.SetBool("IsRidingElephant", false);
     }
 
-    // ====== 動畫層權重 ======
     private void SetAnimatorLayerWeight(string layerName, float weight)
     {
         int idx = anim.GetLayerIndex(layerName);
         if (idx != -1) anim.SetLayerWeight(idx, weight);
     }
 
-    // ====== 行為：跳躍（僅下指令，實際由物理接手） ======
     private int currentJumpCount = 0;
 
     private void TryJump()
@@ -378,7 +448,6 @@ public class PlayerMovement : MonoBehaviour
             if (jumpVFX != null) jumpVFX.Play();
         }
 
-        // 在物理步生效：直接改剛體的垂直速度
         var v = _rb.linearVelocity;
         v.y = jumpForce;
         _rb.linearVelocity = v;
@@ -391,7 +460,6 @@ public class PlayerMovement : MonoBehaviour
         anim.SetBool("IsDoubleJump", false);
     }
 
-    // ====== 行為：Dash（用 WaitForFixedUpdate 與狀態） ======
     private IEnumerator DashCoroutine()
     {
         if (isWalkOnly && lockDashInWalkOnly) yield break;
@@ -408,7 +476,7 @@ public class PlayerMovement : MonoBehaviour
         float t = 0f;
         while (t < dashDuration)
         {
-            yield return new WaitForFixedUpdate();      // ★ 物理步同步
+            yield return new WaitForFixedUpdate();
             t += Time.fixedDeltaTime;
         }
 
@@ -416,26 +484,26 @@ public class PlayerMovement : MonoBehaviour
         anim.SetBool("Dash", false);
         isDashing = false;
 
-        // 不硬清零，交回給一般移動；若需要可做短阻尼
-        // _rb.linearVelocity = new Vector3(0f, _rb.linearVelocity.y, 0f);
-
         yield return new WaitForSeconds(dashCooldown);
         canDash = true;
     }
 
-    // ====== 地面/牆面/樓梯 ======
-    private bool IsGrounded()
+    private bool IsGrounded(out RaycastHit hit, out float angle)
     {
         Vector3 origin = transform.position + Vector3.up * 0.1f;
-        return Physics.Raycast(origin, Vector3.down, 0.2f, groundLayer, QueryTriggerInteraction.Ignore);
+        if (Physics.Raycast(origin, Vector3.down, out hit, 0.35f, groundLayer, QueryTriggerInteraction.Ignore))
+        {
+            angle = Vector3.Angle(hit.normal, Vector3.up);
+            return angle <= maxGroundAngle;
+        }
+
+        angle = 999f;
+        return false;
     }
 
-    private void CheckWallFriction()
+    private bool IsGrounded()
     {
-        // 若要做黏牆材質切換，可在此啟用
-        // bool touchingWall = false;
-        // ...
-        // _col.material = touchingWall ? noFrictionMaterial : defaultMaterial;
+        return IsGrounded(out _, out _);
     }
 
     private void StepClimbCheck()
@@ -449,13 +517,11 @@ public class PlayerMovement : MonoBehaviour
             Vector3 upperOrigin = transform.position + Vector3.up * maxStepHeight;
             if (!Physics.Raycast(upperOrigin, direction, stepCheckDistance, groundLayer, QueryTriggerInteraction.Ignore))
             {
-                // 平滑拉升一點（用 MovePosition 而非 transform）
                 _rb.MovePosition(_rb.position + Vector3.up * 0.1f);
             }
         }
     }
 
-    // ====== 腳步音與材質 ======
     private void UpdateFootstepAudio()
     {
         bool movingHoriz = _rawInputMovement.magnitude > 0.1f;
@@ -492,71 +558,17 @@ public class PlayerMovement : MonoBehaviour
             {
                 case "Grass": return "Grass";
                 case "Stone": return "Stone";
-                case "Wood":  return "Wood";
-                default:      return "Default";
+                case "Wood": return "Wood";
+                default: return "Default";
             }
         }
         return "Default";
     }
 
-    // ====== 抓邊 ======
-    /*private void CheckForLedgeGrab()
-    {
-        Vector3 forwardStart = transform.position + Vector3.up * Mathf.Max(1.5f, grabDetectionHeight);
-        Vector3 forwardDir = transform.forward;
-
-        Debug.DrawRay(forwardStart, forwardDir * 0.6f, Color.blue);
-
-        if (Physics.Raycast(forwardStart, forwardDir, out RaycastHit forwardHit, 0.6f, ledgeLayer, QueryTriggerInteraction.Ignore))
-        {
-            Vector3 downStart = forwardHit.point + Vector3.up * 0.3f;
-            Debug.DrawRay(downStart, Vector3.down * 1.0f, Color.yellow);
-
-            if (Physics.Raycast(downStart, Vector3.down, out RaycastHit downHit, 1.0f, ledgeLayer, QueryTriggerInteraction.Ignore))
-            {
-                float angle = Vector3.Angle(downHit.normal, Vector3.up);
-                if (angle < 45f) StartLedgeGrab(downHit.point);
-            }
-        }
-    }
-
-    private void StartLedgeGrab(Vector3 ledgePoint)
-    {
-        if (isGrabbing) return;
-
-        isGrabbing = true;
-
-        // 切到「抓邊」的剛體型態（避免與物理搶位置造成 jitter）
-        _rb.linearVelocity = Vector3.zero;
-        _rb.useGravity = false;
-        _rb.isKinematic = true;
-
-        // 用剛體座標，不用 transform
-        _rb.position = ledgePoint + Vector3.down * grabOffset;
-
-        anim.SetBool("IsLedgeGrabbing", true);
-        input.ResetJump();
-    }
-
-    private IEnumerator ReleaseLedge()
-    {
-        anim.SetBool("IsLedgeGrabbing", false);
-        yield return new WaitForSeconds(0.1f);
-
-        if (isGrabbing)
-        {
-            _rb.isKinematic = false;
-            _rb.useGravity = true;
-        }
-        isGrabbing = false;
-    }*/
-    
     private void TrackSafeGround()
     {
-        // 確認是否踩地
-        if (!IsGrounded()) { stableTimer = 0f; return; }
+        if (!IsGrounded(out RaycastHit hit, out float angle)) { stableTimer = 0f; return; }
 
-        // 判斷水平速度是否太快（例如跳或滑落邊緣）
         Vector3 horizontalVel = new Vector3(_rb.linearVelocity.x, 0, _rb.linearVelocity.z);
         if (horizontalVel.magnitude > maxHorizontalSpeed)
         {
@@ -564,7 +576,6 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        // 穩定計時
         stableTimer += Time.deltaTime;
         if (stableTimer >= stableTimeThreshold)
         {
@@ -584,7 +595,6 @@ public class PlayerMovement : MonoBehaviour
         return true;
     }
 
-    // ====== 碰撞處理（只做狀態切換；地面狀態以 Raycast 為準） ======
     private void OnCollisionEnter(Collision other)
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("Ledge"))
@@ -599,17 +609,50 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnCollisionStay(Collision other)
     {
-        if (!other.gameObject.CompareTag("Object")) return;
-
-        if (_rawInputMovement.magnitude < 0.1f)
+        if (other.gameObject.CompareTag("Object"))
         {
-            anim.SetBool("isPush", false);
-            isPushing = false;
+            if (_rawInputMovement.magnitude < 0.1f)
+            {
+                anim.SetBool("isPush", false);
+                isPushing = false;
+            }
+            else
+            {
+                anim.SetBool("isPush", true);
+                isPushing = true;
+            }
         }
-        else
+
+        // ===== 收集「最像牆」的 contact 法線，讓黏牆穩定 =====
+        // 原則：upDot 越小越像牆（法線越水平）
+        float bestUpDot = 999f;
+        Vector3 bestN = Vector3.zero;
+
+        int count = other.contactCount;
+        for (int i = 0; i < count; i++)
         {
-            anim.SetBool("isPush", true);
-            isPushing = true;
+            Vector3 n = other.GetContact(i).normal;
+            float upDot = Mathf.Abs(Vector3.Dot(n, Vector3.up));
+            if (upDot < bestUpDot)
+            {
+                bestUpDot = upDot;
+                bestN = n;
+            }
+        }
+
+        if (bestN != Vector3.zero)
+        {
+            // 先用 dot 門檻快速過濾
+            if (bestUpDot <= wallNormalUpDotMax)
+            {
+                // 再用角度避免把坡面當牆
+                float angleFromUp = Vector3.Angle(bestN, Vector3.up);
+                if (angleFromUp >= wallMinAngleFromUp)
+                {
+                    _touchingWall = true;
+                    _wallNormal = bestN;
+                }
+            }
         }
     }
 
@@ -628,22 +671,10 @@ public class PlayerMovement : MonoBehaviour
             anim.SetTrigger("isPraying");
     }
 
-    // ====== 工具 ======
     private Vector3 GetCameraRelativeMovement(Vector2 cameraInput)
     {
         Vector3 f = cameraTransform.forward; f.y = 0f;
-        Vector3 r = cameraTransform.right;   r.y = 0f;
+        Vector3 r = cameraTransform.right; r.y = 0f;
         return (f.normalized * cameraInput.y + r.normalized * cameraInput.x).normalized;
     }
-
-#if UNITY_EDITOR
-    // private void OnDrawGizmosSelected()
-    // {
-    //     Gizmos.color = Color.red;
-    //     Vector3 rayStart = transform.position + Vector3.up * grabDetectionHeight;
-    //     Vector3 rayDir = transform.forward;
-    //     Gizmos.DrawLine(rayStart, rayStart + rayDir * ledgeCheckDistance);
-    //     Gizmos.DrawWireSphere(rayStart + rayDir * ledgeCheckDistance + Vector3.up * 0.5f, 0.2f);
-    // }
-#endif
 }

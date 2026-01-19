@@ -72,7 +72,7 @@ public class SceneController : MonoBehaviour
                 case "MainMenu":
                     AudioManager.Instance.PlayBGM(BGMType.MainMenu);
                     break;
-                case "L1v4Main":
+                case "L1v5":
                     AudioManager.Instance.PlayBGM(BGMType.FirstLevel);
                     break;
                 default:

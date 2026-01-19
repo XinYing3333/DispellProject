@@ -11,6 +11,7 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
     [Header("Refs")]
     public RoadFader road;              // 斑馬線淡入/淡出控制
     public Collider crossRoad;          // 阻擋用碰撞器（有就用；沒有就忽略）
+    public Animator animator;          // 阻擋用碰撞器（有就用；沒有就忽略）
 
     [Header("Timing")]
     public float fadeInTime  = 1f;
@@ -66,6 +67,7 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
     public void OnHit(ThoughtPayloadSO payload)
     {
         if (oneAtATime && _busy) return;
+        animator.SetTrigger("Hit");
         StartCoroutine(RunCycle());
     }
 

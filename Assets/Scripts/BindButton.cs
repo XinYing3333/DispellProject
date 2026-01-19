@@ -43,7 +43,9 @@ public class BindButton : MonoBehaviour
             _button.onClick.AddListener(() => controller.ExitGame());
             return;
         }
+        
+        // TODO:切場景不要寫在程式裏
         // 綁定時用 lambda 呼叫該方法
-        _button.onClick.AddListener(() => controller.LoadSceneWithLoading("L1v4Main"));
+        _button.onClick.AddListener(() => controller.LoadSceneWithLoading("L1v5"));
     }
 }

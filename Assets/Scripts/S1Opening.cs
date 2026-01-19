@@ -5,10 +5,11 @@ using UnityEngine.Video;
 using Cinemachine;
 using Player;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 /// <summary>
 /// 進觸發 → 先播片頭 VideoClip → 播完或被跳過後再交給 CutsceneManager 播 Timeline。
-/// 支援：play-once、skip、PlayerPrefs 持久化、可選 vcam、按 Y 跳過片頭。
+/// 支援：play-once、skip、PlayerPrefs 持久化、可選 vcam、按住 B 2 秒跳過片頭 + 視覺進度。
 /// </summary>
 [RequireComponent(typeof(Collider))]
 public class S1Opening : MonoBehaviour
@@ -40,10 +41,20 @@ public class S1Opening : MonoBehaviour
     [Header("Auto Binding (optional)")]
     public bool autoBindExposedReferences = true;
 
+    [Header("Skip Hold")]
+    [Tooltip("按住多久才跳過（秒）")]
+    [SerializeField] private float holdToSkipSeconds = 2f;
+
+    [Tooltip("顯示跳過提示的 UI Root（可選）")]
+    [SerializeField] private GameObject skipUIRoot;
+
+    [Tooltip("用來顯示進度的 Image（Type 設為 Filled）")]
+    [SerializeField] private Image skipFillImage;
+
     [Header("Events")]
     [Tooltip("Cutscene 播放結束後執行的事件（可在 Inspector 指派）")]
     public UnityEvent onCutsceneFinished;
-    
+
     // 可在程式碼中註冊
     public UnityAction onCutsceneFinishedAction;
 
@@ -51,29 +62,79 @@ public class S1Opening : MonoBehaviour
     private bool _isPlayingIntro;
     private bool _isPlayingCutscene;
 
+    // hold state
+    private float _holdTimer;
+    private bool _holdActive;
+
     private void Start()
     {
         var col = GetComponent<Collider>();
         col.isTrigger = true;
 
-        introPlayer.gameObject.SetActive(false);
+        if (introPlayer != null)
+            introPlayer.gameObject.SetActive(false);
+
+        SetSkipUI(false, 0f);
 
         if (playOnStart)
-        {
             TryPlay();
-        }
     }
 
     private void Update()
     {
-        // 只有在「影片正在播」的時候才聽按鍵
-        if (_isPlayingIntro)
+        if (!_isPlayingIntro) return;
+        if (!allowSkip) { SetSkipUI(false, 0f); return; }
+
+        // 只在 Intro 播放期間顯示/更新 UI
+        SetSkipUI(true, GetHold01());
+
+        // 按住 B 進行累計；鬆開就歸零
+        bool holding = Input.GetKey(KeyCode.B);
+        bool holding2 = PlayerInputHandler.Instance.InteractPressed;
+
+        // 如果你仍想兼容舊的「互動鍵」：按下時啟動一次 hold，但無法判定持續按住時會停在那裡（取決於你的輸入系統）
+        // 這段不會造成一按就跳過；只會嘗試啟動 hold。
+        if (!_holdActive && PlayerInputHandler.Instance != null && PlayerInputHandler.Instance.InteractPressed)
+            _holdActive = true;
+
+        if (holding || holding2)
         {
-            if (Input.GetKeyDown(KeyCode.B) || PlayerInputHandler.Instance.InteractPressed)
+            _holdActive = true;
+            _holdTimer += Time.unscaledDeltaTime;
+
+            if (_holdTimer >= holdToSkipSeconds)
             {
+                _holdTimer = 0f;
+                _holdActive = false;
+                SetSkipUI(false, 0f);
                 SkipIntroAndStartCutscene();
             }
         }
+        else
+        {
+            // 沒有持續按住 B 就重置
+            _holdTimer = 0f;
+            _holdActive = false;
+        }
+
+        // 每幀更新 fill
+        if (skipFillImage != null)
+            skipFillImage.fillAmount = GetHold01();
+    }
+
+    private float GetHold01()
+    {
+        if (holdToSkipSeconds <= 0f) return 1f;
+        return Mathf.Clamp01(_holdTimer / holdToSkipSeconds);
+    }
+
+    private void SetSkipUI(bool on, float fill01)
+    {
+        if (skipUIRoot != null && skipUIRoot.activeSelf != on)
+            skipUIRoot.SetActive(on);
+
+        if (skipFillImage != null)
+            skipFillImage.fillAmount = on ? Mathf.Clamp01(fill01) : 0f;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -97,10 +158,12 @@ public class S1Opening : MonoBehaviour
             if (HasPlayedPersistent()) return;
         }
 
-        PlayerInputHandler.Instance.SetLockMovement(true);
-        introPlayer.gameObject.SetActive(true);
+        if (PlayerInputHandler.Instance != null)
+            PlayerInputHandler.Instance.SetLockMovement(true);
+
         if (introPlayer != null)
         {
+            introPlayer.gameObject.SetActive(true);
             PlayIntro();
         }
         else
@@ -114,6 +177,9 @@ public class S1Opening : MonoBehaviour
         if (introPlayer == null) return;
 
         _isPlayingIntro = true;
+        _holdTimer = 0f;
+        _holdActive = false;
+        SetSkipUI(allowSkip, 0f);
 
         introPlayer.loopPointReached -= OnIntroFinished;
         introPlayer.errorReceived    -= OnIntroError;
@@ -127,6 +193,10 @@ public class S1Opening : MonoBehaviour
     private void OnIntroFinished(VideoPlayer vp)
     {
         _isPlayingIntro = false;
+        _holdTimer = 0f;
+        _holdActive = false;
+        SetSkipUI(false, 0f);
+
         if (hideIntroAfterPlay)
             vp.gameObject.SetActive(false);
 
@@ -137,6 +207,9 @@ public class S1Opening : MonoBehaviour
     {
         Debug.LogWarning($"Intro video error: {msg}, will still play cutscene.");
         _isPlayingIntro = false;
+        _holdTimer = 0f;
+        _holdActive = false;
+        SetSkipUI(false, 0f);
         PlayCutscene();
     }
 
@@ -150,6 +223,10 @@ public class S1Opening : MonoBehaviour
         }
 
         _isPlayingIntro = false;
+        _holdTimer = 0f;
+        _holdActive = false;
+        SetSkipUI(false, 0f);
+
         PlayCutscene();
     }
 
@@ -174,7 +251,6 @@ public class S1Opening : MonoBehaviour
         _playedThisSession = true;
         if (onlyOnce) MarkPlayedPersistent();
 
-        // 執行所有 callback
         onCutsceneFinished?.Invoke();
         onCutsceneFinishedAction?.Invoke();
     }
@@ -197,10 +273,13 @@ public class S1Opening : MonoBehaviour
             _isPlayingCutscene = false;
         }
 
+        _holdTimer = 0f;
+        _holdActive = false;
+        SetSkipUI(false, 0f);
+
         _playedThisSession = true;
         if (onlyOnce) MarkPlayedPersistent();
 
-        // 同樣觸發結束事件（如果 skip 時也想執行）
         onCutsceneFinished?.Invoke();
         onCutsceneFinishedAction?.Invoke();
     }

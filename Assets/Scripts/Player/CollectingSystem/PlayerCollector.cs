@@ -117,6 +117,7 @@ public class PlayerCollector : MonoBehaviour
                 try
                 {
                     collectable.Collect();
+                    AudioManager.Instance.PlaySFX(SFXType.CoinPickup);
                     _onPulledResult?.Invoke(null, true);
                 }
                 finally
@@ -223,7 +224,7 @@ public class PlayerCollector : MonoBehaviour
             rb.isKinematic = true;
             rb.useGravity  = false;
 #if UNITY_6000_0_OR_NEWER
-            rb.linearVelocity = Vector3.zero;
+            //rb.linearVelocity = Vector3.zero;
 #else
             rb.velocity = Vector3.zero;
 #endif

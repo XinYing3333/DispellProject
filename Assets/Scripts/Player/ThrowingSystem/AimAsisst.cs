@@ -70,11 +70,16 @@ public class AimAssist : MonoBehaviour
             return cameraTransform ? cameraTransform.forward : transform.forward;
 
         var origin = throwOrigin ? throwOrigin.position :
-                     (cameraTransform ? cameraTransform.position : transform.position);
-        var dir = (_current.GetAimPoint() - origin);
-        return dir.sqrMagnitude > 0.0001f ? dir.normalized :
-               (cameraTransform ? cameraTransform.forward : transform.forward);
+            (cameraTransform ? cameraTransform.position : transform.position);
+
+        var aimPoint = GetTargetCenter(_current);
+        var dir = aimPoint - origin;
+
+        return dir.sqrMagnitude > 0.0001f
+            ? dir.normalized
+            : (cameraTransform ? cameraTransform.forward : transform.forward);
     }
+
 
     private Targetable FindBestTarget()
     {
@@ -93,12 +98,13 @@ public class AimAssist : MonoBehaviour
             var t = c.GetComponentInParent<Targetable>();
             if (!t) continue;
 
-            var to = t.GetAimPoint() - origin;
+            var to = GetTargetCenter(t) - origin;
             float dist = to.magnitude;
             if (dist <= 0.0001f) continue;
 
             float ang = Vector3.Angle(forward, to);
             if (ang > maxAngle) continue;
+
 
             // 距離越近、角度越小分數越高（各 0.5 權重）
             float score = Mathf.InverseLerp(detectRadius, 0f, dist) * 0.5f +
@@ -108,6 +114,23 @@ public class AimAssist : MonoBehaviour
         }
         return best;
     }
+    
+    private Vector3 GetTargetCenter(Targetable t)
+    {
+        // 優先用 Collider（最準確反映碰撞體）
+        var col = t.GetComponentInChildren<Collider>();
+        if (col)
+            return col.bounds.center;
+
+        // 次選 Renderer（視覺中心）
+        var rend = t.GetComponentInChildren<Renderer>();
+        if (rend)
+            return rend.bounds.center;
+
+        // 兜底：使用原本 AimPoint
+        return t.GetAimPoint();
+    }
+
 
     private void OnDrawGizmosSelected()
     {
@@ -131,7 +154,7 @@ public class AimAssist : MonoBehaviour
         if (CurrentTarget)
         {
             Gizmos.color = targetLineColor;
-            Gizmos.DrawLine(origin, CurrentTarget.GetAimPoint());
+            Gizmos.DrawLine(origin, GetTargetCenter(CurrentTarget));
         }
     }
 }
