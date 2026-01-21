@@ -19,11 +19,6 @@ namespace UI.Pause
         [SerializeField] private GameObject optionsPanel;
         [SerializeField] private GameObject confirmPanel;
 
-        [Header("Main Buttons (OnClick 也可直接綁 controller.Main_XXX)")]
-        [SerializeField] private Button btnContinue;
-        [SerializeField] private Button btnOptions;
-        [SerializeField] private Button btnQuit;
-
         [Header("Main Text Hint")]
         [SerializeField] private TextMeshProUGUI mainHeader;
         [SerializeField] private TextMeshProUGUI mainHint; // 顯示「▶ Continue / ▶ Options / ▶ Quit」
@@ -41,10 +36,6 @@ namespace UI.Pause
         void Awake()
         {
             if (!controller) controller = FindFirstObjectByType<PauseController>();
-
-            if (btnContinue) btnContinue.onClick.AddListener(controller.Main_Continue);
-            if (btnOptions) btnOptions.onClick.AddListener(controller.Main_Options);
-            if (btnQuit) btnQuit.onClick.AddListener(controller.Main_Quit);
         }
 
         void Update()

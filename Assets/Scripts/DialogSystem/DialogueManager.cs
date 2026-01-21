@@ -1,29 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace.EventBus;
 using DefaultNamespace.EventBus.Events.Dialog;
-using UnityEngine;
-using TMPro;
+using DefaultNamespace.EventBus.Events.UI; // LanguageChanged
 using Ink.Runtime;
+using TMPro;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using DialogSystem;
 using Player;
+using UI.Localization;
 
-public enum DialogueLanguage
-{
-    zh,
-    en,
-    jp
-}
-
+/// <summary>
+/// 語言狀態全面交給 LocalizationService：
+/// - DialogueManager 不存語言、不讀寫 PlayerPrefs、不做 zh/en/jp 判斷
+/// - 只在進入/重啟對話時把 LocalizationService.CurrentInkLangCode 寫入 Ink 變數 "lang"
+/// - 收到 LanguageChanged 時若正在對話就重啟（force restart）
+/// </summary>
 public class DialogueManager : MonoBehaviour
 {
     [Header("Params")]
     [SerializeField] private float typingSpeed = 0.09f;
-
-    [Header("Language")]
-    [SerializeField] private DialogueLanguage startLanguage = DialogueLanguage.en;
-    private const string LANG_PREF_KEY = "DIALOGUE_LANG";
-    public DialogueLanguage CurrentLanguage { get; private set; }
 
     [Header("Load Globals JSON")]
     [SerializeField] private TextAsset loadGlobalsJSON;
@@ -52,7 +49,6 @@ public class DialogueManager : MonoBehaviour
     public bool dialogueIsPlaying { get; private set; }
 
     private bool canContinueToNextLine = false;
-
     private Coroutine displayLineCoroutine;
 
     private static DialogueManager instance;
@@ -70,11 +66,14 @@ public class DialogueManager : MonoBehaviour
     private float submitLockTimer = 0f; // 倒數用
     private bool SubmitPressedNow => submitLockTimer <= 0f && PlayerInputHandler.Instance.InteractPressed;
 
-    // ===== 新增：記住最後一次進入對話的參數，讓你可以「切語言強制重啟」=====
+    // 記住最後一次進入對話的參數，讓切語言可「強制重啟」
     private TextAsset lastInkJSON;
     private Animator lastEmoteAnimator;
     private bool lastAutoDisplay;
     private bool lastLockMovement;
+
+    // 監聽語言變更
+    private EventBinding<LanguageChanged> _bindLang;
 
     private void LockSubmit(float seconds = 0.08f)
     {
@@ -84,39 +83,40 @@ public class DialogueManager : MonoBehaviour
     private void Awake()
     {
         if (instance != null)
-        {
             Debug.LogWarning("Found more than one Dialogue Manager in the scene");
-        }
+
         instance = this;
 
         dialogueVariables = new DialogueVariables(loadGlobalsJSON);
         inkExternalFunctions = new InkExternalFunctions();
 
-        audioSource = this.gameObject.AddComponent<AudioSource>();
+        audioSource = gameObject.AddComponent<AudioSource>();
         currentAudioInfo = defaultAudioInfo;
-
-        // ===== 新增：載入語言 =====
-        LoadLanguage();
     }
 
-    public static DialogueManager GetInstance()
+    public static DialogueManager GetInstance() => instance;
+
+    private void OnEnable()
     {
-        return instance;
+        _bindLang = new EventBinding<LanguageChanged>(_ => OnLanguageChanged());
+        EventBus<LanguageChanged>.Register(_bindLang);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<LanguageChanged>.Deregister(_bindLang);
+        _bindLang = null;
     }
 
     private void Start()
     {
         dialogueIsPlaying = false;
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel) dialoguePanel.SetActive(false);
 
         // get all of the choices text
         choicesText = new TextMeshProUGUI[choices.Length];
-        int index = 0;
-        foreach (GameObject choice in choices)
-        {
-            choicesText[index] = choice.GetComponentInChildren<TextMeshProUGUI>();
-            index++;
-        }
+        for (int i = 0; i < choices.Length; i++)
+            choicesText[i] = choices[i].GetComponentInChildren<TextMeshProUGUI>();
 
         InitializeAudioInfoDictionary();
     }
@@ -125,46 +125,44 @@ public class DialogueManager : MonoBehaviour
     {
         audioInfoDictionary = new Dictionary<string, DialogueAudioInfoSO>();
         audioInfoDictionary.Add(defaultAudioInfo.id, defaultAudioInfo);
+
         foreach (DialogueAudioInfoSO audioInfo in audioInfos)
-        {
             audioInfoDictionary.Add(audioInfo.id, audioInfo);
-        }
     }
 
     private void SetCurrentAudioInfo(string id)
     {
-        DialogueAudioInfoSO audioInfo = null;
-        audioInfoDictionary.TryGetValue(id, out audioInfo);
-        if (audioInfo != null)
-        {
-            this.currentAudioInfo = audioInfo;
-        }
-        else
-        {
-            Debug.LogWarning("Failed to find audio info for id: " + id);
-        }
+        audioInfoDictionary.TryGetValue(id, out var audioInfo);
+        if (audioInfo != null) currentAudioInfo = audioInfo;
+        else Debug.LogWarning("Failed to find audio info for id: " + id);
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Y)) //Debug
+        if (Input.GetKeyDown(KeyCode.Y)) // TODO:切語言接口
         {
-            var next = (CurrentLanguage == DialogueLanguage.en) ? DialogueLanguage.zh : DialogueLanguage.en;
-            SetLanguage(next, forceRestartIfPlaying: true);
-            Debug.Log("Lang = " + next);
+            var loc = LocalizationService.Instance;
+            if (!loc) return;
+
+            var next = loc.CurrentAppLanguage == Language.en ? Language.zh : Language.en;
+            loc.SetLanguage(next);
+            Debug.Log("AppLanguage = " + next);
         }
 
         if (!dialogueIsPlaying) return;
 
         // 沒有選項：按下提交才繼續
         if (canContinueToNextLine
-            && currentStory.currentChoices.Count == 0 && PlayerInputHandler.Instance.InteractPressed)
+            && currentStory.currentChoices.Count == 0
+            && PlayerInputHandler.Instance.InteractPressed)
         {
             ContinueStory();
             return;
         }
+
         if (canContinueToNextLine
-            && currentStory.currentChoices.Count == 0 && isAutoDisplay)
+            && currentStory.currentChoices.Count == 0
+            && isAutoDisplay)
         {
             ContinueStory();
             return;
@@ -172,7 +170,8 @@ public class DialogueManager : MonoBehaviour
 
         // 有選項：按下提交則送出目前選到的選項
         if (canContinueToNextLine
-            && currentStory.currentChoices.Count > 0 && PlayerInputHandler.Instance.InteractPressed)
+            && currentStory.currentChoices.Count > 0
+            && PlayerInputHandler.Instance.InteractPressed)
         {
             int idx = GetSelectedChoiceIndex();
             if (idx < 0) idx = 0;
@@ -183,8 +182,7 @@ public class DialogueManager : MonoBehaviour
         if (submitLockTimer > 0f)
         {
             submitLockTimer -= Time.unscaledDeltaTime;
-            if (submitLockTimer <= 0f)
-                submitLockTimer = 0f;
+            if (submitLockTimer <= 0f) submitLockTimer = 0f;
         }
     }
 
@@ -206,7 +204,7 @@ public class DialogueManager : MonoBehaviour
 
     public void EnterDialogueMode(TextAsset inkJSON, Animator emoteAnimator = null, bool autoDisplay = false, bool lockMovement = true)
     {
-        // ===== 新增：記住參數，方便切語言重啟 =====
+        // 記住參數，方便切語言重啟
         lastInkJSON = inkJSON;
         lastEmoteAnimator = emoteAnimator;
         lastAutoDisplay = autoDisplay;
@@ -220,36 +218,28 @@ public class DialogueManager : MonoBehaviour
         inkExternalFunctions.Bind(currentStory, emoteAnimator);
 
         dialogueIsPlaying = true;
-        dialoguePanel.SetActive(true);
+        if (dialoguePanel) dialoguePanel.SetActive(true);
         isAutoDisplay = autoDisplay;
 
-        // globals 先灌進去（注意：如果你的 globals 也有 VAR lang，這裡會覆寫它）
+        // globals 先灌進去
         dialogueVariables.StartListening(currentStory);
 
-        // ===== 新增：把目前語言灌到 Ink 變數 lang（要在 StartListening 後做，避免被 globals 覆寫）=====
+        // 把目前語言灌到 Ink 變數 lang
         ApplyLanguageToStory(currentStory);
 
         // reset portrait, layout, and speaker
-        displayNameText.text = "???";
-        portraitAnimator.Play("default");
-        layoutAnimator.Play("layout1");
+        if (displayNameText) displayNameText.text = "???";
+        if (portraitAnimator) portraitAnimator.Play("default");
+        if (layoutAnimator) layoutAnimator.Play("layout1");
 
         ContinueStory();
     }
 
-    // ===== 新增：外部切語言入口（你要接到設定 UI 按鈕）=====
-    public void SetLanguage(DialogueLanguage lang, bool forceRestartIfPlaying = true)
+    private void OnLanguageChanged()
     {
-        if (CurrentLanguage == lang && !forceRestartIfPlaying) return;
-
-        CurrentLanguage = lang;
-        PlayerPrefs.SetString(LANG_PREF_KEY, CurrentLanguage.ToString());
-
-        // 你說「切換語言會強制重啟」：正在對話就從頭播
-        if (forceRestartIfPlaying && dialogueIsPlaying && lastInkJSON != null)
-        {
+        // 切語言：若正在對話，強制重啟（你原本需求）
+        if (dialogueIsPlaying && lastInkJSON != null)
             RestartDialogue();
-        }
     }
 
     private void RestartDialogue()
@@ -272,16 +262,22 @@ public class DialogueManager : MonoBehaviour
         currentStory = new Story(lastInkJSON.text);
         inkExternalFunctions.Bind(currentStory, lastEmoteAnimator);
         dialogueVariables.StartListening(currentStory);
+
+        // 重新灌語言
         ApplyLanguageToStory(currentStory);
 
         // reset UI
-        displayNameText.text = "???";
-        portraitAnimator.Play("default");
-        layoutAnimator.Play("layout1");
+        if (displayNameText) displayNameText.text = "???";
+        if (portraitAnimator) portraitAnimator.Play("default");
+        if (layoutAnimator) layoutAnimator.Play("layout1");
 
-        continueIcon.SetActive(false);
+        if (continueIcon) continueIcon.SetActive(false);
         HideChoices();
         canContinueToNextLine = false;
+
+        // 若你希望切語言後保留 autoDisplay/lockMovement 行為：
+        isAutoDisplay = lastAutoDisplay;
+        if (lastLockMovement) PlayerInputHandler.Instance.SetLockMovement(true);
 
         ContinueStory();
     }
@@ -299,8 +295,8 @@ public class DialogueManager : MonoBehaviour
         dialogueVariables.SaveVariables();
 
         dialogueIsPlaying = false;
-        dialoguePanel.SetActive(false);
-        dialogueText.text = "";
+        if (dialoguePanel) dialoguePanel.SetActive(false);
+        if (dialogueText) dialogueText.text = "";
 
         // go back to default audio
         SetCurrentAudioInfo(defaultAudioInfo.id);
@@ -315,44 +311,40 @@ public class DialogueManager : MonoBehaviour
         }
 
         if (displayLineCoroutine != null)
-        {
             StopCoroutine(displayLineCoroutine);
-        }
 
         string nextLine = currentStory.Continue();
 
-        // ★ 關鍵：吃掉「只有 tag 的空輸出」
+        // 吃掉「只有 tag 的空輸出」
         while (string.IsNullOrWhiteSpace(nextLine) && currentStory.canContinue)
         {
-            // 空行也可能帶 tags，一定要先處理
             HandleTags(currentStory.currentTags);
-
             nextLine = currentStory.Continue();
         }
 
-        // 如果最後一個也是空行且不能繼續，正常結束
         if (string.IsNullOrWhiteSpace(nextLine) && !currentStory.canContinue)
         {
             StartCoroutine(ExitDialogueMode());
             return;
         }
 
-        // 正常顯示
         HandleTags(currentStory.currentTags);
         displayLineCoroutine = StartCoroutine(DisplayLine(nextLine));
     }
 
-
     private IEnumerator DisplayLine(string line)
     {
-        dialogueText.text = line;
-        dialogueText.maxVisibleCharacters = 0;
-        continueIcon.SetActive(false);
+        if (dialogueText)
+        {
+            dialogueText.text = line;
+            dialogueText.maxVisibleCharacters = 0;
+        }
+
+        if (continueIcon) continueIcon.SetActive(false);
         HideChoices();
         canContinueToNextLine = false;
 
         LockSubmit(0.05f);
-
         PlayDialogueLineSound();
 
         bool isAddingRichTextTag = false;
@@ -361,7 +353,7 @@ public class DialogueManager : MonoBehaviour
         {
             if (SubmitPressedNow)
             {
-                dialogueText.maxVisibleCharacters = line.Length;
+                if (dialogueText) dialogueText.maxVisibleCharacters = line.Length;
                 break;
             }
 
@@ -371,22 +363,18 @@ public class DialogueManager : MonoBehaviour
             {
                 isAddingRichTextTag = true;
                 i++;
-                dialogueText.maxVisibleCharacters = i;
+                if (dialogueText) dialogueText.maxVisibleCharacters = i;
                 if (c == '>') isAddingRichTextTag = false;
                 continue;
             }
 
             i++;
-            dialogueText.maxVisibleCharacters = i;
+            if (dialogueText) dialogueText.maxVisibleCharacters = i;
             yield return new WaitForSeconds(typingSpeed);
         }
 
         if (isAutoDisplay) yield return new WaitForSeconds(0.8f);
-
-        if (!isAutoDisplay)
-        {
-            continueIcon.SetActive(true);
-        }
+        if (!isAutoDisplay && continueIcon) continueIcon.SetActive(true);
 
         DisplayChoices();
         canContinueToNextLine = true;
@@ -414,9 +402,7 @@ public class DialogueManager : MonoBehaviour
     private void HideChoices()
     {
         foreach (GameObject choiceButton in choices)
-        {
             choiceButton.SetActive(false);
-        }
     }
 
     private void HandleTags(List<string> currentTags)
@@ -429,23 +415,28 @@ public class DialogueManager : MonoBehaviour
                 Debug.LogError("Tag could not be appropriately parsed: " + tag);
                 continue;
             }
+
             string tagKey = splitTag[0].Trim();
             string tagValue = splitTag[1].Trim();
 
             switch (tagKey)
             {
                 case SPEAKER_TAG:
-                    displayNameText.text = tagValue;
+                    if (displayNameText) displayNameText.text = tagValue;
                     break;
+
                 case PORTRAIT_TAG:
                     if (portraitAnimator) portraitAnimator.Play(tagValue);
                     break;
+
                 case LAYOUT_TAG:
                     if (layoutAnimator) layoutAnimator.Play(tagValue);
                     break;
+
                 case AUDIO_TAG:
                     SetCurrentAudioInfo(tagValue);
                     break;
+
                 default:
                     Debug.LogWarning("Tag came in but is not currently being handled: " + tag);
                     break;
@@ -458,10 +449,7 @@ public class DialogueManager : MonoBehaviour
         List<Choice> currentChoices = currentStory.currentChoices;
 
         if (currentChoices.Count > choices.Length)
-        {
-            Debug.LogError("More choices were given than the UI can support. Number of choices given: "
-                + currentChoices.Count);
-        }
+            Debug.LogError("More choices were given than the UI can support. Number of choices given: " + currentChoices.Count);
 
         int index = 0;
         foreach (Choice choice in currentChoices)
@@ -472,9 +460,7 @@ public class DialogueManager : MonoBehaviour
         }
 
         for (int i = index; i < choices.Length; i++)
-        {
             choices[i].gameObject.SetActive(false);
-        }
 
         StartCoroutine(SelectFirstChoice());
     }
@@ -488,11 +474,10 @@ public class DialogueManager : MonoBehaviour
 
     public void MakeChoice(int choiceIndex)
     {
-        if (canContinueToNextLine)
-        {
-            currentStory.ChooseChoiceIndex(choiceIndex);
-            ContinueStory();
-        }
+        if (!canContinueToNextLine) return;
+
+        currentStory.ChooseChoiceIndex(choiceIndex);
+        ContinueStory();
     }
 
     public Ink.Runtime.Object GetVariableState(string variableName)
@@ -500,9 +485,8 @@ public class DialogueManager : MonoBehaviour
         Ink.Runtime.Object variableValue = null;
         dialogueVariables.variables.TryGetValue(variableName, out variableValue);
         if (variableValue == null)
-        {
             Debug.LogWarning("Ink Variable was found to be null: " + variableName);
-        }
+
         return variableValue;
     }
 
@@ -511,27 +495,12 @@ public class DialogueManager : MonoBehaviour
         dialogueVariables.SaveVariables();
     }
 
-    // ===== 新增：語言灌入 Ink 的共用方法 =====
+    // 只從 LocalizationService 取得 Ink 語言代碼
     private void ApplyLanguageToStory(Story story)
     {
         if (story == null) return;
-        story.variablesState["lang"] = CurrentLanguage.ToString(); // "zh"/"en"/"jp"
-    }
 
-    private void LoadLanguage()
-    {
-        if (PlayerPrefs.HasKey(LANG_PREF_KEY))
-        {
-            var s = PlayerPrefs.GetString(LANG_PREF_KEY, startLanguage.ToString());
-            if (System.Enum.TryParse(s, out DialogueLanguage lang))
-                CurrentLanguage = lang;
-            else
-                CurrentLanguage = startLanguage;
-        }
-        else
-        {
-            CurrentLanguage = startLanguage;
-            PlayerPrefs.SetString(LANG_PREF_KEY, CurrentLanguage.ToString());
-        }
+        var loc = LocalizationService.Instance;
+        story.variablesState["lang"] = (loc != null) ? loc.CurrentInkLangCode : "en"; // "zh"/"en"/"jp"
     }
 }

@@ -16826,6 +16826,54 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7718267675085442022, guid: a7f16b71816f052468deaf9ae819c454, type: 3}
   m_PrefabInstance: {fileID: 1104226296}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &321861617
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 321861618}
+  - component: {fileID: 321861619}
+  m_Layer: 0
+  m_Name: LocalizationService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &321861618
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 321861617}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1038610270}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &321861619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 321861617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d955408d778f4d2a8ff50ac6eb05a3bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tables:
+  - {fileID: 11400000, guid: 17412da6cf48d48409a57494c29bfc92, type: 2}
+  - {fileID: 11400000, guid: 74da55d6ef1b9624bb991dbe4002b273, type: 2}
+  currentLanguage: 41
 --- !u!1001 &323022786
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17560,7 +17608,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3528495195845522344, guid: 5b4301989f16b1a43aeef58604dba62d, type: 3}
       propertyPath: steps.Array.data[3].text
-      value: "\u4F7F\u7528 LT \u5438\u6536\u5FF5\u982D\u3002"
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 3528495195845522344, guid: 5b4301989f16b1a43aeef58604dba62d, type: 3}
       propertyPath: steps.Array.data[4].clip
@@ -17737,6 +17785,10 @@ PrefabInstance:
     - target: {fileID: 3528495195845522344, guid: 5b4301989f16b1a43aeef58604dba62d, type: 3}
       propertyPath: steps.Array.data[10].boolValue
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3528495195845522344, guid: 5b4301989f16b1a43aeef58604dba62d, type: 3}
+      propertyPath: steps.Array.data[3].objectiveKey
+      value: obj_tutorial_absorb
       objectReference: {fileID: 0}
     - target: {fileID: 3528495195845522344, guid: 5b4301989f16b1a43aeef58604dba62d, type: 3}
       propertyPath: steps.Array.data[0].lockMoveDuringDialogue
@@ -49167,6 +49219,8 @@ MonoBehaviour:
     boolValue: 1
     seconds: 0
     text: 
+    objectiveKey: 
+    objectiveArgs: []
     inkJSON: {fileID: 0}
     emoteAnimator: {fileID: 0}
     lockMoveDuringDialogue: 0
@@ -49182,6 +49236,8 @@ MonoBehaviour:
     boolValue: 0
     seconds: 0
     text: 
+    objectiveKey: 
+    objectiveArgs: []
     inkJSON: {fileID: 0}
     emoteAnimator: {fileID: 0}
     lockMoveDuringDialogue: 0
@@ -49197,6 +49253,8 @@ MonoBehaviour:
     boolValue: 0
     seconds: 0
     text: 
+    objectiveKey: 
+    objectiveArgs: []
     inkJSON: {fileID: 0}
     emoteAnimator: {fileID: 0}
     lockMoveDuringDialogue: 0
@@ -50638,7 +50696,8 @@ Transform:
   m_LocalPosition: {x: 57.716003, y: 9.559501, z: 87.619995}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 321861618}
   m_Father: {fileID: 1771430366}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1039379893 stripped

@@ -1,6 +1,6 @@
 // PauseTestDriver.cs
-// 測試用：不依賴你的 Input System，直接用鍵盤把 6 個命令打通。
-// 掛在任意物件上即可（建議掛在 PauseController 同物件）。
+// 測試用：不依賴 Input System，直接用鍵盤把 6 個命令打通。
+// 正式接 PlayerInput 後：把 enableTestDriver 關掉，避免雙路徑重複觸發。
 
 using UnityEngine;
 
@@ -9,6 +9,9 @@ namespace UI.Pause
     public sealed class PauseTestDriver : MonoBehaviour
     {
         [SerializeField] private PauseController controller;
+
+        [Header("Enable")]
+        [SerializeField] private bool enableTestDriver = false;
 
         [Header("Key Mapping")]
         [SerializeField] private KeyCode pauseToggle = KeyCode.Escape;
@@ -33,27 +36,24 @@ namespace UI.Pause
 
         void Update()
         {
+            if (!enableTestDriver) return;
             if (!controller) return;
 
-            // PauseToggle（在 Options/Confirm 時等價於 Cancel）
             if (Input.GetKeyDown(pauseToggle))
                 controller.CmdPauseToggle();
 
-            // Submit / Cancel
             if (Input.GetKeyDown(submit))
                 controller.CmdSubmit();
 
             if (Input.GetKeyDown(cancel))
                 controller.CmdCancel();
 
-            // Tab（只在 Options & Browsing 生效）
             if (Input.GetKeyDown(tabLeft))
                 controller.CmdTabLeft();
 
             if (Input.GetKeyDown(tabRight))
                 controller.CmdTabRight();
 
-            // Navigate：用「本幀首次按下」組合成 Vector2
             Vector2 nav = Vector2.zero;
 
             if (Input.GetKeyDown(left)) nav.x = -1f;
@@ -65,7 +65,6 @@ namespace UI.Pause
             if (nav != Vector2.zero)
                 controller.CmdNavigate(nav);
 
-            // Debug print
             if (Input.GetKeyDown(printState))
             {
                 Debug.Log(

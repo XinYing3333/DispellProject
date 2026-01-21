@@ -4,17 +4,24 @@ using DefaultNamespace.UI.Objective;
 using UnityEngine;
 
 /// <summary>
-/// 僅供取得參數，要改變内容的話用 Event Raise
+/// 僅供取得目前 Objective 狀態；要改內容用 Event Raise
 /// </summary>
-public class ObjectiveStore : MonoBehaviour, IObjectiveProvider
+public sealed class ObjectiveStore : MonoBehaviour, IObjectiveProvider
 {
     public static ObjectiveStore Instance { get; private set; }
 
-    [TextArea, SerializeField] private string currentText;
-    public string CurrentText => currentText;
-    public bool HasObjective => !string.IsNullOrEmpty(currentText);
+    [SerializeField] private string currentKey;
+    public string CurrentKey => currentKey;
+
+    private object[] _currentArgs;
+    public object[] CurrentArgs => _currentArgs;
+
+    public bool HasObjective =>
+        !string.IsNullOrEmpty(currentKey) &&
+        currentKey != "none";
 
     private EventBinding<SetObjective> _bindSet;
+
 
     private void Awake()
     {
@@ -37,6 +44,7 @@ public class ObjectiveStore : MonoBehaviour, IObjectiveProvider
 
     private void OnSet(SetObjective e)
     {
-        currentText = e.Text;
+        currentKey  = e.Key;
+        _currentArgs = e.Args;
     }
 }

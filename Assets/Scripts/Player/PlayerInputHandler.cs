@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using UI.Pause;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -44,9 +45,21 @@ namespace Player
         [Header("Core Interaction")]
         [SerializeField] private InteractionController interaction;
 
+        [Header("Pause")]
+        [SerializeField] private PauseController pauseController;
+
+        // 你的 PlayerInput 可能已經在用多個 Action Map
+        // 這裡只做「一致化」：Pause 開啟 -> 切到 UI Map；Pause 關閉 -> 回到 Gameplay Map
+        // 若你的 Map 名稱不同，直接改字串即可（不需要新增資產）
+        [SerializeField] private string gameplayMapName = "Gameplay";
+        [SerializeField] private string uiMapName = "UI";
+
         private PlayerInput _playerInput;
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim, _skill, _target;
         private InputAction _skillUI, _setting, _exit, _reset, _switch;
+
+        // ===== Pause / UI actions（不受 InputLock 影響）=====
+        private InputAction _pauseToggle, _submit, _cancel, _tabLeft, _tabRight, _navigate;
 
         private void Awake()
         {
@@ -65,6 +78,7 @@ namespace Player
                 return;
             }
 
+            // ===== Gameplay =====
             _movement = _playerInput.actions["Move"];
             _run      = _playerInput.actions["Run"];
             _jump     = _playerInput.actions["Jump"];
@@ -82,16 +96,29 @@ namespace Player
             _setting  = _playerInput.actions["Setting"];
             _target   = _playerInput.actions["Target"];
 
+            // ===== Pause/UI（若你 action 名稱不同，改這裡的 key）=====
+            // 允許不存在：你還沒建 action 時不會炸，只是不支援 Pause。
+            TryGetAction("PauseToggle", out _pauseToggle);
+            TryGetAction("Submit", out _submit);
+            TryGetAction("Cancel", out _cancel);
+            TryGetAction("TabLeft", out _tabLeft);
+            TryGetAction("TabRight", out _tabRight);
+            TryGetAction("Navigate", out _navigate);
+
             if (!interaction)
             {
                 interaction = GetComponentInChildren<InteractionController>();
                 if (!interaction)
                     Debug.LogWarning("[PlayerInputHandler] 尚未指定 InteractionController，吸收/投擲將無效。");
             }
+
+            if (!pauseController)
+                pauseController = FindFirstObjectByType<PauseController>();
         }
 
         private void OnEnable()
         {
+            // ===== Gameplay subscribes =====
             _collect.started  += OnCollectStarted;
             _collect.canceled += OnCollectCanceled;
 
@@ -104,10 +131,25 @@ namespace Player
             _skill.performed  += OnSkillPerformed;
             _interact.performed += OnInteractPerformed;
             _target.performed += OnTargetPerformed;
+
+            // ===== Pause / UI subscribes（不受 InputLock）=====
+            if (_pauseToggle != null) _pauseToggle.performed += OnPauseTogglePerformed;
+            if (_submit != null)      _submit.performed      += OnSubmitPerformed;
+            if (_cancel != null)      _cancel.performed      += OnCancelPerformed;
+            if (_tabLeft != null)     _tabLeft.performed     += OnTabLeftPerformed;
+            if (_tabRight != null)    _tabRight.performed    += OnTabRightPerformed;
+
+            // Navigate：鍵盤 2D Vector / 手把搖桿都會進來（performed + canceled）
+            if (_navigate != null)
+            {
+                _navigate.performed += OnNavigatePerformed;
+                _navigate.canceled  += OnNavigateCanceled;
+            }
         }
 
         private void OnDisable()
         {
+            // ===== Gameplay unsubscribes =====
             _collect.started  -= OnCollectStarted;
             _collect.canceled -= OnCollectCanceled;
 
@@ -120,7 +162,20 @@ namespace Player
             _skill.performed  -= OnSkillPerformed;
             _interact.performed -= OnInteractPerformed;
             _target.performed -= OnTargetPerformed;
-            
+
+            // ===== Pause / UI unsubscribes =====
+            if (_pauseToggle != null) _pauseToggle.performed -= OnPauseTogglePerformed;
+            if (_submit != null)      _submit.performed      -= OnSubmitPerformed;
+            if (_cancel != null)      _cancel.performed      -= OnCancelPerformed;
+            if (_tabLeft != null)     _tabLeft.performed     -= OnTabLeftPerformed;
+            if (_tabRight != null)    _tabRight.performed    -= OnTabRightPerformed;
+
+            if (_navigate != null)
+            {
+                _navigate.performed -= OnNavigatePerformed;
+                _navigate.canceled  -= OnNavigateCanceled;
+            }
+
             StopHoldRumble();
         }
 
@@ -131,16 +186,18 @@ namespace Player
                 // 鎖定時不更新 MoveInput，確保角色不會被移動
                 MoveInput = Vector2.zero;
                 MoveSpeedMultiplier = 1f;
-                return;
+            }
+            else
+            {
+                MoveInput = _movement.ReadValue<Vector2>();
+
+                string controlScheme = _playerInput.currentControlScheme;
+                MoveSpeedMultiplier = (controlScheme == "Gamepad")
+                    ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
+                    : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
             }
 
-            MoveInput = _movement.ReadValue<Vector2>();
-
-            string controlScheme = _playerInput.currentControlScheme;
-            MoveSpeedMultiplier = (controlScheme == "Gamepad")
-                ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
-                : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
-            
+            // 連續震動維持（只在手把存在且 scheme 正確時）
             if (_isRumbling)
             {
                 if (_playerInput.currentControlScheme != "Gamepad" || Gamepad.current == null)
@@ -152,7 +209,6 @@ namespace Player
                     Gamepad.current.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
                 }
             }
-
         }
 
         // ========= 只鎖「行動系統」的統一接口 =========
@@ -172,6 +228,31 @@ namespace Player
             }
         }
 
+        // ========= Pause: 由 PauseController 呼叫（或你自行在其它系統呼叫） =========
+        public void SetPauseMode(bool paused)
+        {
+            SetLockMovement(paused);
+            SwitchActionMap(paused ? uiMapName : gameplayMapName);
+        }
+
+        private void SwitchActionMap(string mapName)
+        {
+            if (_playerInput == null) return;
+            if (string.IsNullOrEmpty(mapName)) return;
+
+            // 避免重複切換造成 GC/狀態抖動
+            if (_playerInput.currentActionMap != null && _playerInput.currentActionMap.name == mapName)
+                return;
+
+            try
+            {
+                _playerInput.SwitchCurrentActionMap(mapName);
+            }
+            catch
+            {
+                // Map 名稱不對時，不炸；你要改 gameplayMapName/uiMapName
+            }
+        }
 
         public void ResetJump() => JumpPressed = false;
         public void ResetDash() => DashPressed = false;
@@ -199,7 +280,6 @@ namespace Player
         }
 
         // ========= Callback（僅 gameplay 才看 InputLock） =========
-
         private void OnCollectStarted(InputAction.CallbackContext ctx)
         {
             if (InputLock || interaction == null) return;
@@ -207,7 +287,7 @@ namespace Player
             IsCollecting = true;
             interaction.Input_StartAbsorbHold();
 
-            // 按住期間持續震動（低頻+低高頻，自己再微調強度）
+            // 按住期間持續震動
             StartHoldRumble(0.15f, 0.30f);
         }
 
@@ -220,7 +300,6 @@ namespace Player
             if (interaction != null)
                 interaction.Input_Drop();
         }
-
 
         private void OnAimStarted(InputAction.CallbackContext ctx)
         {
@@ -265,7 +344,6 @@ namespace Player
             Rumble(0.3f, 0.7f, 0.1f);
         }
 
-
         /// <summary>
         /// 注意：這裡只處理「丟下物件」的 Gameplay 版本。
         /// 對話 / UI 請讀取 InteractPressed 屬性自己用，不會被 InputLock 擋。
@@ -273,7 +351,6 @@ namespace Player
         private void OnInteractPerformed(InputAction.CallbackContext ctx)
         {
             if (InputLock || interaction == null) return;
-
             interaction.Input_Drop();
         }
 
@@ -291,9 +368,75 @@ namespace Player
 
         public void SetSpellType(SpellType newSpellType)
         {
-            // 
+            //
         }
-        
+
+        // ========= Pause/UI callbacks（不受 InputLock） =========
+
+        private void OnPauseTogglePerformed(InputAction.CallbackContext ctx)
+        {
+            if (pauseController == null) return;
+
+            // 直接交給 PauseController 做狀態機；InputHandler 不做判斷
+            pauseController.CmdPauseToggle();
+        }
+
+        private void OnSubmitPerformed(InputAction.CallbackContext ctx)
+        {
+            if (pauseController == null) return;
+            pauseController.CmdSubmit();
+        }
+
+        private void OnCancelPerformed(InputAction.CallbackContext ctx)
+        {
+            if (pauseController == null) return;
+            pauseController.CmdCancel();
+        }
+
+        private void OnTabLeftPerformed(InputAction.CallbackContext ctx)
+        {
+            if (pauseController == null) return;
+            pauseController.CmdTabLeft();
+        }
+
+        private void OnTabRightPerformed(InputAction.CallbackContext ctx)
+        {
+            if (pauseController == null) return;
+            pauseController.CmdTabRight();
+        }
+
+        // 導航 Gate：避免搖桿持續輸出導致每幀觸發
+        private Vector2 _lastNav;
+        [SerializeField] private float navigateDeadzone = 0.5f;
+
+        private void OnNavigatePerformed(InputAction.CallbackContext ctx)
+        {
+            if (pauseController == null) return;
+
+            var v = ctx.ReadValue<Vector2>();
+            Vector2 snapped = Vector2.zero;
+
+            if (v.x <= -navigateDeadzone) snapped.x = -1f;
+            else if (v.x >= navigateDeadzone) snapped.x = 1f;
+
+            if (v.y <= -navigateDeadzone) snapped.y = -1f;
+            else if (v.y >= navigateDeadzone) snapped.y = 1f;
+
+            if (snapped == Vector2.zero) return;
+
+            if (snapped != _lastNav)
+            {
+                _lastNav = snapped;
+                pauseController.CmdNavigate(snapped);
+            }
+        }
+
+        private void OnNavigateCanceled(InputAction.CallbackContext ctx)
+        {
+            _lastNav = Vector2.zero;
+        }
+
+        // ========= Rumble =========
         private bool _isRumbling;
         private float _rumbleLow;
         private float _rumbleHigh;
@@ -334,9 +477,33 @@ namespace Player
         private IEnumerator StopRumbleAfter(float t)
         {
             yield return new WaitForSecondsRealtime(t);
-            if (Gamepad.current != null)
-                Gamepad.current.SetMotorSpeeds(0f, 0f);
+
+            if (_isRumbling)
+            {
+                // 若此時仍在 HoldRumble，恢復持續震動
+                if (Gamepad.current != null)
+                    Gamepad.current.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
+            }
+            else
+            {
+                if (Gamepad.current != null)
+                    Gamepad.current.SetMotorSpeeds(0f, 0f);
+            }
         }
 
+        // ========= Helpers =========
+        private void TryGetAction(string actionName, out InputAction action)
+        {
+            action = null;
+            if (_playerInput == null || _playerInput.actions == null) return;
+            try
+            {
+                action = _playerInput.actions[actionName];
+            }
+            catch
+            {
+                action = null;
+            }
+        }
     }
 }

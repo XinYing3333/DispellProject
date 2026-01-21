@@ -55,8 +55,13 @@ public class StepDrawer : PropertyDrawer
                 break;
 
             case StepKind.SetObjective:
-                Draw("text", "Text", true); // TextArea 需要 includeChildren=true 才能有正確高度
+                Draw("objectiveKey", "Objective Key", false);
+                Draw("objectiveArgs", "Args", true);
+
+                // 過渡期：仍顯示舊 text，方便你手動搬資料
+                Draw("text", "Legacy Text (migrate away)", true);
                 break;
+
 
             case StepKind.ToggleObject:
                 Draw("targetGO", "Target", false);
@@ -124,8 +129,11 @@ public class StepDrawer : PropertyDrawer
                 break;
 
             case StepKind.SetObjective:
-                total += H("text", true);
+                total += H("objectiveKey", false);
+                total += H("objectiveArgs", true);
+                total += H("text", true); // legacy
                 break;
+
 
             case StepKind.ToggleObject:
                 total += H("targetGO", false) + H("boolValue", false);
