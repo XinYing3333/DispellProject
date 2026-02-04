@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - DR_RIM_ON
   - _ALPHATEST_ON
   - _CELPRIMARYMODE_SINGLE
   - _DETAILMAPBLENDINGMODE_MULTIPLY
@@ -28,7 +29,7 @@ Material:
     RenderType: TransparentCutout
   disabledShaderPasses:
   - SRPDEFAULTUNLIT
-  m_LockedProperties: 
+  m_LockedProperties: _TextureImpact
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -103,15 +104,15 @@ Material:
     - _FlatRimAmount: 0.5
     - _FlatRimEdgeSmoothness: 0.1
     - _FlatRimEnabled: 1
-    - _FlatRimLightAlign: 0
-    - _FlatRimSize: 0.3
+    - _FlatRimLightAlign: 0.37
+    - _FlatRimSize: 0.33
     - _FlatShadowsEnabled: 1
     - _FlatSmoothness: 0.362
     - _FlatSpecularEdgeSmoothness: 0.5
     - _FlatSpecularEnabled: 1
     - _FlatSpecularSize: 0.712
     - _FlatSpecularSmoothness: 0.5
-    - _Flatness: 1
+    - _Flatness: 0.86
     - _FlatnessExtra: 1
     - _FlatnessSecondary: 1
     - _GlossMapScale: 1
@@ -144,12 +145,12 @@ Material:
     - _OverrideShadowsEnabled: 1
     - _Parallax: 0.02
     - _QueueOffset: 0
-    - _RimEnabled: 0
+    - _RimEnabled: 1
     - _SecondaryColor: 1
     - _SecondaryColorEnabled: 1
-    - _SelfShadingSize: 0.496
+    - _SelfShadingSize: 0.21
     - _SelfShadingSizeExtra: 0.504
-    - _ShadowEdgeSize: 0
+    - _ShadowEdgeSize: 0.289
     - _ShadowEdgeSizeExtra: 0.05
     - _ShadowEdgeSmoothness: 0.01
     - _ShadowFalloff: 0.01
@@ -169,10 +170,10 @@ Material:
     - _VertexExtrusionSmoothNormals: 0
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.9803922, g: 0.9921569, b: 0.4156863, a: 1}
+    - _BaseColor: {r: 0.9208545, g: 0.9245283, b: 0.31835172, a: 1}
     - _Color: {r: 0.72156864, g: 0.77647066, b: 0.78823537, a: 1}
     - _ColorCelShadow: {r: 0.38581347, g: 0.38787434, b: 0.9622642, a: 1}
-    - _ColorDim: {r: 0.9803922, g: 0.9921569, b: 0.4156863, a: 1}
+    - _ColorDim: {r: 0.7924528, g: 0.755112, b: 0.1981132, a: 1}
     - _ColorDimCurve: {r: 0.85023, g: 0.85034, b: 0.8504499, a: 0.85056}
     - _ColorDimExtra: {r: 0.85, g: 0.85, b: 0.85, a: 0.85}
     - _ColorDimSteps: {r: 0.85, g: 0.85, b: 0.85, a: 0.85}
@@ -182,7 +183,7 @@ Material:
     - _ColorShadows: {r: 0.37835297, g: 0.4602353, b: 0.72, a: 1}
     - _DetailMapColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 6.574697, g: 6.574697, b: 6.574697, a: 1}
-    - _FlatRimColor: {r: 0.52358484, g: 0.6375387, b: 1, a: 1}
+    - _FlatRimColor: {r: 0.64212006, g: 0.8584906, b: 0.31990921, a: 1}
     - _FlatSpecularColor: {r: 0.93133986, g: 1, b: 0.24056602, a: 1}
     - _LightmapDirection: {r: 0, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}

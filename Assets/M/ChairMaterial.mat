@@ -12,9 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - DR_GRADIENT_ON
   - DR_OUTLINE_ON
-  - DR_RIM_ON
   - _CELPRIMARYMODE_SINGLE
   - _DETAILMAPBLENDINGMODE_MULTIPLY
   - _GRADIENTSPACE_WORLD
@@ -168,7 +166,7 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
-    - _CameraDistanceImpact: 0
+    - _CameraDistanceImpact: 0.68
     - _CelExtraEnabled: 0
     - _CelNumSteps: 3
     - _CelPrimaryMode: 1
@@ -198,7 +196,7 @@ Material:
     - _GradientAngle: 0
     - _GradientCenterX: 0
     - _GradientCenterY: 0.7
-    - _GradientEnabled: 1
+    - _GradientEnabled: 0
     - _GradientSize: -2.24
     - _GradientSpace: 0
     - _HeightTransition: 0
@@ -222,7 +220,7 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimEnabled: 1
+    - _RimEnabled: 0
     - _SelfShadingSize: 0.547
     - _SelfShadingSizeExtra: 0.6
     - _ShadowEdgeSize: 0.195
@@ -249,9 +247,9 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.8207547, g: 0.008825319, b: 0, a: 1}
+    - _BaseColor: {r: 0.8113208, g: 0.17919354, b: 0.049750824, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _ColorDim: {r: 0.8784314, g: 0.3247027, b: 0.24313723, a: 1}
+    - _ColorDim: {r: 0.33812755, g: 0.3773585, b: 0.1548594, a: 1}
     - _ColorDimCurve: {r: 0.85023, g: 0.85034, b: 0.8504499, a: 0.85056}
     - _ColorDimExtra: {r: 1, g: 1, b: 1, a: 1}
     - _ColorDimSteps: {r: 0.85023, g: 0.85034, b: 0.8504499, a: 0.85056}
@@ -261,7 +259,7 @@ Material:
     - _FlatRimColor: {r: 0.41509432, g: 0, b: 0.0046913936, a: 1}
     - _FlatSpecularColor: {r: 0.57547164, g: 0.13300994, b: 0.14502138, a: 1}
     - _LightmapDirection: {r: 0, g: 1, b: 0, a: 0}
-    - _OutlineColor: {r: 0.1981132, g: 0.047659326, b: 0.047659304, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _UnityShadowColor: {r: 0.85023, g: 0.85034, b: 0.8504499, a: 0.85056}
   m_BuildTextureStacks: []

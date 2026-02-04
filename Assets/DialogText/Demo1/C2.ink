@@ -1,10 +1,10 @@
-VAR lang = "en"
+INCLUDE globals.ink
 
 // EXTERNAL playEmote(emoteName)
 
 { lang == "zh":
 #speaker:鄔詩
-    「——！？」#speaker:鄔詩
+    「——！？」
 - else:
 #speaker:Wushi
     —!? 
@@ -31,9 +31,11 @@ VAR lang = "en"
 // ------------------------------------------------
 #portrait:wushi-palm #layout:layout1 #audio:wushi
 { lang == "zh":
-    「哎呦！」#speaker:鄔詩
+#speaker:鄔詩
+    「哎呦！」
 - else:
-    Ouch! #speaker:Wushi
+#speaker:Wushi
+    Ouch! 
 }
 #portrait:wushi-scorn
 { lang == "zh":
@@ -44,44 +46,27 @@ VAR lang = "en"
 // ------------------------------------------------
 ？#speaker:??? #portrait:god-1 #layout:layout2 #audio:default
 ？#portrait:god-2
-#portrait:wushi-scorn
-{ lang == "zh":
-    ？？#speaker:鄔詩
-- else:
-    ？？#speaker:Wushi
-}
-
 { lang == "zh":
     #speaker:白
 - else:
     #speaker:White
 }
-#portrait:god-1
-#audio:god
+#portrait:god-2 #audio:god
 { lang == "zh":
     「居然有<color=\#FF2424>人類靈媒</color>在，來的正好。」
 - else:
-    A <color=\#FF2424>human medium</color> is here, perfect timing.
+    A <color=\#FF2424>human witch</color> is here, perfect timing.
 }
-
-//~playEmote("pangolin-WALK")
-
 { lang == "zh":
     #speaker:黑
 - else:
     #speaker:Black
 }
-#portrait:god-1
-#layout:layout1
+#portrait:god-1 #layout:layout1
 { lang == "zh":
     「唉!差一點釀成大錯，果然直接吞噬太過冒進。」
 - else:
     Ah! That was close. Swallowing it directly was too reckless.
-}
-{ lang == "zh":
-    「凭我的反應速度不會有事的。」
-- else:
-    With my reaction speed, it should be fine.
 }
 
 { lang == "zh":
@@ -90,6 +75,11 @@ VAR lang = "en"
     #speaker:White
 }
 #portrait:god-2
+{ lang == "zh":
+    「凭我的反應速度不會有事的。」
+- else:
+    With my reaction speed, it should be fine.
+}
 { lang == "zh":
     「應該要把她趕出去，再試一次。」
 - else:
@@ -200,11 +190,23 @@ VAR lang = "en"
 }
 
 { lang == "zh":
+    #speaker:黑
+- else:
+    #speaker:Black
+}
+#portrait:god-1
+{ lang == "zh":
     「...就和你說過馬路不要滑手機了。」
 - else:
     ...Like I told you, don't use your phone while crossing the street.
 }
 
+{ lang == "zh":
+    #speaker:白
+- else:
+    #speaker:White
+}
+#portrait:god-2
 { lang == "zh":
     「你什麽時候説過了，而且我連手機都沒有。」
 - else:

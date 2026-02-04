@@ -1,4 +1,4 @@
-INCLUDE globals.ink
+//INCLUDE globals.ink
 EXTERNAL playEmote(emoteName)
 
 hi#speaker:Wushi #portrait:wushi #layout:layout1 #audio:default
@@ -19,7 +19,7 @@ choose a number
 
 === chosen(number) ===
 ~ playEmote("pangolin-ball02")
-~ chooseNumber = number
+//~ chooseNumber = number
 ok you chose {number}.
 
 ->END

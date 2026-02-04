@@ -63,6 +63,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _TextureG:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -88,6 +92,8 @@ Material:
     - _Emission: 1
     - _Float: 0.5
     - _GroundDetails: -1.69
+    - _Height: 0.5
+    - _HeightGradient: 1
     - _MossOffset: 2.25
     - _OffsetDetails: 2.2
     - _QueueControl: 0
@@ -106,6 +112,7 @@ Material:
     - _Color3: {r: 0.7169812, g: 0.6391955, b: 0.6842709, a: 0}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _HeightColor: {r: 0.29803917, g: 0.30980387, b: 0.094117604, a: 0}
     - _OffsetMinMax: {r: -1.55, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DefaultNamespace
 {
@@ -13,6 +14,7 @@ namespace DefaultNamespace
         [SerializeField] private bool useDeltaForStage0 = true; // 避免舊存檔秒解
         private int baselineThough;
         [SerializeField] private LevelSequenceTrigger enemyTutorial ; 
+        [SerializeField] private GameObject collectionPanel ; 
 
         // ---- 第二階段（收集特定 Offering）----
         [Header("Stage 1: Collect Offering")]
@@ -32,6 +34,7 @@ namespace DefaultNamespace
                 pangolinIdle.gameObject.SetActive(false);
                 pangolin1.gameObject.SetActive(true);
                 pangolin2.gameObject.SetActive(true);
+                collectionPanel.SetActive(true);
                 return;
             }
             if (stage == 0 && useDeltaForStage0)
@@ -39,6 +42,18 @@ namespace DefaultNamespace
             if (stage == 2)
             {
                 Destroy(gameObject);
+            }
+        }
+
+        private void Start()
+        {
+            if (isTutorialFinished)
+            {
+                pangolinIdle.gameObject.SetActive(false);
+                pangolin1.gameObject.SetActive(true);
+                pangolin2.gameObject.SetActive(true);
+                collectionPanel.SetActive(true);
+                return;
             }
         }
 

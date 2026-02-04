@@ -139,7 +139,7 @@ public class DialogueManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Y)) // TODO:切語言接口
+        /*if (Input.GetKeyDown(KeyCode.Y)) // TODO:切語言接口
         {
             var loc = LocalizationService.Instance;
             if (!loc) return;
@@ -147,7 +147,7 @@ public class DialogueManager : MonoBehaviour
             var next = loc.CurrentAppLanguage == Language.en ? Language.zh : Language.en;
             loc.SetLanguage(next);
             Debug.Log("AppLanguage = " + next);
-        }
+        }*/
 
         if (!dialogueIsPlaying) return;
 

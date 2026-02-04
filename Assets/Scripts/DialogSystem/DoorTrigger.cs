@@ -9,8 +9,8 @@ namespace World
         [SerializeField] private Renderer[] targetRenderers;
 
         [Header("ShaderGraph Reference Names (NOT Display Names)")]
-        [SerializeField] private string fillAmountRef ;     // 改成你 Blackboard 的 Reference
-        [SerializeField] private string visibleAmountRef ; // 改成你 Blackboard 的 Reference
+        [SerializeField] private string fillAmountRef;     // Blackboard Reference
+        [SerializeField] private string visibleAmountRef;  // Blackboard Reference
 
         [Header("Lerp Targets")]
         [SerializeField] private float fillTarget = 20f;
@@ -22,6 +22,11 @@ namespace World
 
         [Header("Door Object To Disable")]
         [SerializeField] private GameObject doorObject;
+        [SerializeField] private LevelSequenceTrigger LSTrigger;
+
+        [Header("Open Cost (CollectionSystem)")]
+        [SerializeField] private CollectionSystem.CollectedType costType = CollectionSystem.CollectedType.Though;
+        [SerializeField] private int costAmount = 20;
 
         [Header("Behavior")]
         [SerializeField] private bool oneShot = true;
@@ -55,6 +60,10 @@ namespace World
             if (oneShot && _triggered) return;
             if (!other.CompareTag("Player")) return;
 
+            // 條件：Though >= 20；成功則扣除 20 並開門
+            if (!CollectionSystem.TryConsumeItem(costType, costAmount))
+                return;
+
             _triggered = true;
             StartCoroutine(CoRun());
         }
@@ -62,14 +71,12 @@ namespace World
         IEnumerator CoRun()
         {
             _running = true;
+            
+            LSTrigger.Play();
 
-            // 1) Fill Amount -> 20
             yield return LerpFloat(_fillId, fillTarget, fillDuration);
-
-            // 2) visible amount -> 1
             yield return LerpFloat(_visibleId, visibleTarget, visibleDuration);
 
-            // 3) 關閉大門物件
             if (doorObject) doorObject.SetActive(false);
 
             _running = false;

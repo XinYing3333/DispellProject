@@ -177,8 +177,8 @@ public class PlayerMovement : MonoBehaviour
         if (input.IsCollecting) targetSpeed *= 0.65f;
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 10f * Time.deltaTime);
 
-        SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 1f);
-        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 1f);
+        SetAnimatorLayerWeight("Shoot", input.ShootPressed ? 1f : 0f);
+        SetAnimatorLayerWeight("Inhale", input.IsCollecting ? 1f : 0f);
 
         _animSpeedParam = (_rawInputMovement.magnitude < 0.1f)
             ? 0f

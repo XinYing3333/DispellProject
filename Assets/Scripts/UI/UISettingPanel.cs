@@ -1,3 +1,4 @@
+using Player;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -29,16 +30,14 @@ namespace DefaultNamespace
         private void Update()
         {
             // ===== Debug Input =====
-            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.Q))
+            if (PlayerInputHandler.Instance.SettingLeftPressed || Input.GetKeyDown(KeyCode.Q))
             {
                 SwitchPanel(-1);
-                Debug.Log("Settings Panel ← " + _currentPanel);
             }
 
-            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.E))
+            if (PlayerInputHandler.Instance.SettingRightPressed || Input.GetKeyDown(KeyCode.E))
             {
                 SwitchPanel(+1);
-                Debug.Log("Settings Panel → " + _currentPanel);
             }
         }
 

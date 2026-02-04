@@ -35,10 +35,13 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
 
     public void Collect()
     {
-        //LevelStateStore.Instance.MarkCollectedSession(_spawnId);
+        if (LevelStateStore.Instance != null)
+            LevelStateStore.Instance.MarkCollectedSession(_spawnId);
+
         CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
         _owner.ReturnThoughToPool(gameObject);
     }
+
     
     /*private void OnTriggerEnter(Collider other)
     {

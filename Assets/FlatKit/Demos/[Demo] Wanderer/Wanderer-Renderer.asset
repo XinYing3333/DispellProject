@@ -1,20 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-2786428230938764867
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cca7768aaaea4b0081f14e7f9d4b5ad, type: 3}
-  m_Name: FlatKitOutline
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  settings: {fileID: 11400000, guid: 6a9ce4523839c4a44a17d8d1334b16d2, type: 2}
---- !u!114 &-2165328654616028734
+--- !u!114 &-4413277559661223180
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -59,6 +45,20 @@ MonoBehaviour:
       cameraFieldOfView: 60
   materials: []
   autoReferenceMaterials: 1
+--- !u!114 &-2786428230938764867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cca7768aaaea4b0081f14e7f9d4b5ad, type: 3}
+  m_Name: FlatKitOutline
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings: {fileID: 11400000, guid: 6a9ce4523839c4a44a17d8d1334b16d2, type: 2}
 --- !u!114 &-1344586528338988631
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,7 +100,7 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -2786428230938764867}
   - {fileID: -1344586528338988631}
-  - {fileID: -2165328654616028734}
+  - {fileID: -4413277559661223180}
   m_RendererFeatureMap: bd59c67e499e54d9a9319428ad1157ed
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}

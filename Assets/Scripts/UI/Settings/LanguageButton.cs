@@ -1,23 +1,20 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UI.Localization; // Language enum
 
+// 掛在「Language 按鈕」物件上（同物件有 Button）
+// 功能：按一下在 en <-> zh 間切換，並呼叫 LocalizationService.Instance.SetLanguage(...)
 public sealed class LanguageButton : MonoBehaviour
 {
-    public enum Language
-    {
-        English = 0,
-        ChineseTraditional = 1
-    }
-
     [Header("Auto Wire")]
-    [SerializeField] private Button targetButton;           // 不填：自動抓本物件 Button
-    [SerializeField] private TextMeshProUGUI valueText;     // 右側顯示 EN / 繁中（可不填）
+    [SerializeField] private Button targetButton;        // 不填：自動抓本物件 Button
+    [SerializeField] private TextMeshProUGUI valueText;  // 右側顯示文字（不填：自動抓子物件 TMP）
 
-    [Header("State")]
-    [SerializeField] private Language currentLanguage = Language.English;
+    [Header("Cycle Order")]
+    [SerializeField] private Language[] cycle = { Language.en, Language.zh }; // 目前只要英/繁
 
-    private const string LANG_KEY = "LANGUAGE"; // 存檔 key
+    private int _index;
 
     private void Awake()
     {
@@ -27,56 +24,56 @@ public sealed class LanguageButton : MonoBehaviour
         targetButton.onClick.RemoveListener(OnClickCycle);
         targetButton.onClick.AddListener(OnClickCycle);
 
-        Load();
-        RefreshText();
+        // 以 LocalizationService 的目前語言決定 index
+        var svc = LocalizationService.Instance;
+        if (svc != null)
+        {
+            _index = FindIndex(svc.CurrentAppLanguage);
+            RefreshText(svc.CurrentAppLanguage);
+        }
+        else
+        {
+            _index = 0;
+            RefreshText(cycle.Length > 0 ? cycle[0] : Language.en);
+        }
     }
 
     private void OnDestroy()
     {
-        if (targetButton)
-            targetButton.onClick.RemoveListener(OnClickCycle);
+        if (targetButton) targetButton.onClick.RemoveListener(OnClickCycle);
     }
 
     private void OnClickCycle()
     {
-        currentLanguage = (Language)(((int)currentLanguage + 1) % 2);
-        Save();
-        Apply();
-        RefreshText();
+        if (cycle == null || cycle.Length == 0) return;
+
+        _index = (_index + 1) % cycle.Length;
+        var next = cycle[_index];
+
+        // ★ 接入你的 LocalizationService 介面
+        if (LocalizationService.Instance != null)
+            LocalizationService.Instance.SetLanguage(next);
+
+        RefreshText(next);
     }
 
-    private void RefreshText()
+    private int FindIndex(Language lang)
+    {
+        if (cycle == null || cycle.Length == 0) return 0;
+        for (int i = 0; i < cycle.Length; i++)
+            if (cycle[i] == lang) return i;
+        return 0;
+    }
+
+    private void RefreshText(Language lang)
     {
         if (!valueText) return;
 
-        valueText.text = currentLanguage switch
+        valueText.text = lang switch
         {
-            Language.English => "English",
-            Language.ChineseTraditional => "繁體中文",
-            _ => "English"
+            Language.en => "English",
+            Language.zh => "繁體中文",
+            _ => lang.ToString()
         };
-    }
-
-    private void Apply()
-    {
-        // ★ 這裡只負責「通知語言改變」
-        // 你之後的多語系系統（TMP/Ink/CSV）都從這裡接
-        Debug.Log("Language set to: " + currentLanguage);
-    }
-
-    private void Save()
-    {
-        PlayerPrefs.SetInt(LANG_KEY, (int)currentLanguage);
-        PlayerPrefs.Save();
-    }
-
-    private void Load()
-    {
-        currentLanguage = (Language)PlayerPrefs.GetInt(LANG_KEY, 0);
-    }
-
-    public Language GetCurrentLanguage()
-    {
-        return currentLanguage;
     }
 }

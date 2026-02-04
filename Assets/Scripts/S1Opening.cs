@@ -90,7 +90,7 @@ public class S1Opening : MonoBehaviour
 
         // 按住 B 進行累計；鬆開就歸零
         bool holding = Input.GetKey(KeyCode.B);
-        bool holding2 = PlayerInputHandler.Instance.InteractPressed;
+        bool holding2 = PlayerInputHandler.Instance.IsSkiping;
 
         // 如果你仍想兼容舊的「互動鍵」：按下時啟動一次 hold，但無法判定持續按住時會停在那裡（取決於你的輸入系統）
         // 這段不會造成一按就跳過；只會嘗試啟動 hold。
