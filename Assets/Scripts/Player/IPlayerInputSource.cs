@@ -16,9 +16,6 @@ public interface IPlayerInputSource
 
     void ResetJump();
     void ResetDash();
-    
-    void SetSpellType(SpellType newSpellType);
-
 
     event Action OnJump;
     event Action OnSkill;

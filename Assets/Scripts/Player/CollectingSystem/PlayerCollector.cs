@@ -119,6 +119,7 @@ public class PlayerCollector : MonoBehaviour
                     collectable.Collect();
                     AudioManager.Instance.PlaySFX(SFXType.CoinPickup);
                     _onPulledResult?.Invoke(null, true);
+                    //記錄圖騰種類
                 }
                 finally
                 {

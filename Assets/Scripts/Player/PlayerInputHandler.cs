@@ -11,9 +11,6 @@ namespace Player
     {
         public static PlayerInputHandler Instance { get; private set; }
 
-        /// <summary>
-        /// 僅代表「角色行動相關」是否被鎖，UI / 對話不受影響
-        /// </summary>
         public bool InputLock { get; private set; }
 
         public Vector2 MoveInput { get; private set; }
@@ -27,19 +24,15 @@ namespace Player
         public bool IsCollecting { get; private set; }
         public bool IsTargetPressed { get; private set; }
         public bool IsAiming { get; private set; }
-        public bool IsSkiping { get; private set; }
+        public bool IsSkipping { get; private set; } 
 
-        // 只在未鎖時允許切換（視為 gameplay）
-        public bool SwitchPressed => !InputLock && _switch.WasPressedThisFrame();
-
-        // ===== UI / System 用，不受 InputLock 影響 =====
-        public bool InteractPressed => _interact.WasPressedThisFrame(); // 提供給對話 / UI 使用
-        public bool ExitPressed => _exit.WasPressedThisFrame();
-        public bool SelectPressed => _select.WasPressedThisFrame();
-        public bool SettingRightPressed => _right.WasPressedThisFrame();
-
-        // ★ 你原本的 Setting 改成 Pause
-        public bool SettingLeftPressed => _left.WasPressedThisFrame();
+        // ===== UI / System Flags =====
+        public bool SwitchPressed { get; private set; }
+        public bool InteractPressed { get; private set; }
+        public bool ExitPressed { get; private set; }
+        public bool SelectPressed { get; private set; }
+        public bool SettingRightPressed { get; private set; }
+        public bool SettingLeftPressed { get; private set; }
 
         public event Action OnJump;
         public event Action OnSkill;
@@ -55,15 +48,14 @@ namespace Player
 
         private PlayerInput _playerInput;
 
-        // ===== Gameplay actions =====
+        // ===== Actions =====
         private InputAction _movement, _run, _dash, _jump, _shoot, _collect, _interact, _aim, _skill, _target;
-        private InputAction _exit, _left, _right, _switch, _select;
+        private InputAction _exit, _left, _right, _switch, _select, _pause;
 
-        // ===== UI/System actions =====
-        private InputAction _pause; // ★ 由原本 Setting 改名
+        public bool IsPaused { get; private set; }
 
-        // ===== Pause state =====
-        public bool IsPaused{ get; private set; }
+        // ===== Cache =====
+        private bool _isGamepadControl;
 
         private void Awake()
         {
@@ -82,7 +74,6 @@ namespace Player
                 return;
             }
 
-            // ===== Gameplay =====
             _movement = _playerInput.actions["Move"];
             _run      = _playerInput.actions["Run"];
             _jump     = _playerInput.actions["Jump"];
@@ -92,17 +83,16 @@ namespace Player
             _interact = _playerInput.actions["Interact"];
 
             _exit     = _playerInput.actions["Exit"];
-            _select     = _playerInput.actions["Select"];
-            _left    = _playerInput.actions["SettingLeft"];
+            _select   = _playerInput.actions["Select"];
+            _left     = _playerInput.actions["SettingLeft"];
             _right    = _playerInput.actions["SettingRight"];
 
             _aim      = _playerInput.actions["Aim"];
             _skill    = _playerInput.actions["Skill"];
             _switch   = _playerInput.actions["Switch"];
             _target   = _playerInput.actions["Target"];
-
             
-            _pause = _playerInput.actions["Pause"];
+            _pause    = _playerInput.actions["Pause"];
 
             if (!interaction)
             {
@@ -114,55 +104,78 @@ namespace Player
 
         private void OnEnable()
         {
-            // ===== Gameplay subscribes =====
-            _collect.started  += OnCollectStarted;
-            _collect.canceled += OnCollectCanceled;
-
-            _aim.started      += OnAimStarted;
-            _aim.canceled     += OnAimCanceled;
-            
-            _interact.started  += OnSkipStarted;
-            _interact.canceled += OnSkipCanceled;
-
-            _jump.performed     += OnJumpPerformed;
-            _dash.performed     += OnDashPerformed;
-            _shoot.performed    += OnShootPerformed;
-            _skill.performed    += OnSkillPerformed;
-            _interact.performed += OnInteractPerformed;
-            _target.performed   += OnTargetPerformed;
-
-            // ===== Pause subscribe（不受 InputLock）=====
-            if (_pause != null) _pause.performed += OnPausePerformed;
+            BindEvents(true);
+            _playerInput.onControlsChanged += OnControlsChanged;
+            UpdateControlSchemeCache();
         }
 
         private void OnDisable()
         {
-            // ===== Gameplay unsubscribes =====
-            _collect.started  -= OnCollectStarted;
-            _collect.canceled -= OnCollectCanceled;
-
-            _aim.started      -= OnAimStarted;
-            _aim.canceled     -= OnAimCanceled;
-
-            _interact.started  -= OnSkipStarted;
-            _interact.canceled -= OnSkipCanceled;
-            
-            _jump.performed     -= OnJumpPerformed;
-            _dash.performed     -= OnDashPerformed;
-            _shoot.performed    -= OnShootPerformed;
-            _skill.performed    -= OnSkillPerformed;
-            _interact.performed -= OnInteractPerformed;
-            _target.performed   -= OnTargetPerformed;
-
-            // ===== Pause unsubscribe =====
-            if (_pause != null) _pause.performed -= OnPausePerformed;
-
+            BindEvents(false);
+            _playerInput.onControlsChanged -= OnControlsChanged;
             StopHoldRumble();
+        }
+
+        // 統一事件綁定管理
+        private void BindEvents(bool bind)
+        {
+            if (bind)
+            {
+                _collect.started  += OnCollectStarted;
+                _collect.canceled += OnCollectCanceled;
+                _aim.started      += OnAimStarted;
+                _aim.canceled     += OnAimCanceled;
+                _interact.started += OnSkipStarted;
+                _interact.canceled += OnSkipCanceled;
+
+                _jump.performed     += OnJumpPerformed;
+                _dash.performed     += OnDashPerformed;
+                _shoot.performed    += OnShootPerformed;
+                _skill.performed    += OnSkillPerformed;
+                _interact.performed += OnInteractPerformed;
+                _target.performed   += OnTargetPerformed;
+
+                if (_pause != null) _pause.performed += OnPausePerformed;
+            }
+            else
+            {
+                _collect.started  -= OnCollectStarted;
+                _collect.canceled -= OnCollectCanceled;
+                _aim.started      -= OnAimStarted;
+                _aim.canceled     -= OnAimCanceled;
+                _interact.started -= OnSkipStarted;
+                _interact.canceled -= OnSkipCanceled;
+                
+                _jump.performed     -= OnJumpPerformed;
+                _dash.performed     -= OnDashPerformed;
+                _shoot.performed    -= OnShootPerformed;
+                _skill.performed    -= OnSkillPerformed;
+                _interact.performed -= OnInteractPerformed;
+                _target.performed   -= OnTargetPerformed;
+
+                if (_pause != null) _pause.performed -= OnPausePerformed;
+            }
+        }
+
+        private void OnControlsChanged(PlayerInput input)
+        {
+            UpdateControlSchemeCache();
+        }
+
+        private void UpdateControlSchemeCache()
+        {
+            _isGamepadControl = _playerInput.currentControlScheme == "Gamepad";
         }
 
         private void Update()
         {
-            // ===== 移動輸入更新（受 InputLock 影響）=====
+            SwitchPressed = !InputLock && _switch.WasPressedThisFrame();
+            InteractPressed = _interact.WasPressedThisFrame();
+            ExitPressed = _exit.WasPressedThisFrame();
+            SelectPressed = _select.WasPressedThisFrame();
+            SettingRightPressed = _right.WasPressedThisFrame();
+            SettingLeftPressed = _left.WasPressedThisFrame();
+
             if (InputLock)
             {
                 MoveInput = Vector2.zero;
@@ -172,16 +185,14 @@ namespace Player
             {
                 MoveInput = _movement.ReadValue<Vector2>();
 
-                string controlScheme = _playerInput.currentControlScheme;
-                MoveSpeedMultiplier = (controlScheme == "Gamepad")
+                MoveSpeedMultiplier = _isGamepadControl
                     ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
                     : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
             }
 
-            // ===== 連續震動維持 =====
             if (_isRumbling)
             {
-                if (_playerInput.currentControlScheme != "Gamepad" || Gamepad.current == null)
+                if (!_isGamepadControl || Gamepad.current == null)
                 {
                     StopHoldRumble();
                 }
@@ -192,7 +203,6 @@ namespace Player
             }
         }
 
-        // ========= Pause toggle（本腳本內部處理） =========
         private void OnPausePerformed(InputAction.CallbackContext ctx)
         {
             TogglePause();
@@ -206,27 +216,11 @@ namespace Player
         public void SetPauseMode(bool paused)
         {
             IsPaused = paused;
-
             EventBus<OnTogglePause>.Raise(new OnTogglePause());
-
             SetLockMovement(paused);
-
             Time.timeScale = paused ? 0f : 1f;
         }
 
-        private void SwitchActionMap(string mapName)
-        {
-            if (_playerInput == null) return;
-            if (string.IsNullOrEmpty(mapName)) return;
-
-            if (_playerInput.currentActionMap != null && _playerInput.currentActionMap.name == mapName)
-                return;
-
-            try { _playerInput.SwitchCurrentActionMap(mapName); }
-            catch { /* map 名稱不對就不炸 */ }
-        }
-
-        // ========= 只鎖「行動系統」的統一接口 =========
         public void SetLockMovement(bool lockMovement)
         {
             if (InputLock == lockMovement) return;
@@ -238,29 +232,23 @@ namespace Player
             if (InputLock)
             {
                 StopHoldRumble();
-                ForceStopContinuousGameplayStates();
-                ClearGameplayFlags();
+                ClearAllGameplayStates();
             }
         }
 
         public void ResetJump() => JumpPressed = false;
         public void ResetDash() => DashPressed = false;
-
-        // ========= 內部工具 =========
-        private void ForceStopContinuousGameplayStates()
+        
+        private void ClearAllGameplayStates()
         {
             if (IsCollecting && interaction != null)
                 interaction.Input_Drop();
 
             IsCollecting = false;
             IsAiming = false;
-        }
-
-        private void ClearGameplayFlags()
-        {
+            
             MoveInput = Vector2.zero;
             MoveSpeedMultiplier = 1f;
-
             JumpPressed = false;
             DashPressed = false;
             ShootPressed = false;
@@ -268,21 +256,17 @@ namespace Player
             IsTargetPressed = false;
         }
 
-        // ========= Gameplay callbacks（受 InputLock 影響） =========
         private void OnCollectStarted(InputAction.CallbackContext ctx)
         {
             if (InputLock || interaction == null) return;
-
             IsCollecting = true;
             interaction.Input_StartAbsorbHold();
-
             StartHoldRumble(0.15f, 0.30f);
         }
 
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
             StopHoldRumble();
-
             IsCollecting = false;
             if (interaction != null)
                 interaction.Input_Drop();
@@ -294,21 +278,12 @@ namespace Player
             IsAiming = true;
         }
 
-        private void OnAimCanceled(InputAction.CallbackContext ctx)
-        {
-            IsAiming = false;
-        }
-        private void OnSkipStarted(InputAction.CallbackContext ctx)
-        {
-            IsSkiping = true;
-        }
-        private void OnSkipCanceled(InputAction.CallbackContext ctx)
-        {
-            IsSkiping = false;
-        }
+        private void OnAimCanceled(InputAction.CallbackContext ctx) => IsAiming = false;
 
-        
-        
+        private void OnSkipStarted(InputAction.CallbackContext ctx) => IsSkipping = true;
+
+        private void OnSkipCanceled(InputAction.CallbackContext ctx) => IsSkipping = false;
+
         private void OnJumpPerformed(InputAction.CallbackContext ctx)
         {
             if (InputLock) return;
@@ -341,9 +316,6 @@ namespace Player
             Rumble(0.3f, 0.7f, 0.1f);
         }
 
-        /// <summary>
-        /// 只處理 Gameplay 的丟下物件版本。對話/UI 請讀 InteractPressed（不受 InputLock 影響）
-        /// </summary>
         private void OnInteractPerformed(InputAction.CallbackContext ctx)
         {
             if (InputLock || interaction == null) return;
@@ -361,11 +333,7 @@ namespace Player
             yield return null;
             ShootPressed = false;
         }
-
-        public void SetSpellType(SpellType newSpellType)
-        {
-            //
-        }
+        
 
         // ========= Rumble =========
         private bool _isRumbling;
@@ -374,7 +342,7 @@ namespace Player
 
         private void StartHoldRumble(float low, float high)
         {
-            if (_playerInput.currentControlScheme != "Gamepad") return;
+            if (!_isGamepadControl) return;
             var pad = Gamepad.current;
             if (pad == null) return;
 
@@ -396,7 +364,7 @@ namespace Player
 
         private void Rumble(float low, float high, float duration)
         {
-            if (_playerInput.currentControlScheme != "Gamepad") return;
+            if (!_isGamepadControl) return;
 
             var pad = Gamepad.current;
             if (pad == null) return;
