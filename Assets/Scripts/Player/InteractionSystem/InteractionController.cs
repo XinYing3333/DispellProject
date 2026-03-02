@@ -25,6 +25,8 @@ public class InteractionController : MonoBehaviour
     [SerializeField, Tooltip("空手也開啟 AimAssist 掃描以利瞄準 spell")]
     private bool scanWhenEmptyForSpell = true;
 
+    // 紀錄當前的法術種類
+    private SpellType _currentSpellType; 
     private float _lastSpellTime = -999f;
 
     [Header("Absorb (Hold)")]
@@ -32,7 +34,7 @@ public class InteractionController : MonoBehaviour
     private float absorbTickInterval = 0.12f;
 
     [SerializeField] private List<ParticleSystem> particleVFX;
-
+    
     public InteractState State { get; private set; } = InteractState.Idle;
 
     private ThrowingSystem _thrower;
@@ -65,7 +67,6 @@ public class InteractionController : MonoBehaviour
 
     void Update()
     {
-        // 只負責掃描開關的狀態維護（避免在這裡動 VFX）
         SetAimScanningAccordingToState();
     }
 
@@ -79,6 +80,14 @@ public class InteractionController : MonoBehaviour
             aimAssist.SetScanning(shouldScan);
             _prevScanning = shouldScan;
         }
+    }
+
+    /// <summary>
+    /// 供外部呼叫：切換當前法術種類
+    /// </summary>
+    public void SetSpellType(SpellType newType)
+    {
+        _currentSpellType = newType;
     }
 
     // ====== 長按吸收：開始/結束 ======
@@ -98,7 +107,6 @@ public class InteractionController : MonoBehaviour
         _isAbsorbHeld = false;
         State = InteractState.Idle;
 
-        // 👉 新增：叫 Collector 把還在拉的全部停掉
         if (collector)
             collector.CancelAllPulls();
 
@@ -113,7 +121,6 @@ public class InteractionController : MonoBehaviour
 
         SetAimScanningAccordingToState();
     }
-
 
     private System.Collections.IEnumerator AbsorbHoldLoop()
     {
@@ -167,8 +174,6 @@ public class InteractionController : MonoBehaviour
         if (rb && handSlot && handSlot.TryAttach(rb))
         {
             State = InteractState.ReadyToThrow;
-
-            // ✅ 新增這行：吸附成功時關閉特效
             particleVFX?.ForEach(p => p.Stop());
         }
         else
@@ -177,39 +182,52 @@ public class InteractionController : MonoBehaviour
         }
     }
 
-
     private void TrySpawnAndThrowSpell()
     {
+        if (spellPrefab == null) return;
         if (Time.time - _lastSpellTime < spellCooldown) return;
 
-        var pos = throwOrigin ? throwOrigin.position 
-            : transform.position + transform.forward * 0.5f + Vector3.up;
+        var pos = throwOrigin ? throwOrigin.position : transform.position + transform.forward * 0.5f + Vector3.up;
         var rot = throwOrigin ? throwOrigin.rotation : transform.rotation;
 
         Rigidbody rb = Instantiate(spellPrefab, pos, rot);
 
         rb.isKinematic = false;
-        rb.useGravity  = _thrower.UseGravity;
+        rb.useGravity = _thrower.UseGravity;
         rb.detectCollisions = true;
 
-        // 先把軌跡關掉並清空，等下一個 Fixed 再打開
+        Spell spellCmp = rb.GetComponent<Spell>();
+        // if (spellCmp != null)
+        // {
+        //     // 將生成的 Spell 屬性覆寫為當前選擇的種類
+        //     spellCmp.spellType = _currentSpellType;
+        //
+        //     // 整合 AimAssist 導引目標
+        //     if (aimAssist != null)
+        //     {
+        //         Transform currentTarget = aimAssist.GetTarget(); 
+        //         if (currentTarget != null)
+        //         {
+        //             spellCmp.SetTarget(currentTarget);
+        //         }
+        //     }
+        // }
+
         ResetTrails(rb.transform, emittingAfter: true);
-
         rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
-
-        _thrower.ThrowExisting(rb, transform); // 這裡會立即給速度/方向
+    
+        _thrower.ThrowExisting(rb, transform);
 
         _lastSpellTime = Time.time;
     }
-
     
     static void ResetTrails(Transform root, bool emittingAfter = true)
     {
         var trails = root.GetComponentsInChildren<TrailRenderer>(true);
         foreach (var tr in trails)
         {
-            tr.emitting = false; // 先關掉
-            tr.Clear();          // 清空既有點
+            tr.emitting = false;
+            tr.Clear();
         }
 
         if (emittingAfter)
@@ -218,9 +236,8 @@ public class InteractionController : MonoBehaviour
 
     static System.Collections.IEnumerator EnableTrailsNextFixed(Transform root)
     {
-        yield return new WaitForFixedUpdate(); // 等物理步進一次，確定位置/速度都就緒
+        yield return new WaitForFixedUpdate();
         var trails = root.GetComponentsInChildren<TrailRenderer>(true);
         foreach (var tr in trails) tr.emitting = true;
     }
-
 }
