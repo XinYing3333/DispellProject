@@ -1,5 +1,6 @@
 public enum SpellType
 {
     StopSpell,     
-    AttackSpell  
+    AttackSpell,
+    BirdSpell
 }

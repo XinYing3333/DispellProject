@@ -22,7 +22,6 @@ public class AimAssist : MonoBehaviour
     private readonly Collider[] _hits = new Collider[128];
     private Targetable _current;
 
-    // 新增：掃描開關（公開唯讀，對外用 SetScanning 控制）
     public bool Scanning { get; private set; } = false;
     
     public Targetable CurrentTarget => _current;
@@ -34,7 +33,7 @@ public class AimAssist : MonoBehaviour
 
     void Update()
     {
-        if (!Scanning) return;                    // ← 關掉就不掃描
+        if (!Scanning) return;
         var next = FindBestTarget();
 
         if (!ReferenceEquals(next, _current))
@@ -58,10 +57,17 @@ public class AimAssist : MonoBehaviour
         Scanning = on;
         if (!on)
         {
-            // 關閉時確保清掉殘留高亮
             if (_current) _current.SetAimActive(false);
             _current = null;
         }
+    }
+
+    /// <summary>
+    /// 供外部獲取當前鎖定目標的 Transform
+    /// </summary>
+    public Transform GetTarget()
+    {
+        return _current != null ? _current.transform : null;
     }
     
     public Vector3 GetAimDirection()
@@ -79,7 +85,6 @@ public class AimAssist : MonoBehaviour
             ? dir.normalized
             : (cameraTransform ? cameraTransform.forward : transform.forward);
     }
-
 
     private Targetable FindBestTarget()
     {
@@ -105,8 +110,6 @@ public class AimAssist : MonoBehaviour
             float ang = Vector3.Angle(forward, to);
             if (ang > maxAngle) continue;
 
-
-            // 距離越近、角度越小分數越高（各 0.5 權重）
             float score = Mathf.InverseLerp(detectRadius, 0f, dist) * 0.5f +
                           Mathf.InverseLerp(maxAngle, 0f, ang) * 0.5f;
 
@@ -117,20 +120,16 @@ public class AimAssist : MonoBehaviour
     
     private Vector3 GetTargetCenter(Targetable t)
     {
-        // 優先用 Collider（最準確反映碰撞體）
         var col = t.GetComponentInChildren<Collider>();
         if (col)
             return col.bounds.center;
 
-        // 次選 Renderer（視覺中心）
         var rend = t.GetComponentInChildren<Renderer>();
         if (rend)
             return rend.bounds.center;
 
-        // 兜底：使用原本 AimPoint
         return t.GetAimPoint();
     }
-
 
     private void OnDrawGizmosSelected()
     {

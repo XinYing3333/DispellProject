@@ -197,21 +197,21 @@ public class InteractionController : MonoBehaviour
         rb.detectCollisions = true;
 
         Spell spellCmp = rb.GetComponent<Spell>();
-        // if (spellCmp != null)
-        // {
-        //     // 將生成的 Spell 屬性覆寫為當前選擇的種類
-        //     spellCmp.spellType = _currentSpellType;
-        //
-        //     // 整合 AimAssist 導引目標
-        //     if (aimAssist != null)
-        //     {
-        //         Transform currentTarget = aimAssist.GetTarget(); 
-        //         if (currentTarget != null)
-        //         {
-        //             spellCmp.SetTarget(currentTarget);
-        //         }
-        //     }
-        // }
+        if (spellCmp != null)
+        {
+            // 將生成的 Spell 屬性覆寫為當前選擇的種類
+            spellCmp.spellType = _currentSpellType;
+        
+            // 整合 AimAssist 導引目標
+            if (aimAssist != null)
+            {
+                Transform currentTarget = aimAssist.GetTarget(); 
+                if (currentTarget != null)
+                {
+                    spellCmp.SetTarget(currentTarget);
+                }
+            }
+        }
 
         ResetTrails(rb.transform, emittingAfter: true);
         rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
