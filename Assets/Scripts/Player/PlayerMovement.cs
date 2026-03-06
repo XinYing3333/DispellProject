@@ -703,6 +703,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetWeaponAnimation()
     {
+        anim.SetBool("IsShooting", input.ShootPressed);
+        anim.SetBool("IsCollecting", input.IsCollecting);
+        
         if (input.ShootPressed || input.IsCollecting)
         {
             _weaponHoldTimer = WeaponHoldDuration;
