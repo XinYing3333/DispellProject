@@ -60,7 +60,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture:
-        m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
+        m_Texture: {fileID: 2800000, guid: d60dace7a3bc6464989f720702f70701, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureG:
@@ -91,7 +91,9 @@ Material:
     - _DstBlend: 0
     - _Emission: 0
     - _Float: 0.5
-    - _GroundDetails: 2
+    - _GroundDetails: -1.9
+    - _Height: 0.5
+    - _HeightGradient: 1
     - _MossOffset: 0
     - _OffsetDetails: 1
     - _QueueControl: 0
@@ -110,6 +112,7 @@ Material:
     - _Color3: {r: 0.6695606, g: 0.9339623, b: 0.4978195, a: 0}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 0}
+    - _HeightColor: {r: 0.29803917, g: 0.30980387, b: 0.094117604, a: 0}
     - _OffsetMinMax: {r: -1, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

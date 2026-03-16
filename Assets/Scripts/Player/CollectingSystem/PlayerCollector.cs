@@ -16,6 +16,10 @@ public class PlayerCollector : MonoBehaviour
     [SerializeField] private float pullDuration = 0.35f;
     [SerializeField] private float frontOffset  = 0.6f;
     [SerializeField] private Ease  pullEase     = Ease.Linear;
+    
+    [Header("Rate Limit")]
+    [SerializeField] private float immediateCollectCooldown = 0.35f; // 與 pullDuration 對齊
+    private float _lastImmediateTime = -999f;
 
     [Header("Collect Flow")]
     [SerializeField] private bool disablePhysicsDuringPull = true;
@@ -84,10 +88,18 @@ public class PlayerCollector : MonoBehaviour
 
         if (!bestT) return;
 
-        var collect = bestT.GetComponentInParent<ICollectable>();
-        if (collect != null)
+        var collectable = bestT.GetComponentInParent<ICollectable>();
+        if (collectable != null)
         {
-            StartPullThenCollect(bestT, collect);
+            // 判斷是否需要吸附動態
+            if (collectable.NeedCollectAnimation)
+            {
+                StartPullThenCollect(bestT, collectable);
+            }
+            else
+            {
+                ExecuteImmediateCollect(collectable);
+            }
             return;
         }
 
@@ -178,6 +190,19 @@ public class PlayerCollector : MonoBehaviour
             });
 
         _pullTweens[target] = tw;
+    }
+    
+    // =============== 不會有動態的吸收物 ===============
+    private void ExecuteImmediateCollect(ICollectable collectable)
+    {
+        // 判定冷卻，確保不會快於吸附動畫的節奏
+        if (Time.time - _lastImmediateTime < immediateCollectCooldown) return;
+
+        _lastImmediateTime = Time.time;
+
+        collectable.Collect();
+        AudioManager.Instance.PlaySFX(SFXType.CoinPickup);
+        _onPulledResult?.Invoke(null, true);
     }
 
     // =============== 取消全部拉取（給 InteractionController 用） ===============

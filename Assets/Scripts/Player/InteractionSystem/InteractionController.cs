@@ -1,56 +1,63 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Player.InteractionSystem;
+using Cinemachine;
+using Player;
 
-public enum InteractState { Idle, ReadyToThrow }
+public enum InteractState
+{
+    Idle,
+    ReadyToThrow
+}
 
 public class InteractionController : MonoBehaviour
 {
-    [Header("Refs")]
-    [SerializeField] private HandSlot handSlot;
+    [Header("Refs")] [SerializeField] private HandSlot handSlot;
     [SerializeField] private PlayerCollector collector;
     [SerializeField] private AimAssist aimAssist;
     [SerializeField] private Transform throwOrigin;
+    [SerializeField] private PlayerMovement playerMovement;
 
-    [Header("Throw")]
-    [SerializeField] private float throwSpeed = 18f;
+    [Header("Ratchet Style Settings")] [SerializeField]
+    private LayerMask aimRaycastMask;
+
+    [SerializeField] private float maxAimDistance = 100f;
+    [SerializeField] private GameObject crosshairUI;
+
+    [Header("Throw/Spell Stats")] [SerializeField]
+    private float throwSpeed = 22f;
+
     [SerializeField] private ThrowingSystem.ThrowArcMode arcMode = ThrowingSystem.ThrowArcMode.ToTarget;
-    [SerializeField] private bool preferHighArc = true;
-    [SerializeField, Range(5f, 60f)] private float fixedAngle = 35f;
-
-    [Header("Spell (Empty-hand Throw)")]
     [SerializeField] private Rigidbody spellPrefab;
-    [SerializeField] private bool allowSpellWhenEmpty = true;
-    [SerializeField] private float spellCooldown = 0.2f;
-    [SerializeField, Tooltip("空手也開啟 AimAssist 掃描以利瞄準 spell")]
-    private bool scanWhenEmptyForSpell = true;
+    [SerializeField] private float spellCooldown = 0.15f;
 
-    // 紀錄當前的法術種類
-    private SpellType _currentSpellType; 
-    private float _lastSpellTime = -999f;
-
-    [Header("Absorb (Hold)")]
-    [SerializeField, Tooltip("長按吸收時的掃描間隔秒數")]
+    [Header("Absorb Settings")] [SerializeField]
     private float absorbTickInterval = 0.12f;
 
     [SerializeField] private List<ParticleSystem> particleVFX;
-    
-    public InteractState State { get; private set; } = InteractState.Idle;
+    [SerializeField] private ParticleSystem throwVFX;
+
 
     private ThrowingSystem _thrower;
+    private SpellType _currentSpellType;
+    private float _lastSpellTime = -999f;
+    private bool _isDetectAiming;
+    private bool _isAiming;
+
     private Coroutine _absorbRoutine;
     private bool _isAbsorbHeld;
-    private bool _prevScanning;
 
-    void Awake()
+    private float _weaponHoldTimer = 0f;
+    private const float WeaponHoldDuration = 3f;
+
+    public InteractState State { get; private set; } = InteractState.Idle;
+
+    private void Awake()
     {
-        if (!handSlot) handSlot = GetComponentInChildren<HandSlot>();
-
         _thrower = new ThrowingSystem(throwOrigin, throwSpeed, aimAssist)
         {
             ArcMode = arcMode,
-            PreferHighArc = preferHighArc,
-            LaunchAngleDegrees = fixedAngle,
             OrientToVelocity = true,
             UseGravity = true
         };
@@ -60,37 +67,99 @@ public class InteractionController : MonoBehaviour
             collector.SetBusyChecker(() => handSlot && handSlot.HasItem);
             collector.SetOnPulledResult(OnAbsorbResult);
         }
-
-        _prevScanning = false;
-        SetAimScanningAccordingToState();
     }
 
-    void Update()
+    private void Update()
     {
-        SetAimScanningAccordingToState();
+        UpdateAimScanning();
     }
 
-    private void SetAimScanningAccordingToState()
+    private void UpdateAimScanning()
     {
         if (!aimAssist) return;
-        bool has = handSlot && handSlot.HasItem;
-        bool shouldScan = has || (scanWhenEmptyForSpell && allowSpellWhenEmpty);
-        if (shouldScan != _prevScanning)
-        {
-            aimAssist.SetScanning(shouldScan);
-            _prevScanning = shouldScan;
-        }
+        // 瞄準時關閉 AimAssist 掃描，改由準星決定；非瞄準且手中有物時開啟
+        bool shouldScan = !_isAiming && (handSlot && (handSlot.HasItem || true));
+        aimAssist.SetScanning(shouldScan);
     }
 
-    /// <summary>
-    /// 供外部呼叫：切換當前法術種類
-    /// </summary>
-    public void SetSpellType(SpellType newType)
+    // ====== 投擲 / 射擊 (Input_Throw) ======
+    public void Input_Throw()
     {
-        _currentSpellType = newType;
+        if (Time.time - _lastSpellTime < spellCooldown) return;
+
+        // 停止吸收 VFX
+        particleVFX?.ForEach(p => p.Stop());
+
+        Vector3 targetPoint = GetCurrentTargetPoint();
+
+        if (handSlot && handSlot.HasItem)
+        {
+            _isAbsorbHeld = false;
+            ExecuteThrow(handSlot.Take(), targetPoint);
+        }
+        else if (spellPrefab)
+        {
+            ExecuteSpell(targetPoint);
+        }
+
+        _lastSpellTime = Time.time;
+        State = InteractState.Idle;
     }
 
-    // ====== 長按吸收：開始/結束 ======
+    private Vector3 GetCurrentTargetPoint()
+    {
+        // 1. 瞄準模式：從螢幕中心 Raycast
+        if (_isAiming)
+        {
+            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
+            if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, aimRaycastMask))
+            {
+                return hit.point;
+            }
+
+            return ray.GetPoint(maxAimDistance);
+        }
+
+        // 2. 非瞄準模式：使用 AimAssist 鎖定的目標
+        if (aimAssist && aimAssist.CurrentTarget)
+        {
+            return aimAssist.CurrentTarget.GetAimPoint();
+        }
+
+        // 3. 預設前方點
+        return throwOrigin
+            ? (throwOrigin.position + throwOrigin.forward * 20f)
+            : (transform.position + transform.forward * 20f);
+    }
+
+    private void ExecuteThrow(Rigidbody rb, Vector3 targetPoint)
+    {
+        if (!rb) return;
+        rb.transform.position = throwOrigin.position;
+        rb.isKinematic = false;
+        rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
+
+        _thrower.ThrowToPoint(rb, targetPoint);
+        if (throwVFX) throwVFX.Play();
+    }
+
+    private void ExecuteSpell(Vector3 targetPoint)
+    {
+        Rigidbody rb = Instantiate(spellPrefab, throwOrigin.position, throwOrigin.rotation);
+
+        Spell spellCmp = rb.GetComponent<Spell>();
+        if (spellCmp != null)
+        {
+            spellCmp.spellType = _currentSpellType;
+            if (aimAssist && aimAssist.CurrentTarget)
+                spellCmp.SetTarget(aimAssist.CurrentTarget.transform);
+        }
+
+        _thrower.ThrowToPoint(rb, targetPoint);
+        if (throwVFX) throwVFX.Play();
+    }
+
+    // ====== 吸收邏輯 (Absorb) ======
     public void Input_StartAbsorbHold()
     {
         particleVFX?.ForEach(p => p.Play());
@@ -101,14 +170,24 @@ public class InteractionController : MonoBehaviour
             _absorbRoutine = StartCoroutine(AbsorbHoldLoop());
     }
 
+    private IEnumerator AbsorbHoldLoop()
+    {
+        var wait = new WaitForSeconds(absorbTickInterval);
+        while (_isAbsorbHeld)
+        {
+            if (handSlot && !handSlot.HasItem && collector)
+                collector.TryAbsorbOnce();
+            yield return wait;
+        }
+
+        _absorbRoutine = null;
+    }
+
+    // ====== 丟棄與重置 (Input_Drop) ======
     public void Input_Drop()
     {
         particleVFX?.ForEach(p => p.Stop());
         _isAbsorbHeld = false;
-        State = InteractState.Idle;
-
-        if (collector)
-            collector.CancelAllPulls();
 
         if (_absorbRoutine != null)
         {
@@ -116,51 +195,13 @@ public class InteractionController : MonoBehaviour
             _absorbRoutine = null;
         }
 
+        if (collector)
+            collector.CancelAllPulls();
+
         if (handSlot && handSlot.HasItem)
             handSlot.Detach();
 
-        SetAimScanningAccordingToState();
-    }
-
-    private System.Collections.IEnumerator AbsorbHoldLoop()
-    {
-        var wait = new WaitForSeconds(absorbTickInterval);
-        while (_isAbsorbHeld)
-        {
-            if (!handSlot.HasItem && collector)
-                collector.TryAbsorbOnce();
-            yield return wait;
-        }
-        _absorbRoutine = null;
-    }
-
-    // ====== 投擲 / 丟棄 ======
-    public void Input_Throw()
-    {
-        particleVFX?.ForEach(p => p.Stop());
-
-        if (handSlot && handSlot.HasItem)
-        {
-            _isAbsorbHeld = false;
-
-            var rb = handSlot.Take();
-            if (rb)
-            {
-                rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
-                _thrower.ThrowExisting(rb, transform);
-            }
-
-            State = InteractState.Idle;
-            SetAimScanningAccordingToState();
-            return;
-        }
-
-        if (allowSpellWhenEmpty && spellPrefab)
-        {
-            TrySpawnAndThrowSpell();
-            State = InteractState.Idle;
-            SetAimScanningAccordingToState();
-        }
+        State = InteractState.Idle;
     }
 
     private void OnAbsorbResult(Rigidbody rb, bool wasCollected)
@@ -182,62 +223,5 @@ public class InteractionController : MonoBehaviour
         }
     }
 
-    private void TrySpawnAndThrowSpell()
-    {
-        if (spellPrefab == null) return;
-        if (Time.time - _lastSpellTime < spellCooldown) return;
-
-        var pos = throwOrigin ? throwOrigin.position : transform.position + transform.forward * 0.5f + Vector3.up;
-        var rot = throwOrigin ? throwOrigin.rotation : transform.rotation;
-
-        Rigidbody rb = Instantiate(spellPrefab, pos, rot);
-
-        rb.isKinematic = false;
-        rb.useGravity = _thrower.UseGravity;
-        rb.detectCollisions = true;
-
-        Spell spellCmp = rb.GetComponent<Spell>();
-        if (spellCmp != null)
-        {
-            // 將生成的 Spell 屬性覆寫為當前選擇的種類
-            spellCmp.spellType = _currentSpellType;
-        
-            // 整合 AimAssist 導引目標
-            if (aimAssist != null)
-            {
-                Transform currentTarget = aimAssist.GetTarget(); 
-                if (currentTarget != null)
-                {
-                    spellCmp.SetTarget(currentTarget);
-                }
-            }
-        }
-
-        ResetTrails(rb.transform, emittingAfter: true);
-        rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
-    
-        _thrower.ThrowExisting(rb, transform);
-
-        _lastSpellTime = Time.time;
-    }
-    
-    static void ResetTrails(Transform root, bool emittingAfter = true)
-    {
-        var trails = root.GetComponentsInChildren<TrailRenderer>(true);
-        foreach (var tr in trails)
-        {
-            tr.emitting = false;
-            tr.Clear();
-        }
-
-        if (emittingAfter)
-            root.GetComponent<MonoBehaviour>()?.StartCoroutine(EnableTrailsNextFixed(root));
-    }
-
-    static System.Collections.IEnumerator EnableTrailsNextFixed(Transform root)
-    {
-        yield return new WaitForFixedUpdate();
-        var trails = root.GetComponentsInChildren<TrailRenderer>(true);
-        foreach (var tr in trails) tr.emitting = true;
-    }
+    public void SetSpellType(SpellType type) => _currentSpellType = type;
 }

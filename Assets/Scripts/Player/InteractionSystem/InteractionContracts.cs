@@ -7,6 +7,7 @@ namespace Player.InteractionSystem
     {
         // 吸收到玩家時呼叫（自行決定存檔、加分…）
         void Collect();
+        bool NeedCollectAnimation { get; } // 新增：是否立即收集
     }
 
     public interface IMagnetAttachable

@@ -180,6 +180,7 @@ public class PlayerMovement : MonoBehaviour
     private bool _lastWeaponState = false;
     private float _weaponHoldTimer = 0f;
     private const float WeaponHoldDuration = 3f;
+    private bool _isAiming;
     
     // ==========================================
     // Unity 生命週期
@@ -226,6 +227,38 @@ public class PlayerMovement : MonoBehaviour
         if (input.IsCollecting) targetSpeed *= 0.65f;
         _currentSpeed = Mathf.Lerp(_currentSpeed, targetSpeed, 10f * Time.deltaTime);
 
+        // --- 新增：處理 BlendTree 的本地速度參數 ---
+        if (_isAiming || _weaponHoldTimer > 0f)
+        {
+            // 將世界坐標下的移動方向轉換為角色的本地坐標系
+            Vector3 localMove = transform.InverseTransformDirection(_rawInputMovement);
+        
+            // 考慮目前的移動速度比例 (0~1)
+            float speedFactor = (_rawInputMovement.magnitude < 0.1f) ? 0f : (_currentSpeed / runSpeed);
+        
+            float targetVX = localMove.x * speedFactor;
+            float targetVZ = localMove.z * speedFactor;
+
+            // 平滑更新 Animator 參數
+            // 在 Update 中計算完 targetVX, targetVZ 後
+            if (Mathf.Abs(targetVX) < 0.01f) targetVX = 0f;
+            if (Mathf.Abs(targetVZ) < 0.01f) targetVZ = 0f;
+
+            // 限制最大值，避免數值超出 BlendTree 定義範圍 (例如 -1 到 1)
+            targetVX = Mathf.Clamp(targetVX, -1f, 1f);
+            targetVZ = Mathf.Clamp(targetVZ, -1f, 1f);
+
+            anim.SetFloat("velocityX", Mathf.Lerp(anim.GetFloat("velocityX"), targetVX, 10f * Time.deltaTime));
+            anim.SetFloat("velocityZ", Mathf.Lerp(anim.GetFloat("velocityZ"), targetVZ, 10f * Time.deltaTime));
+        }
+        else
+        {
+            // 非瞄準狀態重置參數
+            anim.SetFloat("velocityX", 0f);
+            anim.SetFloat("velocityZ", 0f);
+        }
+        // ---------------------------------------
+        
         SetWeaponAnimation();
 
         _animSpeedParam = (_rawInputMovement.magnitude < 0.1f)
@@ -329,7 +362,7 @@ public class PlayerMovement : MonoBehaviour
 
                 ApplySchemeAMovement(landMul);
 
-                if (_wasMoving)
+                if (_wasMoving && !_isAiming && _weaponHoldTimer <= 0) // 加入判斷
                 {
                     var targetRot = Quaternion.LookRotation(_rawInputMovement);
                     var newRot = Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime);
@@ -703,13 +736,17 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetWeaponAnimation()
     {
+        // 判斷是否處於瞄準/射擊/收集狀態
+        _isAiming = input.ShootPressed || input.IsCollecting;
+    
         anim.SetBool("IsShooting", input.ShootPressed);
         anim.SetBool("IsCollecting", input.IsCollecting);
-        
-        if (input.ShootPressed || input.IsCollecting)
+    
+        if (_isAiming)
         {
             _weaponHoldTimer = WeaponHoldDuration;
         }
+
         if (_weaponHoldTimer > 0f)
         {
             _weaponHoldTimer -= Time.deltaTime;
@@ -717,21 +754,35 @@ public class PlayerMovement : MonoBehaviour
 
         bool isHoldingWeapon = _weaponHoldTimer > 0f;
 
+        // 處理角色轉向：瞄準時鎖定相機方向
+        if (isHoldingWeapon)
+        {
+            RotateTowardsCamera();
+        }
+
         if (isHoldingWeapon != _lastWeaponState)
         {
             _lastWeaponState = isHoldingWeapon;
-            
-            if (spiritFollow1 != null)
-            {
-                spiritFollow1.SetWeaponState(isHoldingWeapon);
-            }
-            if (spiritFollow2 != null)
-            {
-                spiritFollow2.SetWeaponState(isHoldingWeapon);
-            }
+            spiritFollow1?.SetWeaponState(isHoldingWeapon);
+            spiritFollow2?.SetWeaponState(isHoldingWeapon);
         }
-            
+    
+        // 更新圖層權重：確保 AimMovement 圖層與 Shoot 圖層同步開啟
         SetAnimatorLayerWeight("Shoot", isHoldingWeapon ? 1f : 0f);
+        SetAnimatorLayerWeight("AimMovement", isHoldingWeapon ? 1f : 0f);
+    }
+
+// 新增：強迫玩家轉向攝影機前方的方法
+    private void RotateTowardsCamera()
+    {
+        Vector3 camForward = cameraTransform.forward;
+        camForward.y = 0; // 鎖定 Y 軸，防止角色傾斜
+        if (camForward.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(camForward);
+            // 使用與原本 turnSpeed 一致的平滑度，或者更快一點
+            _rb.MoveRotation(Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime));
+        }
     }
     
     private void SetAnimatorLayerWeight(string layerName, float weight)

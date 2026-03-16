@@ -12,6 +12,7 @@ public enum SFXType
     Inhale,
     BouncePad,
     CoinPickup,
+    RockShake,
     Explosion,
     EnemyHit,
     Victory,

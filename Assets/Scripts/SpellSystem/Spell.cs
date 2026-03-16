@@ -1,16 +1,17 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.VFX; 
 
 [RequireComponent(typeof(Rigidbody))]
 [DisallowMultipleComponent]
 public class Spell : MonoBehaviour
 {
     [Header("Type Definition")]
-    public SpellType spellType; // 接收外部注入的法術屬性
+    public SpellType spellType; 
 
-    [Header("Visual / FX")]
-    public GameObject travelFxPrefab;
-    public GameObject smokeFxPrefab;
+    [Header("Visual / FX (Pre-placed in Prefab)")]
+    [SerializeField] private VisualEffect travelVFX;    // 拖入子物件中的 VFX Graph
+    [SerializeField] private ParticleSystem hitVFX;    // 拖入子物件中的 Particle System
     public SFXType explodeSfx = SFXType.Spawn;
 
     [Header("Flight")]
@@ -23,15 +24,13 @@ public class Spell : MonoBehaviour
     public bool explodeOnCollision = true;
     public LayerMask collideMask = ~0;
 
-    [Header("Smoke")]
-    public float smokeDuration = 2.0f;
-    public float cleanupDelay = 0.08f;
+    [Header("Cleanup")]
+    public float cleanupDelay = 1.0f; // 增加延遲以確保 HitParticle 播完
 
     // --- 內部狀態 ---
     private Rigidbody _rb;
     private Collider _col;
     private MeshRenderer _mesh;
-    private GameObject _travelFxInst;
 
     private float _life;
     private bool _exploded;
@@ -43,26 +42,23 @@ public class Spell : MonoBehaviour
         _col = GetComponent<Collider>();
         _mesh = GetComponent<MeshRenderer>();
         _life = fuseLifetime;
+
+        // 初始化狀態
+        if (travelVFX) travelVFX.Play();
+        if (hitVFX) hitVFX.Stop(); 
     }
 
     void Start()
     {
         ApplySpellTypeSettings();
-
-        if (travelFxPrefab)
-        {
-            _travelFxInst = Instantiate(travelFxPrefab, transform.position, transform.rotation, transform);
-        }
     }
 
-    // 依據外部寫入的 spellType 覆寫自身屬性與視覺表現
     private void ApplySpellTypeSettings()
     {
         if (_mesh)
         {
             switch (spellType)
             {
-                // 依據實際定義的 SpellType 名稱與需求調整內部數值
                 case SpellType.StopSpell:     
                     _mesh.material.color = new Color(1f, 0.8f, 0.2f); 
                     break;
@@ -71,9 +67,6 @@ public class Spell : MonoBehaviour
                     break;
             }
         }
-
-        // 若需針對特定 SpellType 修改導引速度或引爆音效，同步於此處指派：
-        // if (spellType == SpellType.AttackSpell) homingSpeed = 12f;
     }
 
     public void SetTarget(Transform target)
@@ -88,7 +81,7 @@ public class Spell : MonoBehaviour
         _life -= Time.deltaTime;
         if (_life <= 0f)
         {
-            ExplodeAsSmoke();
+            Explode();
         }
     }
 
@@ -112,17 +105,17 @@ public class Spell : MonoBehaviour
     {
         if (_exploded || !explodeOnCollision) return;
         if (((1 << other.gameObject.layer) & collideMask) == 0) return;
-        ExplodeAsSmoke();
+        Explode();
     }
 
     void OnTriggerEnter(Collider other)
     {
         if (_exploded || !explodeOnCollision) return;
         if (((1 << other.gameObject.layer) & collideMask) == 0) return;
-        ExplodeAsSmoke();
+        Explode();
     }
 
-    private void ExplodeAsSmoke()
+    private void Explode()
     {
         if (_exploded) return;
         _exploded = true;
@@ -130,27 +123,22 @@ public class Spell : MonoBehaviour
         if (AudioManager.Instance != null)
             AudioManager.Instance.PlaySFX(explodeSfx);
 
+        // 隱藏本體與禁用物理
         if (_mesh) _mesh.enabled = false;
         if (_col) _col.enabled = false;
-        if (_travelFxInst) Destroy(_travelFxInst);
-        
         _rb.linearVelocity = Vector3.zero;
         _rb.isKinematic = true;
-        _rb.useGravity = false;
 
-        GameObject fx = null;
-        if (smokeFxPrefab)
+        // 特效切換
+        if (travelVFX) travelVFX.Stop();
+        
+        if (hitVFX)
         {
-            fx = Instantiate(smokeFxPrefab, transform.position, Quaternion.identity);
+            hitVFX.transform.SetParent(null); // 脫離父物件避免跟隨銷毀
+            hitVFX.Play();
+            Destroy(hitVFX.gameObject, hitVFX.main.duration + hitVFX.main.startLifetime.constantMax);
         }
-
-        StartCoroutine(Co_SmokeLife(fx));
-    }
-
-    private IEnumerator Co_SmokeLife(GameObject fx)
-    {
-        yield return new WaitForSeconds(smokeDuration);
-        if (fx) Destroy(fx, cleanupDelay);
-        Destroy(gameObject, cleanupDelay);
+        
+        Destroy(gameObject, 0.05f); // 快速銷毀子彈主體
     }
 }

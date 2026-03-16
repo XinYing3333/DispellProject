@@ -241,7 +241,7 @@ namespace Player
         
         private void ClearAllGameplayStates()
         {
-            if (IsCollecting && interaction != null)
+            if (IsCollecting && interaction != null) 
                 interaction.Input_Drop();
 
             IsCollecting = false;

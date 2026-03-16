@@ -258,4 +258,26 @@ public class ThrowingSystem
         Vector2 xz = new Vector2(v.x, v.z).normalized * newFlat;
         return new Vector3(xz.x, newY, xz.y);
     }
+    
+    public void ThrowToPoint(Rigidbody rb, Vector3 targetPoint)
+    {
+        if (!rb) return;
+        rb.isKinematic = false;
+    
+        Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
+    
+        // 使用你原本寫好的彈道解算器，直接餵入 targetPoint
+        bool ok = TrySolveBallisticWithPitchLimits(
+            origin, targetPoint, throwSpeed, 
+            PreferHighArc, MinPitchDeg, MaxPitchDeg, true, 
+            out Vector3 v0, out _, out _);
+
+        if (!ok) v0 = (targetPoint - origin).normalized * throwSpeed; // 解不出來就直線射擊
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = v0;
+#else
+    rb.velocity = v0;
+#endif
+    }
 }

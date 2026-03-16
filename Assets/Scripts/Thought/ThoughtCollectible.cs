@@ -11,8 +11,10 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     public int idleCount = 2;//動畫總數，animator clips 命名排列以 0 開始
     public float minGap = 1.8f, maxGap = 4.0f;
     public float crossFade = 0.12f;
-
+    
     float timer;
+    
+    public bool NeedCollectAnimation => true; 
 
     void Start() { timer = Random.Range(minGap, maxGap); }
 

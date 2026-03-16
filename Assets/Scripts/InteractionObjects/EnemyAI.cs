@@ -25,6 +25,8 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
 
     private bool isPlay;
     private NavMeshAgent agent;
+    
+    public bool NeedCollectAnimation => true; 
 
     void Start()
     {
@@ -107,4 +109,5 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
         Destroy(gameObject);
         //_owner.ReturnThoughToPool(gameObject);
     }
+
 }

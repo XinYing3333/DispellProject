@@ -12,7 +12,7 @@ public static class CollectionSystem
 
     // 宣告事件：參數 = 物品類型, 當前總數量
     public static event System.Action<CollectedType, int> OnCollected;
-    public enum CollectedType { Though, EnemyThough, Offering }
+    public enum CollectedType { Though, EnemyThough, StopSignThough, Offering }
 
     private static string Key(CollectedType t) => t.ToString();
 
