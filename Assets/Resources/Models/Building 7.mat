@@ -25,6 +25,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - DR_CEL_EXTRA_ON
   - DR_OUTLINE_ON
   - _BASEMAP_PREMULTIPLY
   - _CELPRIMARYMODE_SINGLE
@@ -125,7 +126,7 @@ Material:
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
     - _CameraDistanceImpact: 0.85
-    - _CelExtraEnabled: 0
+    - _CelExtraEnabled: 1
     - _CelNumSteps: 3
     - _CelPrimaryMode: 1
     - _ClearCoatMask: 0
@@ -144,16 +145,16 @@ Material:
     - _FlatRimSize: 0.5
     - _FlatSpecularEdgeSmoothness: 0
     - _FlatSpecularSize: 0.1
-    - _Flatness: 0.46
+    - _Flatness: 0
     - _FlatnessExtra: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _GradientAngle: 13
-    - _GradientCenterX: 0
+    - _GradientCenterX: -69.23
     - _GradientCenterY: 0
     - _GradientEnabled: 0
-    - _GradientSize: 34.53
+    - _GradientSize: 35.9
     - _GradientSpace: 0
     - _LightContribution: 0
     - _LightFalloffSize: 0
@@ -199,7 +200,7 @@ Material:
     - _ColorDimCurve: {r: 0.73508644, g: 0.8773585, b: 0.6166341, a: 1}
     - _ColorDimExtra: {r: 0.5776944, g: 0.5943396, b: 0.47939652, a: 1}
     - _ColorDimSteps: {r: 0.85023, g: 0.85034, b: 0.8504499, a: 0.85056}
-    - _ColorGradient: {r: 0.1509434, g: 0.08676719, b: 0, a: 1}
+    - _ColorGradient: {r: 0.015686266, g: 0.3623953, b: 0.42352942, a: 1}
     - _DetailMapColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FlatRimColor: {r: 0.24528301, g: 0.23940533, b: 0.14231043, a: 1}
