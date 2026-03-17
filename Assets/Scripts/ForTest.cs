@@ -53,7 +53,7 @@ namespace Player
                 CollectionSystem.ClearCollection();
                 ForTutorialDemo.isTutorialFinished = false;
                 Time.timeScale = 1;
-                SceneController.Instance.LoadScene("MainMenu");
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 return;
             }
 

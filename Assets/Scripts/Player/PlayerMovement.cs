@@ -4,6 +4,7 @@ using Cinemachine;
 using Player;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.VFX;
 
 [RequireComponent(typeof(Rigidbody), typeof(Collider))]
@@ -35,10 +36,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float maxStepHeight = 0.3f;
     [SerializeField] private float stepCheckDistance = 0.4f;
 
-    [Header("VFX Settings")] [SerializeField]
-    private VisualEffect stepVFX;
+    [Header("VFX Settings")]
+    [SerializeField] private ParticleSystem stepVFX;
 
-    [SerializeField] private ParticleSystem jumpVFX;
+    [SerializeField] private ParticleSystem firstJumpVFX;
+    [SerializeField] private ParticleSystem doubleJumpVFX;
     [SerializeField] private ParticleSystem groundedVFX;
 
     [Header("Jump Settings")] [SerializeField]
@@ -490,13 +492,15 @@ public class PlayerMovement : MonoBehaviour
             anim.SetBool("Jump", true);
             anim.SetBool("IsDoubleJump", false);
             AudioManager.Instance.PlaySFX(SFXType.Jump);
+            if (doubleJumpVFX != null) firstJumpVFX.Play();
+
         }
         else if (currentJumpCount == 2)
         {
             anim.SetBool("IsDoubleJump", true);
             anim.SetBool("Jump", false);
             AudioManager.Instance.PlaySFX(SFXType.Jump);
-            if (jumpVFX != null) jumpVFX.Play();
+            if (doubleJumpVFX != null) doubleJumpVFX.Play();
         }
 
         var v = _rb.linearVelocity;
