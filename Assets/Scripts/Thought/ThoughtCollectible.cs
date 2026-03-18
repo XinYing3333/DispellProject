@@ -15,7 +15,7 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     float timer;
     
     public bool NeedCollectAnimation => true;
-    public bool IsCollectableActive => true;
+    public bool IsSpellStateActive => false;
 
     void Start() { timer = Random.Range(minGap, maxGap); }
 

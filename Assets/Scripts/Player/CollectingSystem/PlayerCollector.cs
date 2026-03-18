@@ -33,8 +33,8 @@ public class PlayerCollector : MonoBehaviour
     private float _cosHalf;
 
     private System.Func<bool> _isBusy;
-    private System.Action<Rigidbody, bool> _onPulledResult;
-
+    private System.Action<Rigidbody, bool, bool> _onPulledResult; // rb, wasCollected, canThrow
+    public void SetOnPulledResult(System.Action<Rigidbody, bool, bool> cb) => _onPulledResult = cb;
     // ===== 狀態 =====
     // 原本就有：
     private readonly HashSet<Transform> _pulling = new();
@@ -48,7 +48,6 @@ public class PlayerCollector : MonoBehaviour
     void Awake() => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
 
     public void SetBusyChecker(System.Func<bool> f) => _isBusy = f;
-    public void SetOnPulledResult(System.Action<Rigidbody, bool> cb) => _onPulledResult = cb;
 
     private bool IsCollectorBusy() => (_isBusy != null && _isBusy()) || _activePulls > 0;
 
@@ -98,7 +97,7 @@ public class PlayerCollector : MonoBehaviour
 
         // 狀況 A: 具備收集介面，且物件「自認」現在可以被收集
         // (例如：普通金幣，或「沒被打中」的紅綠燈)
-        if (collectable != null && collectable.IsCollectableActive)
+        if (collectable != null && !collectable.IsSpellStateActive)
         {
             if (collectable.NeedCollectAnimation)
                 StartPullThenCollect(bestT, collectable);
@@ -113,6 +112,7 @@ public class PlayerCollector : MonoBehaviour
         {
             // 額外檢查：如果是紅綠燈，確保它是 Kinematic 或符合你的移動條件
             StartPullThenHandOff(bestT, rb);
+            Debug.Log("AAAAAAAAAAA");
             return;
         }
     }
@@ -137,7 +137,7 @@ public class PlayerCollector : MonoBehaviour
                 {
                     collectable.Collect();
                     AudioManager.Instance.PlaySFX(SFXType.CoinPickup);
-                    _onPulledResult?.Invoke(null, true);
+                    _onPulledResult?.Invoke(null, true, false);
                     //記錄圖騰種類
                 }
                 finally
@@ -166,7 +166,6 @@ public class PlayerCollector : MonoBehaviour
         _activePulls++;
 
         Vector3 endPos = GetFrontPoint();
-
         var origCCD = rb.collisionDetectionMode;
         var origInterp = rb.interpolation;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -179,7 +178,9 @@ public class PlayerCollector : MonoBehaviour
             {
                 try
                 {
-                    _onPulledResult?.Invoke(rb, false);
+                    // 檢查物件是否有 IThrowable 介面，若無則視為「僅供吸取/搬運」
+                    bool canThrow = target.GetComponentInParent<IThrowable>() != null;
+                    _onPulledResult?.Invoke(rb, false, canThrow);
                 }
                 finally
                 {
@@ -190,7 +191,6 @@ public class PlayerCollector : MonoBehaviour
             })
             .OnKill(() =>
             {
-                // 被 cancel 的時候要還原物理
                 rb.collisionDetectionMode = origCCD;
                 rb.interpolation = origInterp;
                 CleanupPullState(target);
@@ -209,7 +209,7 @@ public class PlayerCollector : MonoBehaviour
 
         collectable.Collect();
         AudioManager.Instance.PlaySFX(SFXType.CoinPickup);
-        _onPulledResult?.Invoke(null, true);
+        _onPulledResult?.Invoke(null, true, false);
     }
 
     // =============== 取消全部拉取（給 InteractionController 用） ===============

@@ -49,6 +49,7 @@ public class InteractionController : MonoBehaviour
 
     private Coroutine _absorbRoutine;
     private bool _isAbsorbHeld;
+    private bool _canCurrentItemBeThrown;
 
     private float _weaponHoldTimer = 0f;
     private const float WeaponHoldDuration = 3f;
@@ -128,23 +129,26 @@ public class InteractionController : MonoBehaviour
     {
         if (Time.time - _lastSpellTime < spellCooldown) return;
 
-        // ★ 優化點：在計算發射位置前，強制角色對齊相機方向
-        if (playerMovement != null)
-        {
-            playerMovement.SyncRotationToCameraInstant();
-        }
-
-        // 此時 GetCurrentTargetPoint() 拿到的 throwOrigin.forward 才是正確的
-        Vector3 targetPoint = GetCurrentTargetPoint();
-
         if (handSlot && handSlot.HasItem)
         {
             _isAbsorbHeld = false;
-            ExecuteThrow(handSlot.Take(), targetPoint);
+
+            // 如果物件不具備投擲能力（如紅綠燈），點擊發射鍵改為執行 Drop
+            if (_canCurrentItemBeThrown)
+            {
+                if (playerMovement != null) playerMovement.SyncRotationToCameraInstant();
+                Vector3 targetPoint = GetCurrentTargetPoint();
+                ExecuteThrow(handSlot.Take(), targetPoint);
+            }
+            else
+            {
+                Input_Drop(); 
+            }
         }
         else if (spellPrefab)
         {
-            ExecuteSpell(targetPoint);
+            if (playerMovement != null) playerMovement.SyncRotationToCameraInstant();
+            ExecuteSpell(GetCurrentTargetPoint());
         }
 
         _lastSpellTime = Time.time;
@@ -245,7 +249,7 @@ public class InteractionController : MonoBehaviour
         State = InteractState.Idle;
     }
 
-    private void OnAbsorbResult(Rigidbody rb, bool wasCollected)
+    private void OnAbsorbResult(Rigidbody rb, bool wasCollected, bool canThrow)
     {
         if (wasCollected)
         {
@@ -255,6 +259,7 @@ public class InteractionController : MonoBehaviour
 
         if (rb && handSlot && handSlot.TryAttach(rb))
         {
+            _canCurrentItemBeThrown = canThrow; // 紀錄此物件是否能被投擲
             State = InteractState.ReadyToThrow;
             particleVFX?.ForEach(p => p.Stop());
         }

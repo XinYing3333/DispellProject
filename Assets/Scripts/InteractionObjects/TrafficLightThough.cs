@@ -27,7 +27,7 @@ namespace DefaultNamespace
         private Vector3 _initialLocalPos; // 紀錄初始位置
 
         public bool NeedCollectAnimation => false;
-        public bool IsCollectableActive => !isStopSpellHit; // 沒被打中時是收集品
+        public bool IsSpellStateActive => isStopSpellHit; // 沒被打中時是收集品
 
         private void Awake()
         {
