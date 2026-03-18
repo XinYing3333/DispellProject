@@ -31,6 +31,8 @@ namespace DefaultNamespace
         private Tween _shakeTween; // 儲存顫抖動畫引用
 
         public bool NeedCollectAnimation => false;
+        public bool IsCollectableActive => true;
+
 
         private void Start()
         {

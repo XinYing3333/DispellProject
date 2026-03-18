@@ -5,27 +5,27 @@ using Player.InteractionSystem;
 
 public class PlayerCollector : MonoBehaviour
 {
-    [Header("Detect (前方錐形)")]
-    public Transform center;
+    [Header("Detect (前方錐形)")] public Transform center;
     public Transform forwardRef;
     public LayerMask interactionMask;
     public float radius = 2.0f;
     [Range(1f, 180f)] public float angle = 90f;
 
-    [Header("Absorb Tween")]
-    [SerializeField] private float pullDuration = 0.35f;
-    [SerializeField] private float frontOffset  = 0.6f;
-    [SerializeField] private Ease  pullEase     = Ease.Linear;
-    
-    [Header("Rate Limit")]
-    [SerializeField] private float immediateCollectCooldown = 0.35f; // 與 pullDuration 對齊
+    [Header("Absorb Tween")] [SerializeField]
+    private float pullDuration = 0.35f;
+
+    [SerializeField] private float frontOffset = 0.6f;
+    [SerializeField] private Ease pullEase = Ease.Linear;
+
+    [Header("Rate Limit")] [SerializeField]
+    private float immediateCollectCooldown = 0.35f; // 與 pullDuration 對齊
+
     private float _lastImmediateTime = -999f;
 
-    [Header("Collect Flow")]
-    [SerializeField] private bool disablePhysicsDuringPull = true;
+    [Header("Collect Flow")] [SerializeField]
+    private bool disablePhysicsDuringPull = true;
 
-    [Header("Gizmos")]
-    [SerializeField] private bool drawGizmos = true;
+    [Header("Gizmos")] [SerializeField] private bool drawGizmos = true;
     [SerializeField] private Color gizmoColor = new(0f, 0.85f, 1f, 0.35f);
     [SerializeField] private float gizmoRayLen = 2f;
 
@@ -45,10 +45,10 @@ public class PlayerCollector : MonoBehaviour
     private readonly Dictionary<Transform, (Rigidbody rb, Collider[] cols)> _pulledPhysics = new();
 
     void OnValidate() => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
-    void Awake()      => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
+    void Awake() => _cosHalf = Mathf.Cos(Mathf.Deg2Rad * (angle * 0.5f));
 
-    public void SetBusyChecker(System.Func<bool> f)             => _isBusy = f;
-    public void SetOnPulledResult(System.Action<Rigidbody,bool> cb) => _onPulledResult = cb;
+    public void SetBusyChecker(System.Func<bool> f) => _isBusy = f;
+    public void SetOnPulledResult(System.Action<Rigidbody, bool> cb) => _onPulledResult = cb;
 
     private bool IsCollectorBusy() => (_isBusy != null && _isBusy()) || _activePulls > 0;
 
@@ -62,7 +62,8 @@ public class PlayerCollector : MonoBehaviour
     {
         if (!center || IsCollectorBusy()) return;
 
-        int n = Physics.OverlapSphereNonAlloc(center.position, radius, _hits, interactionMask, QueryTriggerInteraction.Ignore);
+        int n = Physics.OverlapSphereNonAlloc(center.position, radius, _hits, interactionMask,
+            QueryTriggerInteraction.Ignore);
 
         Transform bestT = null;
         float bestScore = float.MinValue;
@@ -75,38 +76,44 @@ public class PlayerCollector : MonoBehaviour
             var c = _hits[i];
             if (!c) continue;
 
-            Vector3 to  = c.transform.position - center.position;
-            float d2    = to.sqrMagnitude;
+            Vector3 to = c.transform.position - center.position;
+            float d2 = to.sqrMagnitude;
             if (d2 < 1e-6f) continue;
 
             Vector3 toN = to / Mathf.Sqrt(d2);
             if (Vector3.Dot(fwd, toN) < cosHalf) continue;
 
             float score = 1f / Mathf.Max(0.0001f, Mathf.Sqrt(d2));
-            if (score > bestScore) { bestScore = score; bestT = c.transform; }
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestT = c.transform;
+            }
         }
 
         if (!bestT) return;
 
         var collectable = bestT.GetComponentInParent<ICollectable>();
-        if (collectable != null)
+        var rb = bestT.GetComponentInParent<Rigidbody>();
+
+        // 狀況 A: 具備收集介面，且物件「自認」現在可以被收集
+        // (例如：普通金幣，或「沒被打中」的紅綠燈)
+        if (collectable != null && collectable.IsCollectableActive)
         {
-            // 判斷是否需要吸附動態
             if (collectable.NeedCollectAnimation)
-            {
                 StartPullThenCollect(bestT, collectable);
-            }
             else
-            {
                 ExecuteImmediateCollect(collectable);
-            }
             return;
         }
 
-        var rb = bestT.GetComponentInParent<Rigidbody>();
-        if (rb)
+        // 狀況 B: 具備物理組件 (Rigidbody)，且不處於狀況 A
+        // (例如：被打中的紅綠燈，或純物理方塊)
+        if (rb != null && !rb.CompareTag("boss"))
         {
+            // 額外檢查：如果是紅綠燈，確保它是 Kinematic 或符合你的移動條件
             StartPullThenHandOff(bestT, rb);
+            return;
         }
     }
 
@@ -160,10 +167,10 @@ public class PlayerCollector : MonoBehaviour
 
         Vector3 endPos = GetFrontPoint();
 
-        var origCCD    = rb.collisionDetectionMode;
+        var origCCD = rb.collisionDetectionMode;
         var origInterp = rb.interpolation;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        rb.interpolation          = RigidbodyInterpolation.Interpolate;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         var tw = rb.DOMove(endPos, pullDuration)
             .SetEase(pullEase)
@@ -177,7 +184,7 @@ public class PlayerCollector : MonoBehaviour
                 finally
                 {
                     rb.collisionDetectionMode = origCCD;
-                    rb.interpolation          = origInterp;
+                    rb.interpolation = origInterp;
                     CleanupPullState(target);
                 }
             })
@@ -185,13 +192,13 @@ public class PlayerCollector : MonoBehaviour
             {
                 // 被 cancel 的時候要還原物理
                 rb.collisionDetectionMode = origCCD;
-                rb.interpolation          = origInterp;
+                rb.interpolation = origInterp;
                 CleanupPullState(target);
             });
 
         _pullTweens[target] = tw;
     }
-    
+
     // =============== 不會有動態的吸收物 ===============
     private void ExecuteImmediateCollect(ICollectable collectable)
     {
@@ -214,6 +221,7 @@ public class PlayerCollector : MonoBehaviour
             var t = kv.Value;
             if (t.IsActive()) t.Kill(false);
         }
+
         _pullTweens.Clear();
 
         // 2) 把被我們關掉物理的還原
@@ -223,6 +231,7 @@ public class PlayerCollector : MonoBehaviour
             var (rb, cols) = kv.Value;
             RestoreAfterPull(target, rb, cols);
         }
+
         _pulledPhysics.Clear();
 
         // 3) 狀態清空
@@ -241,20 +250,21 @@ public class PlayerCollector : MonoBehaviour
 
     private void PrepareForPull(Transform t, out Rigidbody rb, out Collider[] cols)
     {
-        rb   = t.GetComponentInParent<Rigidbody>();
+        rb = t.GetComponentInParent<Rigidbody>();
         cols = t.GetComponentsInChildren<Collider>(true);
 
         if (!disablePhysicsDuringPull) return;
         if (rb)
         {
             rb.isKinematic = true;
-            rb.useGravity  = false;
+            rb.useGravity = false;
 #if UNITY_6000_0_OR_NEWER
             //rb.linearVelocity = Vector3.zero;
 #else
             rb.velocity = Vector3.zero;
 #endif
         }
+
         foreach (var c in cols) c.enabled = false;
     }
 
@@ -266,8 +276,9 @@ public class PlayerCollector : MonoBehaviour
         if (rb)
         {
             rb.isKinematic = false;
-            rb.useGravity  = true;
+            rb.useGravity = true;
         }
+
         if (cols != null)
         {
             foreach (var c in cols)
@@ -284,14 +295,14 @@ public class PlayerCollector : MonoBehaviour
         Gizmos.color = gizmoColor;
         Gizmos.DrawWireSphere(center.position, radius);
 
-        Vector3 origin  = center.position;
+        Vector3 origin = center.position;
         Vector3 forward = forwardRef ? forwardRef.forward : transform.forward;
         float half = angle * 0.5f;
 
         Gizmos.color = Color.cyan;
-        Vector3 leftDir  = Quaternion.AngleAxis(-half, Vector3.up) * forward;
+        Vector3 leftDir = Quaternion.AngleAxis(-half, Vector3.up) * forward;
         Vector3 rightDir = Quaternion.AngleAxis(+half, Vector3.up) * forward;
-        Gizmos.DrawRay(origin, leftDir  * gizmoRayLen);
+        Gizmos.DrawRay(origin, leftDir * gizmoRayLen);
         Gizmos.DrawRay(origin, rightDir * gizmoRayLen);
 
         Gizmos.color = Color.green;

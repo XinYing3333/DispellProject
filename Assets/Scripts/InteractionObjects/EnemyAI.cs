@@ -27,6 +27,8 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
     private NavMeshAgent agent;
     
     public bool NeedCollectAnimation => true; 
+    public bool IsCollectableActive => true;
+
 
     void Start()
     {
