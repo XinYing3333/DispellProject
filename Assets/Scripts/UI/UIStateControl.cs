@@ -151,8 +151,6 @@ namespace DefaultNamespace
 
             // ★ 立刻推進一次，避免你覺得「沒切到」
             anim.Update(0f);
-
-            Debug.Log($"[UIStateControl] Set {STATE_PARAM}={v}, state={s}, animatorReadback={anim.GetInteger(STATE_PARAM)}");
         }
 
         private void ApplyVisibility(UIState s)
@@ -190,7 +188,6 @@ namespace DefaultNamespace
                     settingsBtn.interactable = false;
                     break;
             }
-            Debug.Log($"[UIStateControl] Set {s}, state={s}");
         }
 
         private void StartCloseSequence()

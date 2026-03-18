@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Cinemachine;
+using EventBus.Events.Health;
 using Player;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,11 +34,13 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private float runSpeed = 4.5f;
     [SerializeField] private float turnSpeed = 20f;
+    [SerializeField] private float aimTurnSpeed = 50f; // ★ 新增：瞄準時的旋轉速度（建議設為原來的 2-3 倍）
     [SerializeField] private float maxStepHeight = 0.3f;
     [SerializeField] private float stepCheckDistance = 0.4f;
 
     [Header("VFX Settings")]
     [SerializeField] private ParticleSystem stepVFX;
+    [SerializeField] private ParticleSystem hurtVFX;
 
     [SerializeField] private ParticleSystem firstJumpVFX;
     [SerializeField] private ParticleSystem doubleJumpVFX;
@@ -184,6 +187,61 @@ public class PlayerMovement : MonoBehaviour
     private const float WeaponHoldDuration = 3f;
     private bool _isAiming;
     
+    private EventBinding<OnPlayerDamaged> _binding;
+
+    private void OnEnable()
+    {
+        _binding = new EventBinding<OnPlayerDamaged>(SetHurtAnimation);
+        EventBus<OnPlayerDamaged>.Register(_binding);
+    } 
+    
+    private void OnDisable()
+    {
+        if (_binding == null) return; //Optional
+        EventBus<OnPlayerDamaged>.Deregister(_binding);
+        _binding = null; //Optional
+    }
+    
+    void SetHurtAnimation()
+    {
+        DoHitStop(0.1f);
+        // 確保動畫與特效不受 HitStop 影響
+        anim.updateMode = AnimatorUpdateMode.UnscaledTime; 
+    
+        anim.SetTrigger("Hurt");
+        AudioManager.Instance.PlaySFX(SFXType.Hurt);
+    
+        if (hurtVFX != null) 
+        {
+            // 粒子系統也需設置為 Unscaled 才能在停頓中播放
+            var main = hurtVFX.main;
+            main.useUnscaledTime = true;
+            hurtVFX.Play();
+        }
+    }
+    
+    public void DoHitStop(float duration = 0.1f)
+    {
+        if (_isHitStopping) return;
+        StartCoroutine(CoHitStop(duration));
+    }
+
+    private bool _isHitStopping;
+    IEnumerator CoHitStop(float duration)
+    {
+        _isHitStopping = true;
+        float originalScale = Time.timeScale;
+
+        // 強制時間停止
+        Time.timeScale = 0f;
+
+        // 因為 TimeScale 為 0，必須使用 WaitForSecondsRealtime
+        yield return new WaitForSecondsRealtime(duration);
+
+        Time.timeScale = originalScale;
+        _isHitStopping = false;
+    }
+    
     // ==========================================
     // Unity 生命週期
     // ==========================================
@@ -215,7 +273,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (input.InputLock)
         {
-            anim.Play("idle");
+            //anim.Play("idle");
+            if (stepVFX != null) stepVFX.Stop();
             AudioManager.Instance.StopSFXLoop();
             return;
         }
@@ -780,12 +839,35 @@ public class PlayerMovement : MonoBehaviour
     private void RotateTowardsCamera()
     {
         Vector3 camForward = cameraTransform.forward;
-        camForward.y = 0; // 鎖定 Y 軸，防止角色傾斜
+        camForward.y = 0;
         if (camForward.sqrMagnitude > 0.001f)
         {
             Quaternion targetRot = Quaternion.LookRotation(camForward);
-            // 使用與原本 turnSpeed 一致的平滑度，或者更快一點
-            _rb.MoveRotation(Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime));
+        
+            // 計算角度差
+            float angleDiff = Quaternion.Angle(_rb.rotation, targetRot);
+        
+            // 如果角度差很大（例如大於 90 度），給予額外的速度加成
+            float speedMultiplier = angleDiff > 90f ? 1.5f : 1f;
+
+            _rb.MoveRotation(Quaternion.Slerp(
+                _rb.rotation, 
+                targetRot, 
+                aimTurnSpeed * speedMultiplier * Time.fixedDeltaTime
+            ));
+        }
+    }
+    
+    public void SyncRotationToCameraInstant()
+    {
+        Vector3 camForward = cameraTransform.forward;
+        camForward.y = 0;
+        if (camForward.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(camForward);
+            // 直接修改轉向，不經過 Slerp 插值
+            _rb.rotation = targetRot;
+            transform.rotation = targetRot; 
         }
     }
     

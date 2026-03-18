@@ -50,9 +50,6 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
             if (!isPlay) _stateUIAnimator.Play("enemy-warning");
             isPlay = true;
         }
-        else if (distanceToTarget > detectionRange && !_isStunned)
-        {
-        }
         else
         {
             isPlay = false;
@@ -62,11 +59,6 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
     }
 
     int originalLayer;
-
-    public void AttackStun()
-    {
-        StartCoroutine(OnStun());
-    }
 
     IEnumerator OnStun()
     {
@@ -90,6 +82,10 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
         {
             if(_isStunned)return;
             stunTime = 2f;
+            StartCoroutine(OnStun());
+        }
+        if (other.CompareTag("Player"))
+        {
             StartCoroutine(OnStun());
         }
     }

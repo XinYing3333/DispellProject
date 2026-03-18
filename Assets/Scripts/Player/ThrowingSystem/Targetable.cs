@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public class Targetable : MonoBehaviour
@@ -18,7 +19,7 @@ public class Targetable : MonoBehaviour
 
     [Header("描邊 / 高亮")]
     [SerializeField] private Outline outlineScript;
-    [SerializeField] private GameObject outlineObject;
+    [SerializeField] private GameObject outlineUICanvas;
 
     private bool _aimActive;
 
@@ -96,7 +97,7 @@ public class Targetable : MonoBehaviour
     private void SetHighLightEnabled(bool on)
     {
         if (outlineScript) outlineScript.enabled = on;
-        if (outlineObject) outlineObject.SetActive(on);
+        if (outlineUICanvas) outlineUICanvas.SetActive(on);
     }
 
     private void OnDisable()

@@ -36,8 +36,10 @@ public class InteractionController : MonoBehaviour
     private float absorbTickInterval = 0.12f;
 
     [SerializeField] private List<ParticleSystem> particleVFX;
-    [SerializeField] private ParticleSystem throwVFX;
-
+    [SerializeField] private ParticleSystem throwVFX; 
+    
+    [Header("Indicator Settings")]
+    [SerializeField] private RectTransform crosshairRect; // 拖入你的 UI 圖示
 
     private ThrowingSystem _thrower;
     private SpellType _currentSpellType;
@@ -73,6 +75,45 @@ public class InteractionController : MonoBehaviour
     {
         UpdateAimScanning();
     }
+    
+    private void LateUpdate()
+    {
+        UpdateAimVisuals();
+    }
+
+    private void UpdateAimVisuals()
+    {
+        bool hasTarget = aimAssist != null && aimAssist.CurrentTarget != null;
+
+        // 1. 準星 UI 邏輯：僅在有目標時顯現
+        if (crosshairRect != null)
+        {
+            if (hasTarget)
+            {
+                Vector3 targetPoint = aimAssist.CurrentTarget.GetAimPoint();
+                Vector3 screenPos = Camera.main.WorldToScreenPoint(targetPoint);
+
+                // 檢查是否在相機前方
+                if (screenPos.z > 0)
+                {
+                    crosshairRect.gameObject.SetActive(true);
+                    crosshairRect.position = screenPos;
+                
+                    float dist = Vector3.Distance(Camera.main.transform.position, targetPoint);
+                    float scale = Mathf.Lerp(1.2f, 0.4f, dist / maxAimDistance);
+                    crosshairRect.localScale = new Vector3(scale, scale, 1f);
+                }
+                else
+                {
+                    crosshairRect.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                crosshairRect.gameObject.SetActive(false);
+            }
+        }
+    }
 
     private void UpdateAimScanning()
     {
@@ -87,9 +128,13 @@ public class InteractionController : MonoBehaviour
     {
         if (Time.time - _lastSpellTime < spellCooldown) return;
 
-        // 停止吸收 VFX
-        particleVFX?.ForEach(p => p.Stop());
+        // ★ 優化點：在計算發射位置前，強制角色對齊相機方向
+        if (playerMovement != null)
+        {
+            playerMovement.SyncRotationToCameraInstant();
+        }
 
+        // 此時 GetCurrentTargetPoint() 拿到的 throwOrigin.forward 才是正確的
         Vector3 targetPoint = GetCurrentTargetPoint();
 
         if (handSlot && handSlot.HasItem)
@@ -108,28 +153,24 @@ public class InteractionController : MonoBehaviour
 
     private Vector3 GetCurrentTargetPoint()
     {
-        // 1. 瞄準模式：從螢幕中心 Raycast
-        if (_isAiming)
-        {
-            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f, 0f));
-            if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, aimRaycastMask))
-            {
-                return hit.point;
-            }
-
-            return ray.GetPoint(maxAimDistance);
-        }
-
-        // 2. 非瞄準模式：使用 AimAssist 鎖定的目標
+        // 優先權 1：自動鎖定目標
         if (aimAssist && aimAssist.CurrentTarget)
         {
             return aimAssist.CurrentTarget.GetAimPoint();
         }
 
-        // 3. 預設前方點
+        // 優先權 2：從相機中心射出射線（最準確，無視角色朝向）
+        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, aimRaycastMask))
+        {
+            return hit.point;
+        }
+        
         return throwOrigin
             ? (throwOrigin.position + throwOrigin.forward * 20f)
             : (transform.position + transform.forward * 20f);
+        // 優先權 3：相機前方固定距離點
+        //return ray.GetPoint(20f); 
     }
 
     private void ExecuteThrow(Rigidbody rb, Vector3 targetPoint)

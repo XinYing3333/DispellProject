@@ -11,6 +11,8 @@ public class PangolinSpiritFollow : MonoBehaviour
     public Transform player;        
     public Transform followPoint;   
     public Animator animator;       
+    public ParticleSystem switchVFX;       
+    public ParticleSystem switchBackVFX;       
 
     [Header("Trail Position (位移延遲)")]
     public int trailBuffer = 30;
@@ -140,10 +142,12 @@ public class PangolinSpiritFollow : MonoBehaviour
         {
             // 觸發變身動畫 (需在 Animator 中設定對應 Trigger)
             if (animator) animator.Play("pangolin-BALL");
+            if (switchVFX) switchVFX.Play();
         }
         else
         {
             // 觸發還原動畫
+            if (switchBackVFX) switchBackVFX.Play();
             if (animator) animator.Play("pangolin-SWIM2");
         }
     }

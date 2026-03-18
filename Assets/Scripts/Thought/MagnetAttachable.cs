@@ -8,7 +8,7 @@ public class MagnetAttachable : MonoBehaviour, IMagnetAttachable, IThrowable
 
     void Awake() => rb = GetComponent<Rigidbody>();
 
-    public void OnMagnetAttached(Transform parent)
+    public virtual void OnMagnetAttached(Transform parent)
     {
         if (!rb) return;
         rb.isKinematic = true;
@@ -20,7 +20,7 @@ public class MagnetAttachable : MonoBehaviour, IMagnetAttachable, IThrowable
     }
 
 
-    public void OnMagnetDetached()
+    public virtual void OnMagnetDetached()
     {
         if (!rb) return;
         transform.SetParent(null, true);
@@ -29,7 +29,7 @@ public class MagnetAttachable : MonoBehaviour, IMagnetAttachable, IThrowable
         rb.detectCollisions = true;
     }
 
-    public void OnBeforeThrow()
+    public virtual void OnBeforeThrow()
     {
         if (!rb) return;
         rb.isKinematic = false;

@@ -1,4 +1,5 @@
 using System.Collections;
+using SpellSystem;
 using UnityEngine;
 using UnityEngine.VFX; 
 
@@ -101,17 +102,49 @@ public class Spell : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(_rb.linearVelocity.normalized, Vector3.up);
     }
 
+
+    // --- 內部狀態新增變數 ---
+    private Vector3 _lastHitPoint;
+
     void OnCollisionEnter(Collision other)
     {
         if (_exploded || !explodeOnCollision) return;
+        // 檢查 LayerMask
         if (((1 << other.gameObject.layer) & collideMask) == 0) return;
+
+        // 1. 取得碰撞點
+        _lastHitPoint = other.contacts[0].point;
+
+        // 2. 向上搜尋父物件是否實作 ISpellAffectable
+        ISpellAffectable affectable = other.gameObject.GetComponentInParent<ISpellAffectable>();
+
+        if (affectable != null && SpellManager.Instance != null)
+        {
+            // 3. 向管理器註冊效果
+            SpellManager.Instance.RegisterEffect(affectable, spellType, _lastHitPoint);
+        }
+
         Explode();
     }
 
     void OnTriggerEnter(Collider other)
     {
         if (_exploded || !explodeOnCollision) return;
+        // 檢查 LayerMask
         if (((1 << other.gameObject.layer) & collideMask) == 0) return;
+
+        // Trigger 點位通常取法術中心或使用 ClosestPoint
+        _lastHitPoint = other.ClosestPoint(transform.position);
+
+        // 2. 向上搜尋父物件是否實作 ISpellAffectable
+        ISpellAffectable affectable = other.gameObject.GetComponentInParent<ISpellAffectable>();
+
+        if (affectable != null && SpellManager.Instance != null)
+        {
+            // 3. 向管理器註冊效果
+            SpellManager.Instance.RegisterEffect(affectable, spellType, _lastHitPoint);
+        }
+    
         Explode();
     }
 

@@ -14,19 +14,22 @@ namespace DefaultNamespace
         [Header("Collect Settings")]
         [SerializeField] private float requiredCollect = 1f; 
         [SerializeField] private float addCollectCount = 1f; 
-        [SerializeField] private float autoHideDelay = 5f;
+        [SerializeField] private float autoHideDelay = 0.5f; // 縮短延遲以配合操作感
         [SerializeField] private ObstacleGroup rockEffect;
 
-        [Header("VFX Settings")]
-        [SerializeField] private ParticleSystem collectingVFX; // 持續收集的粒子 (例如吸附氣流)
-        [SerializeField] private ParticleSystem completeVFXPrefab; // 完成時生成的粒子預製體
-        [SerializeField] private float destroyDelay = 0.5f; // 延遲銷毀時間
+        [Header("VFX & Model Settings")]
+        [SerializeField] private Transform modelTransform; // 禁行標誌的模型位移目標
+        [SerializeField] private float shakeStrength = 0.05f; // 顫抖強度
+        [SerializeField] private ParticleSystem collectingVFX;
+        [SerializeField] private ParticleSystem completeVFXPrefab;
+        [SerializeField] private float destroyDelay = 0.5f;
 
         private float currentCollectCount;
         private bool isCompleted = false;
         private float _hideTimer;
         private bool _isSliderVisible = false;
-        
+        private Tween _shakeTween; // 儲存顫抖動畫引用
+
         public bool NeedCollectAnimation => false;
 
         private void Start()
@@ -37,7 +40,6 @@ namespace DefaultNamespace
                 slider.value = 0;
                 sliderCanvasGroup.alpha = 0;
             }
-            
             if (collectingVFX != null) collectingVFX.Stop();
         }
 
@@ -49,7 +51,7 @@ namespace DefaultNamespace
             if (_hideTimer <= 0)
             {
                 HideSlider();
-                if (collectingVFX != null) collectingVFX.Stop(); // 停止收集粒子
+                StopShake(); // 停止顫抖
             }
         }
 
@@ -59,12 +61,16 @@ namespace DefaultNamespace
 
             _hideTimer = autoHideDelay;
             
-            // 處理粒子播放
-            if (collectingVFX != null)
+            // 1. 處理粒子
+            if (collectingVFX != null && !collectingVFX.isPlaying)
             {
                 collectingVFX.Play();
             }
 
+            // 2. 處理模型顫抖
+            StartShake();
+
+            // 3. 處理 UI
             if (!_isSliderVisible)
             {
                 sliderCanvasGroup.DOKill();
@@ -81,6 +87,33 @@ namespace DefaultNamespace
             }
         }
 
+        private void StartShake()
+        {
+            if (modelTransform == null) return;
+    
+            // 檢查目前是否正在進行顫抖動畫，如果正在動就不重複觸發
+            // 這樣能確保一次抖動動畫完整跑完 (例如 0.1s)，才接下一次
+            if (!DOTween.IsTweening(modelTransform))
+            {
+                modelTransform.DOShakePosition(0.1f, shakeStrength, 15, 90, false, false)
+                    .OnComplete(() => {
+                        // 每段抖動完畢後微調回原位，確保座標不偏移
+                        modelTransform.DOLocalMove(Vector3.zero, 0.05f);
+                    });
+            }
+        }
+
+        private void StopShake()
+        {
+            // 停止 Collect 時，如果還在抖，可以讓它播完最後一次，或者立即 Kill
+            // 若要立即停止：
+            if (DOTween.IsTweening(modelTransform))
+            {
+                modelTransform.DOKill();
+                modelTransform.DOLocalMove(Vector3.zero, 0.05f);
+            }
+        }
+
         private void HideSlider()
         {
             _isSliderVisible = false;
@@ -93,21 +126,19 @@ namespace DefaultNamespace
         {
             isCompleted = true;
             _isSliderVisible = false;
+            StopShake(); // 完成時停止顫抖
             
-            // 1. 粒子表現
             if (collectingVFX != null) collectingVFX.Stop();
             if (completeVFXPrefab != null)
             {
                 ParticleSystem vfx = Instantiate(completeVFXPrefab, transform.position, Quaternion.identity);
                 vfx.Play();
-                Destroy(vfx.gameObject, 3f); // 粒子自動回收
+                Destroy(vfx.gameObject, 3f);
             }
 
-            // 2. UI 表現
             sliderCanvasGroup.DOKill();
             sliderCanvasGroup.DOFade(0, 0.3f);
             
-            // 3. 系統邏輯
             CollectionSystem.CollectItem(CollectionSystem.CollectedType.StopSignThough, 1);
             
             if (rockEffect != null)
@@ -115,18 +146,14 @@ namespace DefaultNamespace
                 rockEffect.OnInteract();
             }
 
-            // 4. 物件銷毀
-            // 先關閉渲染與碰撞，避免干擾，隨後銷毀
             DisableObjectState();
             Destroy(gameObject, destroyDelay);
         }
 
         private void DisableObjectState()
         {
-            // 禁用所有 Renderer 和 Collider
             var renderers = GetComponentsInChildren<Renderer>();
             foreach (var r in renderers) r.enabled = false;
-            
             var colliders = GetComponentsInChildren<Collider>();
             foreach (var c in colliders) c.enabled = false;
         }
@@ -134,6 +161,7 @@ namespace DefaultNamespace
         public void StopCollect()
         {
             if (collectingVFX != null) collectingVFX.Stop();
+            StopShake();
         }
     }
 }

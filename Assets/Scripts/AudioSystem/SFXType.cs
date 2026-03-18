@@ -13,6 +13,7 @@ public enum SFXType
     BouncePad,
     CoinPickup,
     RockShake,
+    Hurt,
     Explosion,
     EnemyHit,
     Victory,
