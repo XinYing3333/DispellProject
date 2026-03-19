@@ -65,7 +65,7 @@ public class RespawnController : MonoBehaviour
         }
 
         transform.SetPositionAndRotation(pos, rot);
-
+        Time.timeScale = 1.0f;
         // if (_rb) _rb.isKinematic = false;
     }
 

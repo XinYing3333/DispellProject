@@ -119,9 +119,20 @@ public class InteractionController : MonoBehaviour
     private void UpdateAimScanning()
     {
         if (!aimAssist) return;
-        // 瞄準時關閉 AimAssist 掃描，改由準星決定；非瞄準且手中有物時開啟
-        bool shouldScan = !_isAiming && (handSlot && (handSlot.HasItem || true));
-        aimAssist.SetScanning(shouldScan);
+
+        // 核心邏輯：
+        // 1. 如果手上有東西 -> 切換為投擲模式 (ThrowableReady)，開啟掃描
+        // 2. 如果手上沒東西 -> 切換為法術模式 (SpellReady)，開啟掃描
+        if (handSlot && handSlot.HasItem)
+        {
+            aimAssist.SetAssistMode(TargetState.ThrowableReady);
+            aimAssist.SetScanning(true);
+        }
+        else
+        {
+            aimAssist.SetAssistMode(TargetState.SpellReady);
+            aimAssist.SetScanning(true);
+        }
     }
 
     // ====== 投擲 / 射擊 (Input_Throw) ======

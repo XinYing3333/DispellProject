@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class ThoughPoolManager : MonoBehaviour
+public class ThoughtPoolManager : MonoBehaviour
 {
-    public static ThoughPoolManager Instance { get; private set; }
+    public static ThoughtPoolManager Instance { get; private set; }
 
     [Header("Pool 設定")]
     public GameObject thoughPrefab;

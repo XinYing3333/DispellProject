@@ -37,69 +37,84 @@ public class ThrowingSystem
 
     // 核心：把「手上的 rb」直接丟出去
     public void ThrowExisting(Rigidbody rb, Transform player)
+{
+    if (!rb) return;
+
+    // 1. 物理狀態初始化
+    rb.isKinematic = false;
+    rb.useGravity = UseGravity;
+    rb.detectCollisions = true;
+
+    // 2. 設置出手位置與旋轉
+    Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
+    if (throwOrigin)
     {
-        if (!rb) return;
-
-        rb.isKinematic = false;
-        rb.useGravity = UseGravity;
-        rb.detectCollisions = true;
-
-        // ★ 出手點必須以 throwOrigin 為準（你原本用 rb.position 會導致 y 偏差、pitch 被壓低）
-        Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
-
-        if (throwOrigin)
-        {
-            rb.position = throwOrigin.position;
-            rb.rotation = throwOrigin.rotation;
-        }
-
-        Vector3 v0;
-
-        if (ArcMode == ThrowArcMode.ToTarget && aimAssist && aimAssist.CurrentTarget)
-        {
-            Vector3 target = aimAssist.CurrentTarget.GetAimPoint();
-
-            bool ok = TrySolveBallisticWithPitchLimits(
-                origin, target, throwSpeed,
-                PreferHighArc, MinPitchDeg, MaxPitchDeg, ClampPitchIfTooLow,
-                out v0, out float usedPitchDeg, out string reason);
-
-#if UNITY_EDITOR
-            if (ok) Debug.Log($"[Throw] choose ballistic: pitch={usedPitchDeg:F1}°, speed={throwSpeed:F1}");
-            else    Debug.Log($"[Throw] ballistic fallback: {reason}");
-#endif
-            if (!ok) v0 = FallbackFixedAngle(player);
-        }
-        else
-        {
-#if UNITY_EDITOR
-            Debug.Log("[Throw] no target → FixedAngle");
-#endif
-            v0 = FallbackFixedAngle(player);
-        }
-
-#if UNITY_6000_0_OR_NEWER
-        rb.linearVelocity = v0;
-#else
-        rb.velocity = v0;
-#endif
-
-        if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
-            rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
-
-#if UNITY_EDITOR
-        // 取樣 1 秒軌跡
-        Vector3 p = origin;
-        Vector3 gAcc = Physics.gravity;
-        float step = 0.02f;
-        for (float t = 0; t < 1.0f; t += step)
-        {
-            Vector3 pNext = origin + v0 * t + 0.5f * gAcc * (t * t);
-            Debug.DrawLine(p, pNext, Color.red, 1.0f);
-            p = pNext;
-        }
-#endif
+        rb.position = throwOrigin.position;
+        rb.rotation = throwOrigin.rotation;
     }
+
+    Vector3 v0;
+
+    // 3. 判斷是否滿足輔助瞄準條件
+    // 條件：模式為 ToTarget + AimAssist 正在掃描 + 輔助模式為 ThrowableReady + 確有目標
+    bool canUseAimAssist = ArcMode == ThrowArcMode.ToTarget && 
+                           aimAssist != null && 
+                           aimAssist.Scanning && 
+                           aimAssist.assistMode == TargetState.ThrowableReady &&
+                           aimAssist.CurrentTarget != null;
+
+    if (canUseAimAssist)
+    {
+        // 取得 Targetable 腳本定義的精確瞄準點 (考慮了 Renderer Bounds 或 Anchor)
+        Vector3 targetPoint = aimAssist.CurrentTarget.GetAimPoint();
+
+        bool ok = TrySolveBallisticWithPitchLimits(
+            origin, targetPoint, throwSpeed,
+            PreferHighArc, MinPitchDeg, MaxPitchDeg, ClampPitchIfTooLow,
+            out v0, out float usedPitchDeg, out string reason);
+
+#if UNITY_EDITOR
+        if (ok) Debug.Log($"[Throw] Ballistic Success: Pitch={usedPitchDeg:F1}°, Target={aimAssist.CurrentTarget.name}");
+        else    Debug.Log($"[Throw] Ballistic Fallback: {reason}");
+#endif
+        // 若彈道解算失敗（如太遠），則退回到固定角度投擲
+        if (!ok) v0 = FallbackFixedAngle(player);
+    }
+    else
+    {
+        // 無目標或非投擲模式，直接使用固定角度前向投擲
+        v0 = FallbackFixedAngle(player);
+    }
+
+    // 4. 應用速度 (兼容 Unity 6)
+#if UNITY_6000_0_OR_NEWER
+    rb.linearVelocity = v0;
+#else
+    rb.velocity = v0;
+#endif
+
+    // 5. 視覺修正：讓物件朝向飛行方向
+    if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
+        rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
+
+#if UNITY_EDITOR
+    DrawDebugTrajectory(origin, v0);
+#endif
+}
+
+// 抽離 Debug 繪製邏輯
+private void DrawDebugTrajectory(Vector3 origin, Vector3 velocity)
+{
+    Vector3 p = origin;
+    Vector3 gAcc = Physics.gravity;
+    float step = 0.02f;
+    for (float t = 0; t < 1.0f; t += step)
+    {
+        Vector3 pNext = origin + velocity * t + 0.5f * gAcc * (t * t);
+        Debug.DrawLine(p, pNext, Color.red, 1.0f);
+        p = pNext;
+    }
+}
 
     private Vector3 FallbackFixedAngle(Transform player)
     {

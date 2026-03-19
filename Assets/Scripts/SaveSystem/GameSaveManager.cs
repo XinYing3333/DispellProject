@@ -82,7 +82,7 @@ public class GameSaveManager : MonoBehaviour
 
     private void RefreshPlacers()
     {
-        var placers = FindObjectsOfType<ThoughPlacer>(true);
+        var placers = FindObjectsOfType<ThoughtPlacer>(true);
         foreach (var placer in placers)
         {
             if (Application.isPlaying)

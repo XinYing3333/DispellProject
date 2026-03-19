@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 
 [ExecuteInEditMode]
-public class ThoughPlacer : MonoBehaviour
+public class ThoughtPlacer : MonoBehaviour
 {
     [Header("Prefab 設定")]
     public GameObject thoughPrefab;
@@ -94,7 +94,7 @@ public class ThoughPlacer : MonoBehaviour
             if (LevelStateStore.Instance != null && LevelStateStore.Instance.IsCollectedNow(id))
                 continue;
 
-            GameObject obj = ThoughPoolManager.Instance.Get(thoughPositions[i]);
+            GameObject obj = ThoughtPoolManager.Instance.Get(thoughPositions[i]);
             if (obj != null)
             {
                 obj.transform.SetParent(transform);
@@ -111,7 +111,7 @@ public class ThoughPlacer : MonoBehaviour
     {
         if (obj == null) return;
 
-        ThoughPoolManager.Instance.Return(obj);
+        ThoughtPoolManager.Instance.Return(obj);
         activeThough.Remove(obj);
     }
 
@@ -340,7 +340,7 @@ private static List<Vector3> ResampleBySpacing(List<Vector3> polyline, float spa
             foreach (var obj in activeThough)
             {
                 if (obj != null)
-                    ThoughPoolManager.Instance.Return(obj);
+                    ThoughtPoolManager.Instance.Return(obj);
             }
 
             activeThough.Clear();

@@ -5,7 +5,7 @@ using Player.InteractionSystem;
 
 namespace DefaultNamespace
 {
-    public class StopSignThough : MonoBehaviour, ICollectable
+    public class StopSignThought : MonoBehaviour, ICollectable
     {
         [Header("UI Reference")]
         [SerializeField] private Slider slider;

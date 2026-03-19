@@ -12,7 +12,7 @@ using DefaultNamespace.Thought;
 
 namespace DefaultNamespace
 {
-    public class IntegratedTrafficLight : MonoBehaviour, ICollectable, ISpellAffectable, IMagnetAttachable, IHitReceiver
+    public class TrafficLightThought : MonoBehaviour, ICollectable, ISpellAffectable, IMagnetAttachable, IHitReceiver
     {
         [Header("Status")]
         [SerializeField] private bool isStopSpellHit = false;
@@ -21,12 +21,12 @@ namespace DefaultNamespace
         [SerializeField] private Transform modelTransform;
         [SerializeField] private float shakeStrength = 0.05f;
         [SerializeField] private ParticleSystem collectingVFX;
+        [SerializeField] private ParticleSystem hitVFX;
         
-        [Header("Visual Overlay Settings")]
-        [SerializeField] private Material overlayMaterial;
-        [SerializeField] private float scaleMultiplier = 1.02f;
-        private MeshRenderer _mainMeshRenderer;
-        private List<GameObject> _overlayObjects = new List<GameObject>();
+        [Header("Visual Material Settings")]
+        [SerializeField] private MeshRenderer targetRenderer; // 指定要替換材質的 Renderer
+        [SerializeField] private Material[] normalMaterials;  // 一般狀態下的材質陣列
+        [SerializeField] private Material[] spellHitMaterials; // 被法術擊中時的材質陣列
 
         [Header("Hit Logic & Path (HitTarget)")]
         public RoadFader road;
@@ -38,6 +38,7 @@ namespace DefaultNamespace
         public UnityEvent onFirstHit;
         private bool _consumed;
         private bool _isPathBusy;
+        private bool _isInActiveArea;
 
         [Header("UI (Countdown)")]
         public TextMeshProUGUI countdownText;
@@ -57,6 +58,7 @@ namespace DefaultNamespace
         private Vector3 _initialLocalPos;
         private int _originalLayer;
         private int _interactionLayer;
+        private int _trafficLightActiveArea;
 
         // Interface Properties
         public bool NeedCollectAnimation => false;
@@ -64,10 +66,10 @@ namespace DefaultNamespace
 
         private void Awake()
         {
-            _mainMeshRenderer = GetComponent<MeshRenderer>();
             _rb = GetComponent<Rigidbody>();
             _originalLayer = LayerMask.NameToLayer("Target");
             _interactionLayer = LayerMask.NameToLayer("InteractionMask");
+            _trafficLightActiveArea = LayerMask.NameToLayer("TrafficLightActiveArea");
             
             if (countdownPulseTarget)
             {
@@ -75,12 +77,17 @@ namespace DefaultNamespace
                 countdownPulseTarget.localScale = Vector3.zero;
             }
             if (crossRoad) crossRoad.enabled = false;
+
+            // 啟動時自動快取目標 Renderer 目前的材質為 normalMaterials（若未手動指定）
+            if (targetRenderer != null && normalMaterials.Length == 0)
+            {
+                normalMaterials = targetRenderer.materials;
+            }
         }
 
         #region ICollectable (一般狀態下的吸收反應)
         public void Collect()
         {
-            // 法術狀態下禁止吸收顫抖
             if (isStopSpellHit) return;
 
             if (collectingVFX != null && !collectingVFX.isPlaying)
@@ -102,13 +109,13 @@ namespace DefaultNamespace
         #region IHitReceiver (一般狀態下的擊中路徑邏輯)
         public void OnHit(ThoughtPayloadSO payload)
         {
-            // 法術狀態下禁止觸發倒數路徑
-            if (isStopSpellHit || _isPathBusy) return;
+            // 加入 !_isInActiveArea 阻斷邏輯
+            if (isStopSpellHit || _isPathBusy || !_isInActiveArea) return;
 
             if (animator) animator.SetTrigger("Hit");
+            if (hitVFX) hitVFX.Play();
             StartCoroutine(RunPathCycle());
         }
-
         private IEnumerator RunPathCycle()
         {
             _isPathBusy = true;
@@ -137,7 +144,7 @@ namespace DefaultNamespace
                 isStopSpellHit = true;
                 gameObject.layer = _interactionLayer;
                 animator.speed = 0f;
-                CreateVisualOverlays();
+                SwapMaterials(spellHitMaterials);
             }
         }
 
@@ -146,7 +153,7 @@ namespace DefaultNamespace
             isStopSpellHit = false;
             gameObject.layer = _originalLayer;
             animator.speed = 1f;
-            RemoveVisualOverlays();
+            SwapMaterials(normalMaterials);
         }
         #endregion
 
@@ -203,34 +210,28 @@ namespace DefaultNamespace
             countdownPulseTarget.DOPunchScale(Vector3.one * pulseAmount, pulseDuration);
         }
         
-        private void CreateVisualOverlays()
+        private void SwapMaterials(Material[] newMaterials)
         {
-            if (_mainMeshRenderer) _mainMeshRenderer.enabled = false;
-            if (_overlayObjects.Count > 0) return;
+            if (targetRenderer == null || newMaterials == null || newMaterials.Length == 0) return;
+            targetRenderer.materials = newMaterials;
+        }
+        #endregion
 
-            foreach (var renderer in GetComponentsInChildren<MeshRenderer>())
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.gameObject.layer == _trafficLightActiveArea)
             {
-                if (renderer.gameObject.name == "SpellOverlay") continue;
-                MeshFilter mf = renderer.GetComponent<MeshFilter>();
-                if (!mf) continue;
-
-                GameObject overlay = new GameObject("SpellOverlay");
-                overlay.transform.SetParent(renderer.transform);
-                overlay.transform.localPosition = Vector3.zero;
-                overlay.transform.localScale = Vector3.one * scaleMultiplier;
-                overlay.AddComponent<MeshFilter>().mesh = mf.mesh;
-                overlay.AddComponent<MeshRenderer>().material = overlayMaterial;
-                overlay.layer = LayerMask.NameToLayer("Ignore Raycast");
-                _overlayObjects.Add(overlay);
+                _isInActiveArea = true;
             }
         }
 
-        private void RemoveVisualOverlays()
+        // 必須新增 Exit 以重置狀態
+        private void OnTriggerExit(Collider other)
         {
-            if (_mainMeshRenderer) _mainMeshRenderer.enabled = true;
-            foreach (var obj in _overlayObjects) if (obj) Destroy(obj);
-            _overlayObjects.Clear();
+            if (other.gameObject.layer == _trafficLightActiveArea)
+            {
+                _isInActiveArea = false;
+            }
         }
-        #endregion
     }
 }

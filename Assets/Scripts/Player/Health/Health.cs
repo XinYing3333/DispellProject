@@ -69,13 +69,14 @@ public class Health : MonoBehaviour
 
     public void ApplyDamage(DamageInfo info)
     {
+        EventBus<OnPlayerDamaged>.Raise(new OnPlayerDamaged());
+
+        if (info.amount <= 0) return;
         if (current <= 0) return;
         if (_invuln && !info.bypassIFrames) return;
 
-        current = Mathf.Max(0, current - Mathf.Max(1, info.amount));
+        current = Mathf.Max(0, current - Mathf.Max(0, info.amount));
         EventBus<OnHealthChanged>.Raise(new OnHealthChanged(gameObject, current, MaxTotal));
-        
-        EventBus<OnPlayerDamaged>.Raise(new OnPlayerDamaged());
 
         if (current <= 0)
         {

@@ -4,7 +4,7 @@ using UnityEngine;
 public class  ThoughtCollectible : MonoBehaviour, ICollectable
 {
     private string _spawnId;
-    private ThoughPlacer _owner;
+    private ThoughtPlacer _owner;
 
     public Animator anim;
     public string idleSubSM = "IdlePool";  // 子狀態機名稱
@@ -30,7 +30,7 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
         }
     }
     
-    public void Init(string spawnId, ThoughPlacer owner)
+    public void Init(string spawnId, ThoughtPlacer owner)
     {
         _spawnId = spawnId;
         _owner = owner;
