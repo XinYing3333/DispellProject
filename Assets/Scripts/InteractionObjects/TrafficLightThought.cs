@@ -27,6 +27,7 @@ namespace DefaultNamespace
         [SerializeField] private MeshRenderer targetRenderer; // 指定要替換材質的 Renderer
         [SerializeField] private Material[] normalMaterials;  // 一般狀態下的材質陣列
         [SerializeField] private Material[] spellHitMaterials; // 被法術擊中時的材質陣列
+        [SerializeField] private Material[] objectHitMaterials; // 被物品擊中時的材質陣列
 
         [Header("Hit Logic & Path (HitTarget)")]
         public RoadFader road;
@@ -126,11 +127,12 @@ namespace DefaultNamespace
                 _consumed = true;
                 onFirstHit?.Invoke();
             }
-
+            SwapMaterials(objectHitMaterials);
             if (crossRoad) crossRoad.enabled = true;
             yield return StartCoroutine(Co_CountdownUI(Mathf.CeilToInt(openSeconds)));
             
             if (road) yield return road.FadeOut(fadeOutTime);
+            SwapMaterials(normalMaterials);
             if (crossRoad) crossRoad.enabled = false;
             _isPathBusy = false;
         }
