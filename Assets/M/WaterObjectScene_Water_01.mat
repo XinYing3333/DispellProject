@@ -89,7 +89,7 @@ Material:
     - _CameraDistanceFadeClose: 0
     - _CameraDistanceFadeFar: 10
     - _ColorMode: 0
-    - _CrestSharpness: 0.1
+    - _CrestSharpness: 0
     - _CrestSize: 0
     - _Cull: 2
     - _Cutoff: 0.5
@@ -97,14 +97,14 @@ Material:
     - _DstBlend: 0
     - _EnvironmentReflections: 1
     - _FadeDistance: 0.33
-    - _FoamAmount: 0.08
-    - _FoamDepth: 0.15
+    - _FoamAmount: 0.15
+    - _FoamDepth: 0.09
     - _FoamDirection: -0.62
     - _FoamFromTexture: 1
     - _FoamMode: 1
     - _FoamNoiseAmount: 0.061
     - _FoamProcedural: 1
-    - _FoamScale: 3
+    - _FoamScale: 0.52
     - _FoamSharpness: 0.825
     - _FoamSpeed: 0.1
     - _FoamStretchX: 1
@@ -122,9 +122,9 @@ Material:
     - _ProceduralFoam: 1
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RefractionAmplitude: 0.0156
-    - _RefractionFrequency: -19.7
-    - _RefractionScale: 17.38
+    - _RefractionAmplitude: 0.1
+    - _RefractionFrequency: -12.4
+    - _RefractionScale: -4.65
     - _RefractionSpeed: 0.01
     - _RefractionStrength: 0.01
     - _ShadowStrength: 0
@@ -154,7 +154,7 @@ Material:
     - _ColorTop: {r: 1, g: 1, b: 1, a: 0}
     - _CrestColor: {r: 0, g: 0, b: 0, a: 0.9}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FoamColor: {r: 0.84961396, g: 0.8584906, b: 0.81394625, a: 0.7372549}
+    - _FoamColor: {r: 0.35326388, g: 0.3584906, b: 0.3297437, a: 0.7372549}
     - _FoamStretch: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

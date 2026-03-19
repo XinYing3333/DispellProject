@@ -20,10 +20,11 @@ public class InteractionController : MonoBehaviour
     [SerializeField] private PlayerMovement playerMovement;
 
     [Header("Ratchet Style Settings")] [SerializeField]
-    private LayerMask aimRaycastMask;
+     private LayerMask aimRaycastMask;
+     [SerializeField] private float maxAimDistance = 100f;
+     [SerializeField] private RectTransform crosshairRect; // 拖入你的 UI 圖示
 
-    [SerializeField] private float maxAimDistance = 100f;
-    [SerializeField] private GameObject crosshairUI;
+    // [SerializeField] private GameObject crosshairUI;
 
     [Header("Throw/Spell Stats")] [SerializeField]
     private float throwSpeed = 22f;
@@ -38,9 +39,6 @@ public class InteractionController : MonoBehaviour
     [SerializeField] private List<ParticleSystem> particleVFX;
     [SerializeField] private ParticleSystem throwVFX; 
     
-    [Header("Indicator Settings")]
-    [SerializeField] private RectTransform crosshairRect; // 拖入你的 UI 圖示
-
     private ThrowingSystem _thrower;
     private SpellType _currentSpellType;
     private float _lastSpellTime = -999f;
