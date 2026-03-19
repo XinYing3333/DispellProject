@@ -4,15 +4,18 @@ using UnityEngine;
 public class  ThoughtCollectible : MonoBehaviour, ICollectable
 {
     private string _spawnId;
-    private ThoughPlacer _owner;
+    private ThoughtPlacer _owner;
 
     public Animator anim;
     public string idleSubSM = "IdlePool";  // 子狀態機名稱
     public int idleCount = 2;//動畫總數，animator clips 命名排列以 0 開始
     public float minGap = 1.8f, maxGap = 4.0f;
     public float crossFade = 0.12f;
-
+    
     float timer;
+    
+    public bool NeedCollectAnimation => true;
+    public bool IsSpellStateActive => false;
 
     void Start() { timer = Random.Range(minGap, maxGap); }
 
@@ -27,7 +30,7 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
         }
     }
     
-    public void Init(string spawnId, ThoughPlacer owner)
+    public void Init(string spawnId, ThoughtPlacer owner)
     {
         _spawnId = spawnId;
         _owner = owner;
@@ -35,10 +38,13 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
 
     public void Collect()
     {
-        //LevelStateStore.Instance.MarkCollectedSession(_spawnId);
+        if (LevelStateStore.Instance != null)
+            LevelStateStore.Instance.MarkCollectedSession(_spawnId);
+
         CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
         _owner.ReturnThoughToPool(gameObject);
     }
+
     
     /*private void OnTriggerEnter(Collider other)
     {

@@ -122,9 +122,20 @@ public class LevelSequenceTrigger : MonoBehaviour
             }
             case StepKind.SetObjective:
             {
-                EventBus<SetObjective>.Raise(new SetObjective(s.text));
+                var key = !string.IsNullOrEmpty(s.objectiveKey) ? s.objectiveKey : s.text;
+
+                object[] args = null;
+                if (s.objectiveArgs != null && s.objectiveArgs.Length > 0)
+                {
+                    args = new object[s.objectiveArgs.Length];
+                    for (int i = 0; i < s.objectiveArgs.Length; i++)
+                        args[i] = s.objectiveArgs[i];
+                }
+
+                EventBus<SetObjective>.Raise(new SetObjective(key, args));
                 yield break;
             }
+
             case StepKind.Wait:
             {
                 float t = 0f;

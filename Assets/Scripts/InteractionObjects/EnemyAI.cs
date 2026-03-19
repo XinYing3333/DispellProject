@@ -25,6 +25,10 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
 
     private bool isPlay;
     private NavMeshAgent agent;
+    
+    public bool NeedCollectAnimation => true; 
+    public bool IsSpellStateActive => false;
+
 
     void Start()
     {
@@ -48,9 +52,6 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
             if (!isPlay) _stateUIAnimator.Play("enemy-warning");
             isPlay = true;
         }
-        else if (distanceToTarget > detectionRange && !_isStunned)
-        {
-        }
         else
         {
             isPlay = false;
@@ -60,11 +61,6 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
     }
 
     int originalLayer;
-
-    public void AttackStun()
-    {
-        StartCoroutine(OnStun());
-    }
 
     IEnumerator OnStun()
     {
@@ -90,6 +86,10 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
             stunTime = 2f;
             StartCoroutine(OnStun());
         }
+        if (other.CompareTag("Player"))
+        {
+            StartCoroutine(OnStun());
+        }
     }
 
     public void OnHit(ThoughtPayloadSO payload)
@@ -107,4 +107,5 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
         Destroy(gameObject);
         //_owner.ReturnThoughToPool(gameObject);
     }
+
 }

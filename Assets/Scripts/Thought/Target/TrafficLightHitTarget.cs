@@ -62,6 +62,7 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
             // 一開始先藏起來
             countdownPulseTarget.localScale = Vector3.zero;
         }
+        if (crossRoad) crossRoad.enabled = false;
     }
 
     public void OnHit(ThoughtPayloadSO payload)
@@ -91,7 +92,7 @@ public class TrafficLightHitTarget : MonoBehaviour, IHitReceiver
 
         // 5) 關路
         if (crossRoad) crossRoad.enabled = false;
-
+        
         _busy = false;
     }
 

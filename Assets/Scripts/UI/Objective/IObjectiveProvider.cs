@@ -2,7 +2,8 @@ namespace DefaultNamespace.UI.Objective
 {
     public interface IObjectiveProvider
     {
-        string CurrentText { get; }
-        bool   HasObjective { get; }
+        string   CurrentKey { get; }
+        object[] CurrentArgs { get; }
+        bool     HasObjective { get; }
     }
 }

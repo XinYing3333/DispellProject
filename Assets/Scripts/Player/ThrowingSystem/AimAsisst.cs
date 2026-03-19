@@ -2,159 +2,72 @@
 
 public class AimAssist : MonoBehaviour
 {
-    [Header("Refs")]
     public Transform cameraTransform;
     public Transform throwOrigin;
-
-    [Header("Detect")]
     public LayerMask interactionMask;
     public float detectRadius = 8f;
     [Range(1f, 90f)] public float maxAngle = 30f;
-    public int maxHits = 64;
 
-    [Header("Gizmos")]
-    public bool drawGizmos = true;
-    public Color detectColor = new Color(1f, 0.85f, 0f, 0.25f);
-    public Color fovColor = Color.yellow;
-    public Color forwardColor = Color.white;
-    public Color targetLineColor = Color.green;
+    // 關鍵修正：確保這些是 public，否則 ThrowingSystem 會報錯
+    public Targetable CurrentTarget { get; private set; }
+    public TargetState assistMode = TargetState.SpellReady;
+    public bool Scanning { get; private set; }
 
-    private readonly Collider[] _hits = new Collider[128];
-    private Targetable _current;
-
-    // 新增：掃描開關（公開唯讀，對外用 SetScanning 控制）
-    public bool Scanning { get; private set; } = false;
-    
-    public Targetable CurrentTarget => _current;
-
-    void Reset()
-    {
-        if (!cameraTransform && Camera.main) cameraTransform = Camera.main.transform;
-    }
+    private readonly Collider[] _hits = new Collider[64];
 
     void Update()
     {
-        if (!Scanning) return;                    // ← 關掉就不掃描
+        if (!Scanning) return;
         var next = FindBestTarget();
 
-        if (!ReferenceEquals(next, _current))
+        if (next != CurrentTarget)
         {
-            if (_current) _current.SetAimActive(false);
-            _current = next;
-            if (_current) _current.SetAimActive(true);
+            if (CurrentTarget) CurrentTarget.SetTargetState(TargetState.None);
+            CurrentTarget = next;
+            if (CurrentTarget) CurrentTarget.SetTargetState(assistMode);
         }
-    }
-
-    void OnDisable()
-    {
-        if (_current) _current.SetAimActive(false);
-        _current = null;
-        Scanning = false;
     }
 
     public void SetScanning(bool on)
     {
-        if (Scanning == on) return;
         Scanning = on;
-        if (!on)
+        if (!on && CurrentTarget)
         {
-            // 關閉時確保清掉殘留高亮
-            if (_current) _current.SetAimActive(false);
-            _current = null;
+            CurrentTarget.SetTargetState(TargetState.None);
+            CurrentTarget = null;
         }
     }
-    
-    public Vector3 GetAimDirection()
+
+    public void SetAssistMode(TargetState mode)
     {
-        if (!_current)
-            return cameraTransform ? cameraTransform.forward : transform.forward;
-
-        var origin = throwOrigin ? throwOrigin.position :
-            (cameraTransform ? cameraTransform.position : transform.position);
-
-        var aimPoint = GetTargetCenter(_current);
-        var dir = aimPoint - origin;
-
-        return dir.sqrMagnitude > 0.0001f
-            ? dir.normalized
-            : (cameraTransform ? cameraTransform.forward : transform.forward);
+        if (assistMode == mode) return;
+        if (CurrentTarget) CurrentTarget.SetTargetState(TargetState.None);
+        CurrentTarget = null;
+        assistMode = mode;
     }
-
 
     private Targetable FindBestTarget()
     {
-        var origin = cameraTransform ? cameraTransform.position : transform.position;
-        var forward = cameraTransform ? cameraTransform.forward : transform.forward;
-        float bestScore = float.MinValue;
+        Vector3 origin = cameraTransform ? cameraTransform.position : transform.position;
+        Vector3 forward = cameraTransform ? cameraTransform.forward : transform.forward;
         Targetable best = null;
+        float bestScore = -1f;
 
         int n = Physics.OverlapSphereNonAlloc(origin, detectRadius, _hits, interactionMask, QueryTriggerInteraction.Ignore);
-        int limit = Mathf.Min(n, Mathf.Min(maxHits, _hits.Length));
-
-        for (int i = 0; i < limit; i++)
+        for (int i = 0; i < n; i++)
         {
-            var c = _hits[i];
-            if (!c) continue;
-            var t = c.GetComponentInParent<Targetable>();
+            var t = _hits[i].GetComponentInParent<Targetable>();
             if (!t) continue;
 
-            var to = GetTargetCenter(t) - origin;
-            float dist = to.magnitude;
-            if (dist <= 0.0001f) continue;
-
+            Vector3 to = t.GetAimPoint() - origin;
             float ang = Vector3.Angle(forward, to);
             if (ang > maxAngle) continue;
 
-
-            // 距離越近、角度越小分數越高（各 0.5 權重）
-            float score = Mathf.InverseLerp(detectRadius, 0f, dist) * 0.5f +
-                          Mathf.InverseLerp(maxAngle, 0f, ang) * 0.5f;
-
+            float score = (1f - (ang / maxAngle)) + (1f - (to.magnitude / detectRadius));
             if (score > bestScore) { bestScore = score; best = t; }
         }
         return best;
     }
-    
-    private Vector3 GetTargetCenter(Targetable t)
-    {
-        // 優先用 Collider（最準確反映碰撞體）
-        var col = t.GetComponentInChildren<Collider>();
-        if (col)
-            return col.bounds.center;
 
-        // 次選 Renderer（視覺中心）
-        var rend = t.GetComponentInChildren<Renderer>();
-        if (rend)
-            return rend.bounds.center;
-
-        // 兜底：使用原本 AimPoint
-        return t.GetAimPoint();
-    }
-
-
-    private void OnDrawGizmosSelected()
-    {
-        if (!drawGizmos) return;
-
-        Vector3 origin = cameraTransform ? cameraTransform.position : transform.position;
-        Vector3 forward = cameraTransform ? cameraTransform.forward : transform.forward;
-
-        Gizmos.color = detectColor;
-        Gizmos.DrawWireSphere(origin, detectRadius);
-
-        Gizmos.color = forwardColor;
-        Gizmos.DrawRay(origin, forward * Mathf.Min(2f, detectRadius));
-
-        Gizmos.color = fovColor;
-        var rotL = Quaternion.AngleAxis(-maxAngle, Vector3.up);
-        var rotR = Quaternion.AngleAxis(+maxAngle, Vector3.up);
-        Gizmos.DrawRay(origin, rotL * forward * Mathf.Min(2f, detectRadius));
-        Gizmos.DrawRay(origin, rotR * forward * Mathf.Min(2f, detectRadius));
-
-        if (CurrentTarget)
-        {
-            Gizmos.color = targetLineColor;
-            Gizmos.DrawLine(origin, GetTargetCenter(CurrentTarget));
-        }
-    }
+    public Vector3 GetAimDirection() => cameraTransform ? cameraTransform.forward : transform.forward;
 }

@@ -1,3 +1,4 @@
+/*
 using UnityEngine;
 using Player;
 using System.Collections.Generic;
@@ -32,3 +33,4 @@ public class SkillUIManager : MonoBehaviour
 
     
 }
+*/

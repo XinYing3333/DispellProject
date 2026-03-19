@@ -47,6 +47,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_5c2c872f1c154756bed8ee4ab565e133_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 2a09796800642044d86ebf1396639790, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_8ba50bbe38314b0d9e5355db1d70639f_Texture_1_Texture2D:
         m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -61,6 +65,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _Texture:
         m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureG:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -88,7 +96,9 @@ Material:
     - _Emission: 1
     - _Float: 0.5
     - _GroundDetails: -1.69
-    - _MossOffset: 2.25
+    - _Height: 0.5
+    - _HeightGradient: 1
+    - _MossOffset: 3
     - _OffsetDetails: 2.2
     - _QueueControl: 0
     - _QueueOffset: 0
@@ -106,6 +116,7 @@ Material:
     - _Color3: {r: 0.7169812, g: 0.6391955, b: 0.6842709, a: 0}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _HeightColor: {r: 0.29803917, g: 0.30980387, b: 0.094117604, a: 0}
     - _OffsetMinMax: {r: -1.55, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

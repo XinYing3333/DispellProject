@@ -3,7 +3,7 @@ using System.IO;
 using UnityEngine;
 
 /// <summary>
-/// 收集系統： 提供 Dictionary ， 可以w記錄 string+int ，提供公開【收集】【判斷是否獲得】【獲得數量】【儲存與讀取】。
+/// 收集系統：提供 Dictionary，記錄 string+int，提供公開【收集】【判斷是否獲得】【獲得數量】【儲存與讀取】。
 /// </summary>
 public static class CollectionSystem
 {
@@ -12,7 +12,7 @@ public static class CollectionSystem
 
     // 宣告事件：參數 = 物品類型, 當前總數量
     public static event System.Action<CollectedType, int> OnCollected;
-    public enum CollectedType { Though, EnemyThough, Offering }
+    public enum CollectedType { Though, EnemyThough, StopSignThough, Offering }
 
     private static string Key(CollectedType t) => t.ToString();
 
@@ -26,8 +26,58 @@ public static class CollectionSystem
 #if UNITY_EDITOR
         Debug.Log($"[Collection] 收集到 {key}，本輪暫存數量：{session[key]}");
 #endif
-        // ✅ 這裡觸發事件，傳回累計總數（saved + session）
         OnCollected?.Invoke(itemName, GetItemCount(itemName));
+    }
+
+    // ✅ 消耗：先扣 session，再扣 saved；不足則失敗且不改變任何數值
+    public static bool TryConsumeItem(CollectedType itemName, int amount)
+    {
+        amount = Mathf.Max(1, amount);
+
+        int total = GetItemCount(itemName);
+        if (total < amount) return false;
+
+        string key = Key(itemName);
+
+        int sess = session.ContainsKey(key) ? session[key] : 0;
+        int sav  = saved.ContainsKey(key)   ? saved[key]   : 0;
+
+        int remaining = amount;
+
+        // 扣 session
+        if (sess > 0)
+        {
+            int take = Mathf.Min(sess, remaining);
+            sess -= take;
+            remaining -= take;
+        }
+
+        // 扣 saved
+        if (remaining > 0 && sav > 0)
+        {
+            int take = Mathf.Min(sav, remaining);
+            sav -= take;
+            remaining -= take;
+        }
+
+        // 必須扣完
+        if (remaining != 0) return false;
+
+        if (session.ContainsKey(key)) session[key] = sess;
+        else if (sess > 0) session[key] = sess;
+
+        if (saved.ContainsKey(key)) saved[key] = sav;
+        else if (sav > 0) saved[key] = sav;
+
+        // 清掉 0，避免髒鍵
+        if (session.ContainsKey(key) && session[key] <= 0) session.Remove(key);
+        if (saved.ContainsKey(key) && saved[key] <= 0) saved.Remove(key);
+
+#if UNITY_EDITOR
+        Debug.Log($"[Collection] 消耗 {key} x{amount}，剩餘：{GetItemCount(itemName)} (saved+session)");
+#endif
+        OnCollected?.Invoke(itemName, GetItemCount(itemName));
+        return true;
     }
 
     // 是否收過（以「當前遊戲狀態」為準 = saved ∪ session）

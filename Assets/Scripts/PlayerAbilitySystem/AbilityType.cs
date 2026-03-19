@@ -2,8 +2,10 @@
 {
     public enum AbilityType
     {
-        HumanThought,
-        ElephantThought,
+        None,
         BirdThought,
+        ElephantThought,
+        AttackTotem,
+        StunTotem
     }
 }

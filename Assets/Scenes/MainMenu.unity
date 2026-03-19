@@ -354,7 +354,6 @@ GameObject:
   - component: {fileID: 145060958}
   - component: {fileID: 145060959}
   - component: {fileID: 145060957}
-  - component: {fileID: 145060960}
   m_Layer: 5
   m_Name: MainPanel
   m_TagString: Untagged
@@ -421,24 +420,6 @@ CanvasRenderer:
   m_GameObject: {fileID: 145060955}
   m_CullTransparentMesh: 1
 --- !u!114 &145060959
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 145060955}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2607e64042e549eb90a5151f7b09efc9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  firstSelected: {fileID: 667650354}
-  selectOnEnable: 1
-  guardSelectionOnGamepad: 1
-  requireCursorOnOpen: 1
-  pauseTimeOnOpen: 0
-  resumeOnClose: 1
---- !u!114 &145060960
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1616,6 +1597,10 @@ PrefabInstance:
     - target: {fileID: 1901250583577598086, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
       propertyPath: m_Name
       value: CanvasMain
+      objectReference: {fileID: 0}
+    - target: {fileID: 1901250583577598086, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2255431234709062159, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
       propertyPath: m_IsActive
@@ -4868,6 +4853,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   interaction: {fileID: 0}
+  gameplayMapName: Gameplay
+  uiMapName: UI
 --- !u!114 &2222260344876988768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5017,6 +5004,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: b127d309-321e-4cd1-b938-32244eb8267e
     m_ActionName: 'Player/Target[/Keyboard/t]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 7846fd74-7b24-47fa-8afa-25937a8b5551
+    m_ActionName: 'Player/Exit[/Keyboard/f7]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 46cc9d0a-e764-4791-b441-20993ad54035
+    m_ActionName: 'Player/Reset[/Keyboard/f8,/XInputControllerWindows/select]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: eb182a0d-923d-4d9f-bc7e-2d732b6f1b77
+    m_ActionName: 'UI/PauseToggle[/Keyboard/escape,/XInputControllerWindows/start]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 569eba50-6b89-402f-ba2c-b2909eb11ee3
+    m_ActionName: 'UI/Pause[/Keyboard/escape,/XInputControllerWindows/start]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: UI

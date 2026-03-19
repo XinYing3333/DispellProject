@@ -1,4 +1,4 @@
-INCLUDE globals.ink
+/*//INCLUDE globals.ink
 #speaker:God 2 #portrait:god-2
 { chooseNumber == "": I know what you think.->END | -> sub }
 
@@ -7,4 +7,4 @@ INCLUDE globals.ink
 Let me guess...
 you choose {chooseNumber}! 
 
-->END
+->END*/

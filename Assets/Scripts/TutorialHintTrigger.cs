@@ -2,6 +2,7 @@
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
+using UI.Localization;
 
 [ExecuteAlways]
 public class TutorialHintTrigger : MonoBehaviour
@@ -11,7 +12,13 @@ public class TutorialHintTrigger : MonoBehaviour
     [SerializeField] private bool isTriggerEnter = false;
 
     [SerializeField] private TMP_Text hintText;
-    [TextArea] [SerializeField] private string message;
+
+    [Header("Message (Per Language)")]
+    [TextArea] [SerializeField] private string messageZh;
+    [TextArea] [SerializeField] private string messageEn;
+
+    [Header("Fallback (optional)")]
+    [TextArea] [SerializeField] private string messageDefault;
 
     [Header("Timing")]
     [SerializeField] private float fadeInTime = 0.5f;
@@ -27,7 +34,7 @@ public class TutorialHintTrigger : MonoBehaviour
     [SerializeField] private Vector3 gizmoOffset = Vector3.zero;
 
     private bool _played;
-    private Sequence _seq; // ★ 新增：用來判斷是否正在播放，並可中止
+    private Sequence _seq;
 
     private void Update()
     {
@@ -52,7 +59,6 @@ public class TutorialHintTrigger : MonoBehaviour
 
     private void OnDisable()
     {
-        // 避免物件被關閉時還留著 Tween
         if (_seq != null && _seq.IsActive()) _seq.Kill(false);
         _seq = null;
     }
@@ -61,22 +67,54 @@ public class TutorialHintTrigger : MonoBehaviour
     {
         if (hintCanvasGroup == null || hintText == null) return;
 
-        // ★ 核心：衝突處理（超精簡）
         if (_seq != null && _seq.IsActive())
         {
-            if (skipIfPlaying) return;   // 正在播就略過
-            _seq.Kill(false);            // 否則中止舊的，重啟新的
+            if (skipIfPlaying) return;
+            _seq.Kill(false);
         }
 
         hintCanvasGroup.alpha = 0f;
-        hintText.text = message;
+        hintText.text = ResolveMessage();
 
-        _seq = DOTween.Sequence().SetUpdate(UpdateType.Late); // 用 Late 減少相對抖動
+        _seq = DOTween.Sequence().SetUpdate(UpdateType.Late);
         _seq.Append(hintCanvasGroup.DOFade(1f, fadeInTime));
         _seq.AppendInterval(holdTime);
         _seq.Append(hintCanvasGroup.DOFade(0f, fadeOutTime));
         _seq.OnComplete(() => _seq = null);
         _seq.SetAutoKill(true);
+    }
+
+    private string ResolveMessage()
+    {
+        // 優先用你的 LocalizationService（與 APP_LANG 同步）
+        if (LocalizationService.Instance != null)
+        {
+            var lang = LocalizationService.Instance.CurrentAppLanguage;
+
+            switch (lang)
+            {
+                case Language.en:
+                    if (!string.IsNullOrEmpty(messageEn)) return messageEn;
+                    break;
+
+                case Language.zh:
+                    if (!string.IsNullOrEmpty(messageZh)) return messageZh;
+                    break;
+
+                // 你目前系統還有 jp，但這支腳本只加了英/中；落到 Default
+                case Language.jp:
+                default:
+                    break;
+            }
+        }
+
+        // fallback：手動填的 default
+        if (!string.IsNullOrEmpty(messageDefault)) return messageDefault;
+
+        // 最後 fallback：有什麼用什麼
+        if (!string.IsNullOrEmpty(messageZh)) return messageZh;
+        if (!string.IsNullOrEmpty(messageEn)) return messageEn;
+        return "";
     }
 
 #if UNITY_EDITOR

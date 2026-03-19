@@ -1,13 +1,38 @@
-//EXTERNAL playCutscene(cutsceneName)
-「可惡...沒想到就這樣摔進來了......」#speaker:鄔詩 #portrait:wushi-palm #layout:layout1 #audio:wushi
-「...」#audio:default
-「這裡是...<color=\#FF2424>異常空間</color>？」#portrait:wushi-default #audio:wushi
-「比想像中的還平靜。」
-「先往前走看看吧...」
-// ~ playCutscene(念頭出現)
-//「那是...<color=\#FF2424>念頭</color>？」#portrait:wushi-shock 
-//「比平常看到的都還要大！」 
-// ~ playCutscene(念頭飄走)
-//「站住！」
-// ~ backtoGame
-->END
+INCLUDE globals.ink
+// EXTERNAL playCutscene(cutsceneName)
+{ lang == "zh":
+    #speaker:鄔詩
+- else:
+    #speaker:Wushi
+}
+ #portrait:wushi-palm #layout:layout1 #audio:wushi
+{ lang == "zh":
+    「可惡...沒想到就這樣摔進來了......」
+- else:
+    Damn... I didn’t expect to fall in like this...
+}
+
+#audio:default
+{ lang == "zh":
+    「...」
+- else:
+    ...
+}
+
+#portrait:wushi-default #audio:wushi
+{ lang == "zh":
+    「這裡是...<color=\#FF2424>異常空間</color>？」
+- else:
+    Is this... an <color=\#FF2424>anomalous space</color>?
+}
+{ lang == "zh":
+    「比想像中的還平靜。」
+- else:
+    It’s calmer than I expected.
+}
+{ lang == "zh":
+    「先往前走看看吧...」
+- else:
+    I’ll move forward and take a look...
+}
+-> END

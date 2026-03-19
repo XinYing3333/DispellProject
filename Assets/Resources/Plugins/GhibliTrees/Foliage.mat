@@ -58,7 +58,7 @@ Material:
     - _CastShadows: 1
     - _Cull: 0
     - _DstBlend: 10
-    - _EmissionPower: 0.16
+    - _EmissionPower: -8.21
     - _Inflate: 6.32
     - _JitterScale: 1.59
     - _PositionScale: 1.09
@@ -68,11 +68,11 @@ Material:
     - _RotationScale: 14.66
     - _RotationScrollSpeed: 0.06
     - _RotationSpeed: 0.2
-    - _RotationStrengh: 2.42
-    - _Smoothness: 0
+    - _RotationStrengh: 1.85
+    - _Smoothness: 1
     - _SrcBlend: 5
     - _Surface: 1
-    - _TextureSize: 3.15
+    - _TextureSize: 3.17
     - _WindJitter: 0.76
     - _WindScale: 0.88
     - _WindScroll: 0.13
@@ -81,8 +81,9 @@ Material:
     - _ZWrite: 0
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.98831004, g: 0.8745098, b: 1, a: 0.454902}
-    - _EmissionColor: {r: 0.39030644, g: 0.5568628, b: 0.22745097, a: 0}
+    - _Color: {r: 0.047169805, g: 0.047169805, b: 0.047169805, a: 0.454902}
+    - _EmissionColor: {r: 0.03773582, g: 0.03773582, b: 0.03773582, a: 0}
+    - _TextureOffset: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &5373710250384104421

@@ -34,6 +34,7 @@ public class CheckpointSetter : MonoBehaviour
         {
             // 一些一次性演出（音效/特效/提示）
             EventBus<OnCheckpointUpdated>.Raise(new OnCheckpointUpdated());
+            CollectionSystem.SaveCollection();
             // 可加 animator.SetTrigger("Activated"); 等等
         }
         // 已觸發過就什麼都不做（不覆寫最近進度）

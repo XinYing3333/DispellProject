@@ -34,7 +34,7 @@ namespace Player
             if (input == null) return;
 
             // 開關作弊介面
-            if (input.ExitPressed)
+            if (PlayerInputHandler.Instance.ExitPressed)
             {
                 openCheatMode = !openCheatMode;
                 if (CheatCanvas) CheatCanvas.SetActive(openCheatMode);
@@ -47,13 +47,13 @@ namespace Player
             }
 
             // 重置
-            if (input.ResetPressed)
+            if (PlayerInputHandler.Instance.SelectPressed)
             {
                 PlayerPrefs.DeleteAll();
                 CollectionSystem.ClearCollection();
                 ForTutorialDemo.isTutorialFinished = false;
                 Time.timeScale = 1;
-                SceneController.Instance.LoadScene("MainMenu");
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 return;
             }
 
