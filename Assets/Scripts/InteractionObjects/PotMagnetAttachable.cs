@@ -6,6 +6,7 @@ public class PotMagnetAttachable : MagnetAttachable
     public GameObject fracturedPrefab;    // 破碎模型
     public GameObject thoughtPrefab;      // 念頭物件
     public GameObject breakParticleFX;    // 粒子特效
+    public ParticleSystem sparksParticleFX;    // 粒子特效
 
     [Header("判定設定")]
     public float breakForceThreshold = 8f; 
@@ -44,7 +45,7 @@ public class PotMagnetAttachable : MagnetAttachable
     {
         Vector3 hitPoint = collision.contacts[0].point;
         Vector3 hitNormal = collision.contacts[0].normal;
-
+        sparksParticleFX.Stop();
         // 1. 生成粒子特效 (朝向法線噴發)
         if (breakParticleFX)
         {
