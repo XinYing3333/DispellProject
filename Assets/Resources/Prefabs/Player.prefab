@@ -141,6 +141,7 @@ MonoBehaviour:
   movementSpeed: 2.5
   runSpeed: 6
   turnSpeed: 10
+  aimTurnSpeed: 50
   maxStepHeight: 0.3
   stepCheckDistance: 0.4
   stepVFX: {fileID: 4691037257567097300}
@@ -244,16 +245,6 @@ MonoBehaviour:
   heartSize: 1
   current: 0
   invulnDuration: 0.8
-  flashOnHit: 1
-  flashTargets:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
   enableKnockback: 0
   knockbackDuration: 0.2
   knockbackEase:
@@ -15493,6 +15484,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2289773502168037927}
   - component: {fileID: 1883137092233398348}
+  - component: {fileID: 6688097877301312901}
   m_Layer: 0
   m_Name: SpellInventoryController
   m_TagString: Untagged
@@ -15529,6 +15521,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   interactionController: {fileID: 182527316331146332}
   unlockedSpells: 
+--- !u!114 &6688097877301312901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3439677510787427851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50e191e502844f4e8e8ac18185fbe83c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxActiveNodes: 2
 --- !u!1 &3685730603902487057
 GameObject:
   m_ObjectHideFlags: 0
@@ -20960,7 +20965,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   maxAimDistance: 100
-  crosshairUI: {fileID: 0}
+  crosshairRect: {fileID: 0}
   throwSpeed: 18
   arcMode: 1
   spellPrefab: {fileID: 2678502278186241145, guid: a1a91c10114dd5340acc29746df76fde, type: 3}
@@ -21016,12 +21021,7 @@ MonoBehaviour:
     m_Bits: 4096
   detectRadius: 8
   maxAngle: 50
-  maxHits: 64
-  drawGizmos: 1
-  detectColor: {r: 1, g: 0.112376936, b: 0, a: 1}
-  fovColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  forwardColor: {r: 1, g: 1, b: 1, a: 1}
-  targetLineColor: {r: 1, g: 0, b: 0, a: 1}
+  assistMode: 2
 --- !u!1 &7087890685797867157
 GameObject:
   m_ObjectHideFlags: 0

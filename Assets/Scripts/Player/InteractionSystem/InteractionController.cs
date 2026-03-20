@@ -172,18 +172,16 @@ public class InteractionController : MonoBehaviour
             return aimAssist.CurrentTarget.GetAimPoint();
         }
 
-        // 優先權 2：從相機中心射出射線（最準確，無視角色朝向）
+        // 優先權 2：相機射線（修正：增加射線起始偏移避免射到自己）
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, aimRaycastMask))
         {
             return hit.point;
         }
-        
-        return throwOrigin
-            ? (throwOrigin.position + throwOrigin.forward * 20f)
-            : (transform.position + transform.forward * 20f);
-        // 優先權 3：相機前方固定距離點
-        //return ray.GetPoint(20f); 
+    
+        // 優先權 3：當完全沒打到任何東西時，指向相機正前方固定距離
+        // 這能確保玩家抬頭看天空時，物件是往上飛而非水平飛
+        return ray.GetPoint(20f); 
     }
 
     private void ExecuteThrow(Rigidbody rb, Vector3 targetPoint)

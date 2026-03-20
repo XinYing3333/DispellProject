@@ -20,7 +20,7 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
         _anim = GetComponentInChildren<Animator>();
         // 建議確保這裡的 Layer 名稱與 AimAssist 的 InteractionMask 一致
         _originalLayer = LayerMask.NameToLayer("Target");
-        _defaultLayer = LayerMask.NameToLayer("Default");
+        _defaultLayer = LayerMask.NameToLayer("Environment");
 
         Targetable[] tps = GetComponentsInChildren<Targetable>(true);
         foreach (var t in tps)
@@ -31,9 +31,12 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
 
     public void OnSpellHit(SpellType spellType, Vector3 hitPoint)
     {
+        Debug.Log("Gethit");
+
         // 假設 StopSpell 會讓物件進入停止狀態並不可再被瞄準
         if (spellType == SpellType.StopSpell)
         {
+            Debug.Log("Getstop");
             StopObject();
             CreateVisualOverlays();
         }

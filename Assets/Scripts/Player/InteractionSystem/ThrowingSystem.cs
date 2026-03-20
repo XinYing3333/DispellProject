@@ -18,10 +18,10 @@ public class ThrowingSystem
     public float LaunchAngleDegrees { get; set; } = 35f;
 
     // Ballistic solve options
-    public bool PreferHighArc { get; set; } = true;          // ★選高拋或低拋
-    public float MinPitchDeg { get; set; } = 12f;            // ★最低仰角，避免貼地
-    public float MaxPitchDeg { get; set; } = 70f;            // ★最高仰角上限（避免太陡）
-    public bool ClampPitchIfTooLow { get; set; } = true;     // ★若解出來太低，硬抬到 MinPitchDeg
+    public bool PreferHighArc { get; set; } = true; // ★選高拋或低拋
+    public float MinPitchDeg { get; set; } = 12f; // ★最低仰角，避免貼地
+    public float MaxPitchDeg { get; set; } = 70f; // ★最高仰角上限（避免太陡）
+    public bool ClampPitchIfTooLow { get; set; } = true; // ★若解出來太低，硬抬到 MinPitchDeg
 
     public bool OrientToVelocity { get; set; } = true;
     public bool UseGravity { get; set; } = true;
@@ -37,99 +37,95 @@ public class ThrowingSystem
 
     // 核心：把「手上的 rb」直接丟出去
     public void ThrowExisting(Rigidbody rb, Transform player)
-{
-    if (!rb) return;
-
-    // 1. 物理狀態初始化
-    rb.isKinematic = false;
-    rb.useGravity = UseGravity;
-    rb.detectCollisions = true;
-
-    // 2. 設置出手位置與旋轉
-    Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
-    if (throwOrigin)
     {
-        rb.position = throwOrigin.position;
-        rb.rotation = throwOrigin.rotation;
-    }
+        if (!rb) return;
 
-    Vector3 v0;
+        // 1. 物理狀態初始化
+        rb.isKinematic = false;
+        rb.useGravity = UseGravity;
+        rb.detectCollisions = true;
 
-    // 3. 判斷是否滿足輔助瞄準條件
-    // 條件：模式為 ToTarget + AimAssist 正在掃描 + 輔助模式為 ThrowableReady + 確有目標
-    bool canUseAimAssist = ArcMode == ThrowArcMode.ToTarget && 
-                           aimAssist != null && 
-                           aimAssist.Scanning && 
-                           aimAssist.assistMode == TargetState.ThrowableReady &&
-                           aimAssist.CurrentTarget != null;
+        // 2. 設置出手位置與旋轉
+        Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
+        if (throwOrigin)
+        {
+            rb.position = throwOrigin.position;
+            rb.rotation = throwOrigin.rotation;
+        }
 
-    if (canUseAimAssist)
-    {
-        // 取得 Targetable 腳本定義的精確瞄準點 (考慮了 Renderer Bounds 或 Anchor)
-        Vector3 targetPoint = aimAssist.CurrentTarget.GetAimPoint();
+        Vector3 v0;
 
-        bool ok = TrySolveBallisticWithPitchLimits(
-            origin, targetPoint, throwSpeed,
-            PreferHighArc, MinPitchDeg, MaxPitchDeg, ClampPitchIfTooLow,
-            out v0, out float usedPitchDeg, out string reason);
+        // 3. 判斷是否滿足輔助瞄準條件
+        // 條件：模式為 ToTarget + AimAssist 正在掃描 + 輔助模式為 ThrowableReady + 確有目標
+        bool canUseAimAssist = ArcMode == ThrowArcMode.ToTarget &&
+                               aimAssist != null &&
+                               aimAssist.Scanning &&
+                               aimAssist.assistMode == TargetState.ThrowableReady &&
+                               aimAssist.CurrentTarget != null;
+
+        if (canUseAimAssist)
+        {
+            // 取得 Targetable 腳本定義的精確瞄準點 (考慮了 Renderer Bounds 或 Anchor)
+            Vector3 targetPoint = aimAssist.CurrentTarget.GetAimPoint();
+
+            bool ok = TrySolveBallisticWithPitchLimits(
+                origin, targetPoint, throwSpeed,
+                PreferHighArc, MinPitchDeg, MaxPitchDeg, ClampPitchIfTooLow,
+                out v0, out float usedPitchDeg, out string reason);
 
 #if UNITY_EDITOR
-        if (ok) Debug.Log($"[Throw] Ballistic Success: Pitch={usedPitchDeg:F1}°, Target={aimAssist.CurrentTarget.name}");
-        else    Debug.Log($"[Throw] Ballistic Fallback: {reason}");
+            if (ok)
+                Debug.Log(
+                    $"[Throw] Ballistic Success: Pitch={usedPitchDeg:F1}°, Target={aimAssist.CurrentTarget.name}");
+            else Debug.Log($"[Throw] Ballistic Fallback: {reason}");
 #endif
-        // 若彈道解算失敗（如太遠），則退回到固定角度投擲
-        if (!ok) v0 = FallbackFixedAngle(player);
-    }
-    else
-    {
-        // 無目標或非投擲模式，直接使用固定角度前向投擲
-        v0 = FallbackFixedAngle(player);
-    }
+            // 若彈道解算失敗（如太遠），則退回到固定角度投擲
+            if (!ok) v0 = FallbackFixedAngle(player);
+        }
+        else
+        {
+            // 無目標或非投擲模式，直接使用固定角度前向投擲
+            v0 = FallbackFixedAngle(player);
+        }
 
-    // 4. 應用速度 (兼容 Unity 6)
+        // 4. 應用速度 (兼容 Unity 6)
 #if UNITY_6000_0_OR_NEWER
-    rb.linearVelocity = v0;
+        rb.linearVelocity = v0;
 #else
     rb.velocity = v0;
 #endif
 
-    // 5. 視覺修正：讓物件朝向飛行方向
-    if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
-        rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
+        // 5. 視覺修正：讓物件朝向飛行方向
+        if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
+            rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
 
 #if UNITY_EDITOR
-    DrawDebugTrajectory(origin, v0);
+        DrawDebugTrajectory(origin, v0);
 #endif
-}
+    }
 
 // 抽離 Debug 繪製邏輯
-private void DrawDebugTrajectory(Vector3 origin, Vector3 velocity)
-{
-    Vector3 p = origin;
-    Vector3 gAcc = Physics.gravity;
-    float step = 0.02f;
-    for (float t = 0; t < 1.0f; t += step)
+    private void DrawDebugTrajectory(Vector3 origin, Vector3 velocity)
     {
-        Vector3 pNext = origin + velocity * t + 0.5f * gAcc * (t * t);
-        Debug.DrawLine(p, pNext, Color.red, 1.0f);
-        p = pNext;
+        Vector3 p = origin;
+        Vector3 gAcc = Physics.gravity;
+        float step = 0.02f;
+        for (float t = 0; t < 1.0f; t += step)
+        {
+            Vector3 pNext = origin + velocity * t + 0.5f * gAcc * (t * t);
+            Debug.DrawLine(p, pNext, Color.red, 1.0f);
+            p = pNext;
+        }
     }
-}
 
     private Vector3 FallbackFixedAngle(Transform player)
     {
-        Vector3 look = aimAssist
-            ? aimAssist.GetAimDirection()
-            : (player ? player.forward : Vector3.forward);
+        // 取得相機或玩家的原始方向（包含垂直分量）
+        Vector3 lookDir = aimAssist ? aimAssist.GetAimDirection() : (player ? player.forward : Vector3.forward);
 
-        Vector3 horiz = Vector3.ProjectOnPlane(look, Vector3.up);
-        if (horiz.sqrMagnitude < 1e-6f) horiz = Vector3.forward;
-        horiz.Normalize();
-
-        float angle = Mathf.Max(LaunchAngleDegrees, MinPitchDeg);
-        float rad = angle * Mathf.Deg2Rad;
-
-        return horiz * (throwSpeed * Mathf.Cos(rad)) + Vector3.up * (throwSpeed * Mathf.Sin(rad));
+        // 修正：不再強行轉為水平，而是以當前方向為基礎，至少維持最低仰角
+        float speed = throwSpeed;
+        return EnforceMinPitch(lookDir * speed, MinPitchDeg);
     }
 
     private static bool TrySolveBallisticWithPitchLimits(
@@ -180,32 +176,40 @@ private void DrawDebugTrajectory(Vector3 origin, Vector3 velocity)
         float sqrt = Mathf.Sqrt(disc);
 
         // tanθ 兩解（g 正值）
-        float tanLow  = (v2 - sqrt) / (gMag * x);
+        float tanLow = (v2 - sqrt) / (gMag * x);
         float tanHigh = (v2 + sqrt) / (gMag * x);
 
-        BuildCandidate(origin, toXZ, x, speed, tanLow,  out Vector3 vLow,  out float pitchLow);
+        BuildCandidate(origin, toXZ, x, speed, tanLow, out Vector3 vLow, out float pitchLow);
         BuildCandidate(origin, toXZ, x, speed, tanHigh, out Vector3 vHigh, out float pitchHigh);
 
-        bool lowOk  = pitchLow  <= maxPitchDeg;
+        bool lowOk = pitchLow <= maxPitchDeg;
         bool highOk = pitchHigh <= maxPitchDeg;
 
         // 依偏好選解：先選 Prefer 的；不行再退另一個
         bool picked = false;
         if (preferHighArc && highOk)
         {
-            v0 = vHigh; usedPitchDeg = pitchHigh; picked = true;
+            v0 = vHigh;
+            usedPitchDeg = pitchHigh;
+            picked = true;
         }
         else if (!preferHighArc && lowOk)
         {
-            v0 = vLow; usedPitchDeg = pitchLow; picked = true;
+            v0 = vLow;
+            usedPitchDeg = pitchLow;
+            picked = true;
         }
         else if (highOk)
         {
-            v0 = vHigh; usedPitchDeg = pitchHigh; picked = true;
+            v0 = vHigh;
+            usedPitchDeg = pitchHigh;
+            picked = true;
         }
         else if (lowOk)
         {
-            v0 = vLow; usedPitchDeg = pitchLow; picked = true;
+            v0 = vLow;
+            usedPitchDeg = pitchLow;
+            picked = true;
         }
 
         if (!picked)
@@ -273,26 +277,35 @@ private void DrawDebugTrajectory(Vector3 origin, Vector3 velocity)
         Vector2 xz = new Vector2(v.x, v.z).normalized * newFlat;
         return new Vector3(xz.x, newY, xz.y);
     }
-    
+
     public void ThrowToPoint(Rigidbody rb, Vector3 targetPoint)
     {
         if (!rb) return;
         rb.isKinematic = false;
-    
+        rb.useGravity = UseGravity;
+
         Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
-    
-        // 使用你原本寫好的彈道解算器，直接餵入 targetPoint
+
+        // 1. 嘗試彈道解算
         bool ok = TrySolveBallisticWithPitchLimits(
-            origin, targetPoint, throwSpeed, 
-            PreferHighArc, MinPitchDeg, MaxPitchDeg, true, 
+            origin, targetPoint, throwSpeed,
+            PreferHighArc, MinPitchDeg, MaxPitchDeg, true,
             out Vector3 v0, out _, out _);
 
-        if (!ok) v0 = (targetPoint - origin).normalized * throwSpeed; // 解不出來就直線射擊
+        // 2. 修正：若解算失敗（disc < 0），直接直線射向目標點
+        if (!ok)
+        {
+            Vector3 direction = (targetPoint - origin).normalized;
+            v0 = direction * throwSpeed;
+        }
 
 #if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = v0;
 #else
     rb.velocity = v0;
 #endif
+
+        if (OrientToVelocity && v0.sqrMagnitude > 1e-4f)
+            rb.transform.rotation = Quaternion.LookRotation(v0.normalized, Vector3.up);
     }
 }
