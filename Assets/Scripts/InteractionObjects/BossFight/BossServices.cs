@@ -18,19 +18,16 @@ namespace BossFight
             return pos;
         }
 
-        public IEnumerator MoveVerticalTo(Transform t, float targetHeight, float speed)
+        public IEnumerator MoveVerticalTo(Transform t, float targetWorldY, float speed)
         {
-            // ✅ 把 targetHeight 解釋成「離地高度」
-            if (TryProjectToGroundXZ(t.position, 5f, 10f, out var gp))
+            // 採絕對世界座標移動，避免每一幀都射線檢測導致抖動
+            while (Mathf.Abs(t.position.y - targetWorldY) > 0.05f)
             {
-                float targetY = gp.y + targetHeight; // ← 這樣才是離地高度
-                while (Mathf.Abs(t.position.y - targetY) > 0.05f)
-                {
-                    float y = Mathf.MoveTowards(t.position.y, targetY, speed * Time.deltaTime);
-                    t.position = new Vector3(t.position.x, y, t.position.z);
-                    yield return null;
-                }
+                float y = Mathf.MoveTowards(t.position.y, targetWorldY, speed * Time.deltaTime);
+                t.position = new Vector3(t.position.x, y, t.position.z);
+                yield return null;
             }
+            t.position = new Vector3(t.position.x, targetWorldY, t.position.z);
         }
 
 

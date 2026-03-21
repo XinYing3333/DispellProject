@@ -14,6 +14,7 @@ namespace Player.InteractionSystem
     public interface IMagnetAttachable
     {
         // 吸到手上/從手上離開
+        bool CanAttach { get; } // 新增：是否可被吸附的檢查
         void OnMagnetAttached(Transform parent);
         void OnMagnetDetached();
     }

@@ -5,6 +5,7 @@ using Player.InteractionSystem;
 public class MagnetAttachable : MonoBehaviour, IMagnetAttachable, IThrowable
 {
     private Rigidbody rb;
+    public bool CanAttach { get; }
 
     void Awake() => rb = GetComponent<Rigidbody>();
 

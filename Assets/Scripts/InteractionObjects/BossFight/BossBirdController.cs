@@ -21,6 +21,7 @@ namespace BossFight
         [FormerlySerializedAs("health")] [SerializeField] private BossHealth bossHealth;
         [SerializeField] private LandingTelegraph telegraphPrefab;
         [SerializeField] private ChargeTelegraph  chargeTelegraphPrefab;
+        [SerializeField] private ThoughtPayloadSO requiredWeakness; // 在 Inspector 指定這隻 Boss 怕哪種念頭（石頭帶有的那種）
                 
         [Header("Landing Settings")]  public float hoverHeight = 35f;
         public float riseSpeed = 20f;
@@ -75,23 +76,21 @@ namespace BossFight
             while (true)
             {
                 _state = BossState.Attacking;
-
+                // 每次攻擊 Execute 內部都包含了：升空 -> 攻擊 -> 落地 -> 硬直 -> 回到空中
                 if (landingCount < landingsPerCharge)
                 {
                     yield return _landing.Execute(_ctx);
                     landingCount++;
-                    _state = BossState.Idle;
-                    yield return new WaitForSeconds(landingIdleBetween);
                 }
                 else
                 {
                     yield return _charge.Execute(_ctx);
                     landingCount = 0;
-                    _state = BossState.Idle;
-                    yield return new WaitForSeconds(chargeIdleBetween);
                 }
 
-                // TODO: 這裡檢查血量/條件切到 Phase2：換一組攻擊與 Pattern 即可
+                _state = BossState.Idle;
+                // Idle 期間如果需要微幅上下漂浮，可在這裡加入一個 Float 協程
+                yield return new WaitForSeconds(landingIdleBetween);
             }
         }
         
@@ -142,7 +141,17 @@ namespace BossFight
 
         public void OnHit(ThoughtPayloadSO payload)
         {
-            bossHealth.TakeDamage(1);
+            if (payload == null) return;
+
+            if (payload == requiredWeakness)
+            {
+                bossHealth.TakeDamage(1);
+                // 觸發受傷特效或音效
+            }
+            else
+            {
+                Debug.Log("念頭屬性不符，無效攻擊");
+            }
         }
     }
 }

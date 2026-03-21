@@ -37,6 +37,11 @@ namespace Player.InteractionSystem
         public bool TryAttach(Rigidbody rb)
         {
             if (!rb || HasItem) return false;
+            var magnet = rb.GetComponentInParent<IMagnetAttachable>();
+            if (magnet != null && !magnet.CanAttach) 
+            {
+                return false; // 若物件目前不允許吸附，直接跳出，不執行後續邏輯
+            }
             if (!anchor) anchor = transform;
 
             _held = rb;
@@ -66,9 +71,7 @@ namespace Player.InteractionSystem
                 rb.detectCollisions = false;
             }
 
-            // 5) 通知（不在這裡動 anchor）
-            _heldMagnet = rb.GetComponentInParent<IMagnetAttachable>();
-            _heldMagnet?.OnMagnetAttached(anchor);
+            magnet?.OnMagnetAttached(anchor);
 
             // 6) （可選）錨點防護
             if (stabilizeAnchorWhileHolding && anchor && anchor.parent)

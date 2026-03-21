@@ -6,24 +6,18 @@ namespace BossFight
     [Serializable]
     public class LandingConfig
     {
-        [Header("Telegraph Settings")]
         public float telegraphTime = 0.8f;
         public float telegraphStartRadius = 2.6f;
         public float telegraphEndRadius = 0.8f;
-
-        [Header("Movement Settings")]
         public float hoverHeight = 35f;
         public float riseSpeed = 20f;
         public float descendSpeed = 22f;
         public float stunDuration = 1.2f;
-
-        [Header("Combat Settings")]
         public float landAoERadius = 2.6f;
         public int landAoEDamage = 1;
 
-        [Header("Rock Spawning")]
+        [Header("Rock Settings")]
         public GameObject rockPrefab;
-        public int rockCount = 6;
         public float rockSpawnRadius = 3.5f;
     }
     

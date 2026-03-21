@@ -50,19 +50,22 @@ public class ChargeTelegraph : MonoBehaviour
         color = c;
         ApplyVisual(0f);
     }
+    // 在 ChargeTelegraph 類中增加/修改以下方法
+    public void UpdatePoints(Vector3 start, Vector3 end)
+    {
+        _start = start;
+        _end = end;
+        // 立即調用一次視覺更新，避免延遲
+        ApplyVisual(_t / duration);
+    }
 
+// 修改 Update 邏輯，移除自動銷毀（由 Boss 控制何時消失更精確）
     private void Update()
     {
         _t += Time.deltaTime;
         float pct = Mathf.Clamp01(_t / duration);
         ApplyVisual(pct);
-
-        if (_t >= duration)
-        {
-            OnFinished?.Invoke();
-            if (destroyOnFinish) Destroy(gameObject);
-            enabled = false;
-        }
+    
     }
 
     private void ApplyVisual(float pct)

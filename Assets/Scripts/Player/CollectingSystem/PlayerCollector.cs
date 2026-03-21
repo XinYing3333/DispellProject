@@ -95,11 +95,12 @@ public class PlayerCollector : MonoBehaviour
 
         if (!bestT) return;
 
+        // --- 修改後的判定邏輯 ---
         var collectable = bestT.GetComponentInParent<ICollectable>();
         var rb = bestT.GetComponentInParent<Rigidbody>();
+        var magnet = bestT.GetComponentInParent<IMagnetAttachable>();
 
-        // 狀況 A: 具備收集介面，且物件「自認」現在可以被收集
-        // (例如：普通金幣，或「沒被打中」的紅綠燈)
+        // 狀況 A: 具備收集介面，且物件「自認」現在可以被直接收集 (例如：金幣)
         if (collectable != null && !collectable.IsSpellStateActive)
         {
             if (collectable.NeedCollectAnimation)
@@ -109,13 +110,17 @@ public class PlayerCollector : MonoBehaviour
             return;
         }
 
-        // 狀況 B: 具備物理組件 (Rigidbody)，且不處於狀況 A
-        // (例如：被打中的紅綠燈，或純物理方塊)
+        // 狀況 B: 具備物理組件，且滿足吸附條件
         if (rb != null && !rb.CompareTag("boss"))
         {
-            // 額外檢查：如果是紅綠燈，確保它是 Kinematic 或符合你的移動條件
+            // 關鍵檢查：如果物件有吸附介面，必須 CanAttach 為 true 才能執行拉取
+            if (magnet != null && !magnet.CanAttach) 
+            {
+                return; // 狀態不對（例如石頭還沒被靜止），直接無視
+            }
+
             StartPullThenHandOff(bestT, rb);
-            Debug.Log("AAAAAAAAAAA");
+            Debug.Log($"Absorbing physics object: {bestT.name}");
             return;
         }
     }
