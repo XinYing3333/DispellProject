@@ -1,4 +1,5 @@
 using System.Collections;
+using Player;
 using UnityEngine;
 
 namespace World
@@ -78,6 +79,7 @@ namespace World
             yield return LerpFloat(_visibleId, visibleTarget, visibleDuration);
 
             if (doorObject) doorObject.SetActive(false);
+            PlayerInputHandler.Instance.SetLockMovement(false);
 
             _running = false;
         }

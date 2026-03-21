@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using Player;
 using Player.InteractionSystem;
 
 public class PlayerCollector : MonoBehaviour
@@ -60,6 +61,8 @@ public class PlayerCollector : MonoBehaviour
     public void TryAbsorbOnce()
     {
         if (!center || IsCollectorBusy()) return;
+        if (PlayerInputHandler.Instance != null && PlayerInputHandler.Instance.InputLock) 
+            return;
 
         int n = Physics.OverlapSphereNonAlloc(center.position, radius, _hits, interactionMask,
             QueryTriggerInteraction.Ignore);
@@ -215,26 +218,30 @@ public class PlayerCollector : MonoBehaviour
     // =============== 取消全部拉取（給 InteractionController 用） ===============
     public void CancelAllPulls()
     {
-        // 1) 先 Kill 所有 tween
-        foreach (var kv in _pullTweens)
+        // 1) 先將 Keys 提取出來，避免在 Kill 觸發的回呼中修改正在遍歷的集合
+        var tweenTargets = new List<Transform>(_pullTweens.Keys);
+        foreach (var target in tweenTargets)
         {
-            var t = kv.Value;
-            if (t.IsActive()) t.Kill(false);
+            if (_pullTweens.TryGetValue(target, out var tw))
+            {
+                // Kill(false) 會觸發 OnKill 回呼，進而執行 CleanupPullState
+                if (tw != null && tw.IsActive()) tw.Kill(false);
+            }
+        }
+    
+        // 2) 物理還原（同樣先提取 Keys 確保安全）
+        var physicsTargets = new List<Transform>(_pulledPhysics.Keys);
+        foreach (var target in physicsTargets)
+        {
+            if (_pulledPhysics.TryGetValue(target, out var data))
+            {
+                RestoreAfterPull(target, data.rb, data.cols);
+            }
         }
 
+        // 3) 最後強制清空狀態（防止 OnKill 沒清乾淨）
         _pullTweens.Clear();
-
-        // 2) 把被我們關掉物理的還原
-        foreach (var kv in _pulledPhysics)
-        {
-            var target = kv.Key;
-            var (rb, cols) = kv.Value;
-            RestoreAfterPull(target, rb, cols);
-        }
-
         _pulledPhysics.Clear();
-
-        // 3) 狀態清空
         _pulling.Clear();
         _activePulls = 0;
     }

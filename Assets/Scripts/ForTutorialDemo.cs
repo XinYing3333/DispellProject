@@ -10,7 +10,7 @@ namespace DefaultNamespace
 
         // ---- 第一階段（吸 5 個 Though）----
         [Header("Stage 0: Collect Though")]
-        [SerializeField, Min(1)] private int requiredThough = 5;
+        [SerializeField, Min(1)] private int requiredThough = 20;
         [SerializeField] private bool useDeltaForStage0 = true; // 避免舊存檔秒解
         private int baselineThough;
         [SerializeField] private LevelSequenceTrigger enemyTutorial ; 
@@ -69,40 +69,43 @@ namespace DefaultNamespace
 
                     if (progress >= requiredThough)
                     {
-                        enemyTutorial.Play();
-                        stage = 1;
-
+                        // enemyTutorial.Play();
+                        // stage = 1;
+                        
+                        finishTutorial.Play();
+                        isTutorialFinished = true;
+                        
                         // 進入下一段前若你也想用 Delta，可在此建立新的 baseline（若第二段也需要）
                         // baselineXxx = ...
                     }
                     break;
                 }
 
-                case 1:
-                {
-                    bool done;
-                    if (anyOfferingOk)
-                    {
-                        // 只要曾收集過 Offering 就算
-                        done = CollectionSystem.HasCollected(CollectionSystem.CollectedType.EnemyThough);
-                    }
-                    else
-                    {
-                        // TODO: 在這裡換成「特定種類」的判斷（例如查你的背包/ID/標籤）
-                        // done = YourInventory.Has("Offering_SpecificId");
-                        done = false;
-                    }
-
-                    if (done)
-                    {
-                        finishTutorial.Play();
-                        isTutorialFinished = true;
-                        Debug.Log("tutorial finished");
-                        // TODO: 第二階段完成時要做的事（播教學B / 開UI / 等等）
-                        stage = 2; // 全部完成
-                    }
-                    break;
-                }
+                // case 1:
+                // {
+                //     bool done;
+                //     if (anyOfferingOk)
+                //     {
+                //         // 只要曾收集過 Offering 就算
+                //         done = CollectionSystem.HasCollected(CollectionSystem.CollectedType.EnemyThough);
+                //     }
+                //     else
+                //     {
+                //         // TODO: 在這裡換成「特定種類」的判斷（例如查你的背包/ID/標籤）
+                //         // done = YourInventory.Has("Offering_SpecificId");
+                //         done = false;
+                //     }
+                //
+                //     if (done)
+                //     {
+                //         finishTutorial.Play();
+                //         isTutorialFinished = true;
+                //         Debug.Log("tutorial finished");
+                //         // TODO: 第二階段完成時要做的事（播教學B / 開UI / 等等）
+                //         stage = 2; // 全部完成
+                //     }
+                //     break;
+                // }
 
                 default:
                     // 已全部完成（如需循環或重置，自己加）

@@ -90,7 +90,8 @@ public class ThoughtPlacer : MonoBehaviour
 
         for (int i = 0; i < thoughPositions.Count; i++)
         {
-            string id = spawnIds[i];
+            string id = spawnIds[i]; // Placer 產生的穩定 ID (scene:placerId:index)
+        
             if (LevelStateStore.Instance != null && LevelStateStore.Instance.IsCollectedNow(id))
                 continue;
 
@@ -99,7 +100,11 @@ public class ThoughtPlacer : MonoBehaviour
             {
                 obj.transform.SetParent(transform);
                 var collectible = obj.GetComponent<ThoughtCollectible>();
-                if (collectible != null) collectible.Init(id, this);
+            
+                // 修正：統一由一個 Init 接口處理 ID 與 Owner
+                if (collectible != null) 
+                    collectible.Init(id, this);
+            
                 activeThough.Add(obj);
             }
         }

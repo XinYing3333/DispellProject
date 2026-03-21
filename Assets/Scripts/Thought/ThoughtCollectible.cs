@@ -3,7 +3,9 @@ using UnityEngine;
 
 public class  ThoughtCollectible : MonoBehaviour, ICollectable
 {
-    private string _spawnId;
+    [SerializeField, HideInInspector] 
+    private string persistentId; // 固定的唯一編號
+    private string _runtimeId;
     private ThoughtPlacer _owner;
 
     public Animator anim;
@@ -25,37 +27,42 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
         if (timer <= 0f)
         {
             int idx = Random.Range(0, idleCount);
-            anim.CrossFade($"{idleSubSM}.Idle_{idx}", crossFade, 0, 0f);
+            if(anim) anim.CrossFade($"{idleSubSM}.Idle_{idx}", crossFade, 0, 0f);
             timer = Random.Range(minGap, maxGap);
         }
     }
     
-    public void Init(string spawnId, ThoughtPlacer owner)
+    public void Init(string id, ThoughtPlacer owner)
     {
-        _spawnId = spawnId;
+        _runtimeId = id;
         _owner = owner;
     }
 
     public void Collect()
     {
         if (LevelStateStore.Instance != null)
-            LevelStateStore.Instance.MarkCollectedSession(_spawnId);
+            LevelStateStore.Instance.MarkCollectedSession(persistentId);
 
         CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
-        _owner.ReturnThoughToPool(gameObject);
+        
+        if (_owner != null)
+            _owner.ReturnThoughToPool(gameObject);
+        else
+            gameObject.SetActive(false); // 若非 Placer 生成則直接關閉
+        
+        _runtimeId = null;
     }
 
     
-    /*private void OnTriggerEnter(Collider other)
+#if UNITY_EDITOR
+    private void OnValidate()
     {
-        if (!other.CompareTag("Player")) return;
-
-        // 念頭 → 暫存
-        LevelStateStore.Instance.MarkCollectedSession(_spawnId);
-
-        // 可選：如果念頭同時給玩家「物品」：
-        CollectionSystem.CollectItem(CollectionSystem.CollectedType.Regular, 1);
-
-        _owner.ReturnThoughToPool(gameObject);
-    }*/
+        // 僅在物件位於場景中且沒有 ID 時生成（排除 Prefab 資源本身）
+        if (!Application.isPlaying && string.IsNullOrEmpty(persistentId) && !UnityEditor.EditorUtility.IsPersistent(this))
+        {
+            persistentId = $"{gameObject.scene.name}_{System.Guid.NewGuid().ToString("N").Substring(0, 8)}";
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+    }
+#endif
 }

@@ -273,7 +273,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (input.InputLock)
         {
-            //anim.Play("idle");
+            anim.Play("idle");
             if (stepVFX != null) stepVFX.Stop();
             AudioManager.Instance.StopSFXLoop();
             return;
