@@ -1,10 +1,13 @@
 using System.Collections;
+using DefaultNamespace.Thought;
 using Player;
+using Player.InteractionSystem;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace BossFight
 {
-    public class BossBirdController : MonoBehaviour
+    public class BossBirdController : MonoBehaviour ,IHitReceiver
     {
         public enum BossState { Idle, Attacking, Stunned }
 
@@ -15,7 +18,7 @@ namespace BossFight
         [SerializeField] private Animator anim;
         [SerializeField] private Transform player;
         [SerializeField] private BossServices services;
-        [SerializeField] private BossHealth health;
+        [FormerlySerializedAs("health")] [SerializeField] private BossHealth bossHealth;
         [SerializeField] private LandingTelegraph telegraphPrefab;
         [SerializeField] private ChargeTelegraph  chargeTelegraphPrefab;
                 
@@ -60,8 +63,8 @@ namespace BossFight
             _landing = new LandingAttack(landingCfg, telegraphPrefab, _playerHP);
             _charge  = new ChargeAttack (chargeCfg,  chargeTelegraphPrefab, _playerHP);
 
-            health.OnDamaged += OnBossDamaged;
-            health.OnDead += OnBossDead;
+            bossHealth.OnDamaged += OnBossDamaged;
+            bossHealth.OnDead += OnBossDead;
             
             StartCoroutine(Phase1Loop());
         }
@@ -96,7 +99,7 @@ namespace BossFight
         {
             if (other.TryGetComponent(out Spell spell))
             {
-                health.TakeDamage(1);
+                //bossHealth.TakeDamage(1);
             }
         }
         
@@ -135,6 +138,11 @@ namespace BossFight
             PlayerInputHandler.Instance.SetLockMovement(true);
             demoCanvas.SetActive(true);
             Time.timeScale = 0f;
+        }
+
+        public void OnHit(ThoughtPayloadSO payload)
+        {
+            bossHealth.TakeDamage(1);
         }
     }
 }
