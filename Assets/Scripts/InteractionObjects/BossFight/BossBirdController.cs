@@ -142,16 +142,16 @@ namespace BossFight
         public void OnHit(ThoughtPayloadSO payload)
         {
             if (payload == null) return;
-
-            if (payload == requiredWeakness)
-            {
-                bossHealth.TakeDamage(1);
-                // 觸發受傷特效或音效
-            }
-            else
-            {
-                Debug.Log("念頭屬性不符，無效攻擊");
-            }
+            bossHealth.TakeDamage(1);
+            // if (payload == requiredWeakness)
+            // {
+            //     bossHealth.TakeDamage(1);
+            //     // 觸發受傷特效或音效
+            // }
+            // else
+            // {
+            //     Debug.Log("念頭屬性不符，無效攻擊");
+            // }
         }
     }
 }

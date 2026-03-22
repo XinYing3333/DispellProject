@@ -10,7 +10,7 @@ public class LandingAttack : IBossAttack
     private readonly LandingConfig cfg;
     private readonly LandingTelegraph telegraphPrefab;
     private readonly Health playerHP;
-    
+
     // 物件池與追蹤列表
     private static Queue<GameObject> rockPool = new Queue<GameObject>();
     private static List<GameObject> activeRocks = new List<GameObject>();
@@ -27,11 +27,12 @@ public class LandingAttack : IBossAttack
     {
         Vector3 playerPos = C.Player.position;
         Vector3 landPoint = C.Services.GetGroundBelow(playerPos) + Vector3.up * C.Owner.groundOffset;
-    
+
         // 預警處理
         bool telegraphDone = false;
-        var tele = LandingTelegraph.Spawn(landPoint - Vector3.up * C.Owner.groundOffset, telegraphPrefab, cfg.telegraphTime, cfg.telegraphStartRadius, cfg.telegraphEndRadius);
-        
+        var tele = LandingTelegraph.Spawn(landPoint - Vector3.up * C.Owner.groundOffset, telegraphPrefab,
+            cfg.telegraphTime, cfg.telegraphStartRadius, cfg.telegraphEndRadius);
+
         if (tele != null)
         {
             tele.OnTelegraphFinished += () => telegraphDone = true;
@@ -42,22 +43,26 @@ public class LandingAttack : IBossAttack
         }
 
         // 預熱移動
-        float preAlignTime = cfg.telegraphTime * 0.8f; 
+        float preAlignTime = cfg.telegraphTime * 0.8f;
         yield return new WaitForSeconds(preAlignTime);
         yield return C.Services.MoveHorizontalTo(C.ModelRoot, landPoint + Vector3.up * cfg.hoverHeight, 35f);
 
         // 等待預警結束
         float timeout = 2f; // 安全計時器避免卡死
-        while (!telegraphDone && timeout > 0) 
+        while (!telegraphDone && timeout > 0)
         {
             timeout -= Time.deltaTime;
             yield return null;
         }
 
         // 瞬間砸下
-        C.Anim.Play("bird-glide-ani"); 
+        C.Anim.Play("bird-glide-ani");
         yield return C.Services.MoveTo(C.ModelRoot, landPoint, cfg.descendSpeed * 1.5f);
-    
+
+        // --- 加入特效位置 ---
+        if (cfg.landVFXPrefab) cfg.landVFXPrefab.Play();
+        // ------------------
+        
         // 傷害與生成石頭
         C.Services.DoLandingAoE(landPoint, cfg.landAoERadius, cfg.landAoEDamage, playerHP);
         

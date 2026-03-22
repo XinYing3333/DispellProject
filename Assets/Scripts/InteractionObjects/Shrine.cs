@@ -38,6 +38,7 @@ public class Shrine : MonoBehaviour
 
         // 播放特效
         if (healEffect != null) healEffect.Play();
+        AudioManager.Instance.PlaySFX(SFXType.PickUp);
 
         _playerHP.FullHeal();
 

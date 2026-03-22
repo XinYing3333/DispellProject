@@ -147,6 +147,7 @@ public class InteractionController : MonoBehaviour
             {
                 if (playerMovement != null) playerMovement.SyncRotationToCameraInstant();
                 Vector3 targetPoint = GetCurrentTargetPoint();
+                //AudioManager.Instance.PlaySFX(SFXType.Shoot);
                 ExecuteThrow(handSlot.Take(), targetPoint);
             }
             else

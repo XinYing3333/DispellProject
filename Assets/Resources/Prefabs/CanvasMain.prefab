@@ -2719,11 +2719,11 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: e4abe0a6a8605aa48a1eb68405b7989d, type: 3}
     spellName: "\u653B\u64CA\u5716\u9A30"
   - type: 0
-    icon: {fileID: 21300000, guid: dfb99de91230b6048b3ec0ce1d170da0, type: 3}
-    spellName: "\u975C\u6B62\u5716\u9A30"
-  - type: 2
-    icon: {fileID: 21300000, guid: 87d65d87613a1d849be04d55e7dfa62c, type: 3}
-    spellName: "\u5DE8\u9CE5\u5716\u9A30"
+    icon: {fileID: 0}
+    spellName: 
+  - type: 0
+    icon: {fileID: 0}
+    spellName: 
   activeColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveColor: {r: 1, g: 1, b: 1, a: 0.5}
   tweenDuration: 0.25
@@ -4090,8 +4090,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: This shows what player should do.
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3c7181375f9d5ad42b94c1d75e15fe9a, type: 2}
-  m_sharedMaterial: {fileID: 951524724943139926, guid: 3c7181375f9d5ad42b94c1d75e15fe9a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5444,8 +5444,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: CheckPoint
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 3c7181375f9d5ad42b94c1d75e15fe9a, type: 2}
-  m_sharedMaterial: {fileID: 951524724943139926, guid: 3c7181375f9d5ad42b94c1d75e15fe9a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -6873,8 +6873,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 9142411673591484094}
   - {fileID: 8278057664227684689}
+  - {fileID: 9142411673591484094}
   m_Father: {fileID: 1080841480152472770}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}

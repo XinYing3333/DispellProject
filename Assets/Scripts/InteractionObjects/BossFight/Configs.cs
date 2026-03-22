@@ -16,6 +16,9 @@ namespace BossFight
         public float landAoERadius = 2.6f;
         public int landAoEDamage = 1;
 
+        [Header("Visual Settings")] 
+        public ParticleSystem landVFXPrefab;
+        
         [Header("Rock Settings")]
         public GameObject rockPrefab;
         public float rockSpawnRadius = 3.5f;
@@ -30,7 +33,10 @@ namespace BossFight
         public float width = 1.6f;
         public int   damage = 1;
         public float recover = 0.6f;
-
+        
+        [Header("Visual Settings")] 
+        public ParticleSystem chargeVFXPrefab;
+        
         // 地貼參數（若你剛剛已做）
         public bool  stickToGround = true;
         public float groundOffset = 0.03f;

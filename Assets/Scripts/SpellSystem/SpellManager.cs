@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Player;
 using SpellSystem;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ public class SpellManager : MonoBehaviour
     private void Update()
     {
         // 偵測 Y 鍵收回
-        if (Input.GetKeyDown(KeyCode.Y))
+        if (PlayerInputHandler.Instance.SkillPressed)
         {
             RecallAll();
         }

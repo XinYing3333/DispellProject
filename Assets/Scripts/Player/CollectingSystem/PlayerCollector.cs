@@ -94,6 +94,7 @@ public class PlayerCollector : MonoBehaviour
         }
 
         if (!bestT) return;
+        AudioManager.Instance.PlaySFXLoop(SFXType.Inhale);
 
         // --- 修改後的判定邏輯 ---
         var collectable = bestT.GetComponentInParent<ICollectable>();
@@ -188,6 +189,7 @@ public class PlayerCollector : MonoBehaviour
                 {
                     // 檢查物件是否有 IThrowable 介面，若無則視為「僅供吸取/搬運」
                     bool canThrow = target.GetComponentInParent<IThrowable>() != null;
+                    AudioManager.Instance.PlaySFX(SFXType.Collect);
                     _onPulledResult?.Invoke(rb, false, canThrow);
                 }
                 finally
@@ -243,6 +245,7 @@ public class PlayerCollector : MonoBehaviour
                 RestoreAfterPull(target, data.rb, data.cols);
             }
         }
+        AudioManager.Instance.StopSFXLoop();
 
         // 3) 最後強制清空狀態（防止 OnKill 沒清乾淨）
         _pullTweens.Clear();
@@ -258,6 +261,7 @@ public class PlayerCollector : MonoBehaviour
         _activePulls = Mathf.Max(0, _activePulls - 1);
         _pullTweens.Remove(target);
         _pulledPhysics.Remove(target);
+        AudioManager.Instance.StopSFXLoop();
     }
 
     private void PrepareForPull(Transform t, out Rigidbody rb, out Collider[] cols)

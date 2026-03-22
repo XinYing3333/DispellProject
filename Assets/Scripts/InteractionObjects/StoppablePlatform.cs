@@ -31,12 +31,9 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
 
     public void OnSpellHit(SpellType spellType, Vector3 hitPoint)
     {
-        Debug.Log("Gethit");
-
         // 假設 StopSpell 會讓物件進入停止狀態並不可再被瞄準
         if (spellType == SpellType.StopSpell)
         {
-            Debug.Log("Getstop");
             StopObject();
             CreateVisualOverlays();
         }

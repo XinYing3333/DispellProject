@@ -73,7 +73,8 @@ namespace BossFight
     if (tele != null) Object.Destroy(tele.gameObject);
     Vector3 dashEndPos = C.ModelRoot.position + lockOnDir * cfg.distance;
     dashEndPos.y = targetLandHeight; // 確保終點高度一致
-
+    
+    cfg.chargeVFXPrefab.Play();
     C.Anim.Play("bird-dash-ani"); 
     bool damaged = false;
     while (Vector3.ProjectOnPlane(C.ModelRoot.position - dashEndPos, Vector3.up).sqrMagnitude > 0.1f)
@@ -96,6 +97,7 @@ namespace BossFight
         yield return null;
     }
 
+    cfg.chargeVFXPrefab.Stop();
     C.Anim.Play("birld-ani-stun");
     // 6. 結束與起飛
     yield return new WaitForSeconds(cfg.recover);
