@@ -76,6 +76,7 @@ public class StepDrawer : PropertyDrawer
             case StepKind.StartDialogue:
                 Draw("inkJSON", "Ink JSON", false);
                 Draw("emoteAnimator", "Emote Animator (optional)", false);
+                Draw("autoPlay", "AutoPlay", false);
                 Draw("lockMoveDuringDialogue", "Lock Movement", false);
                 break;
 
@@ -144,7 +145,7 @@ public class StepDrawer : PropertyDrawer
                 break;
 
             case StepKind.StartDialogue:
-                total += H("inkJSON", false) + H("emoteAnimator", false) + H("lockMoveDuringDialogue", false);
+                total += H("inkJSON", false) + H("emoteAnimator", false) + H("autoPlay", false)+ H("lockMoveDuringDialogue", false);
                 break;
 
             case StepKind.PlayCutscene:

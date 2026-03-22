@@ -271,7 +271,7 @@ public class DialogueManager : MonoBehaviour
         if (portraitAnimator) portraitAnimator.Play("default");
         if (layoutAnimator) layoutAnimator.Play("layout1");
 
-        if (continueIcon) continueIcon.SetActive(false);
+        if (continueIcon || !isAutoDisplay) continueIcon.SetActive(false);
         HideChoices();
         canContinueToNextLine = false;
 
@@ -340,7 +340,7 @@ public class DialogueManager : MonoBehaviour
             dialogueText.maxVisibleCharacters = 0;
         }
 
-        if (continueIcon) continueIcon.SetActive(false);
+        if (continueIcon || !isAutoDisplay) continueIcon.SetActive(false);
         HideChoices();
         canContinueToNextLine = false;
 
@@ -373,7 +373,7 @@ public class DialogueManager : MonoBehaviour
             yield return new WaitForSeconds(typingSpeed);
         }
 
-        if (isAutoDisplay) yield return new WaitForSeconds(0.8f);
+        if (isAutoDisplay) yield return new WaitForSeconds(2f);
         if (!isAutoDisplay && continueIcon) continueIcon.SetActive(true);
 
         DisplayChoices();

@@ -64,8 +64,7 @@ namespace DefaultNamespace
         // Interface Properties
         public bool NeedCollectAnimation => false;
         public bool IsSpellStateActive => isStopSpellHit;
-        public bool CanAttach { get; }
-
+        public bool CanAttach { get; set; } = true;
 
         private void Awake()
         {

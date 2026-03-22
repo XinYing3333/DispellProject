@@ -6,15 +6,9 @@ INCLUDE globals.ink
 - else:
     #speaker:Wushi
 }
-#portrait:wushi-scorn #layout:layout1 #audio:wushi
+#portrait:wushi-scorn #layout:layout2 #audio:none
 { lang == "zh":
-    「這是...神龕？」
-- else:
-    Is this... a shrine?
-}
-
-{ lang == "zh":
-    「這個年代居然還能在路邊看到」
+    「這個年代居然還能在路邊看到神龕。」
 - else:
     Still by the roadside… even now.
 }

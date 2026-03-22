@@ -113,7 +113,7 @@ public class LevelSequenceTrigger : MonoBehaviour
                 var input = PlayerInputHandler.Instance;
                 if (s.lockMoveDuringDialogue && input) input.SetLockMovement(true);
 
-                dm.EnterDialogueMode(s.inkJSON, s.emoteAnimator, false, s.lockMoveDuringDialogue);
+                dm.EnterDialogueMode(s.inkJSON, s.emoteAnimator, s.autoPlay, s.lockMoveDuringDialogue);
 
                 while (dm.dialogueIsPlaying) yield return null;
 

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
-  m_Name: "\u6E90\u97F3\u9ED1\u9AD4-Bold Shadow"
+  m_Name: "\u6E90\u97F3\u9ED1\u9AD4 SDF Shadow"
   m_EditorClassIdentifier: 
   m_Version: 1.1.0
   m_FaceInfo:
@@ -107,7 +107,7 @@ MonoBehaviour:
       #portrait:wushi-scorn #layout:layout1\r\n->END \r\n\r\nDEMO \u9AD4\u9A57\u5230\u6B64\u7D50\u675F\uFF0C\u611F\u8B1D\u60A8\u7684\u904A\u73A9\uFF01\r\n\u82E5\u80FD\u64A5\u5197\u586B\u5BEB\u56DE\u994B\u8868\u55AE\uFF0C\u5C07\u5E6B\u52A9\u6211\u5011\u8B93\u4F5C\u54C1\u66F4\u5B8C\u5584\u3002\r\n\u300CDispell\u300D\u6301\u7E8C\u958B\u767C\u4E2D\uFF0C\u6B61\u8FCE\u8FFD\u8E64\u793E\u7FA4\uFF01\r\n\u656C\u8ACB\u671F\u5F85\u66F4\u591A\u5F8C\u7E8C\u3002\r\n\r\nThanks
       for playing! \r\nScan the QR code to share your feedback!\r\nFollow us for
       updates and future releases!"
-    referencedFontAssetGUID: 3c7181375f9d5ad42b94c1d75e15fe9a
+    referencedFontAssetGUID: aaaf5353b5f0e6c4fa879799b0c917a1
     referencedTextAssetGUID: 7f423fea40d777044a46a698ddd50f4c
     fontStyle: 0
     fontStyleModifier: 0
@@ -113951,7 +113951,7 @@ MonoBehaviour:
     italicTypeface: {fileID: 0}
   - regularTypeface: {fileID: 0}
     italicTypeface: {fileID: 0}
-  - regularTypeface: {fileID: 0}
+  - regularTypeface: {fileID: 11400000, guid: 3c7181375f9d5ad42b94c1d75e15fe9a, type: 2}
     italicTypeface: {fileID: 0}
   - regularTypeface: {fileID: 0}
     italicTypeface: {fileID: 0}
@@ -114002,7 +114002,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - UNDERLAY_ON
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -114047,7 +114048,7 @@ Material:
     - _ColorMask: 15
     - _CullMode: 0
     - _Diffuse: 0.5
-    - _FaceDilate: 0.07
+    - _FaceDilate: 0
     - _FaceUVSpeedX: 0
     - _FaceUVSpeedY: 0
     - _GlowInner: 0.05
@@ -114065,8 +114066,8 @@ Material:
     - _PerspectiveFilter: 0.875
     - _Reflectivity: 10
     - _ScaleRatioA: 0.8333333
-    - _ScaleRatioB: 0.61875004
-    - _ScaleRatioC: 0.61875004
+    - _ScaleRatioB: 0.6770833
+    - _ScaleRatioC: 0.6770833
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0
@@ -114106,7 +114107,7 @@ Texture2D:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: "\u6E90\u97F3\u9ED1\u9AD4-Bold Shadow Atlas"
+  m_Name: "\u6E90\u97F3\u9ED1\u9AD4-Bold SDF Atlas"
   m_ImageContentsHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000

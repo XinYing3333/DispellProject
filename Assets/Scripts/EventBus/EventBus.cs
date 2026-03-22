@@ -16,7 +16,7 @@ public static class EventBus<T> where T : IEvent {
                 binding.OnEventNoArgs.Invoke();
             }
         }
-        Debug.Log($"Event Raise:{@event}"); //TODO:Delete
+        //Debug.Log($"Event Raise:{@event}"); //TODO:Delete
     }
 
     static void Clear() {

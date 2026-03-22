@@ -32,6 +32,7 @@ public class Step
     [Header("Dialogue")]
     public TextAsset inkJSON; // 對話腳本
     public Animator emoteAnimator; // 可選（表情/動作動畫）
+    public bool autoPlay = false; 
     public bool lockMoveDuringDialogue = true;
 
     [Header("Cutscene")]
