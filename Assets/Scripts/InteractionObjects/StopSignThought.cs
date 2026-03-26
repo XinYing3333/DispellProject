@@ -13,7 +13,7 @@ namespace DefaultNamespace
 
         [Header("Collect Settings")]
         [SerializeField] private float requiredCollect = 1f; 
-        [SerializeField] private float addCollectCount = 1f; 
+        [SerializeField] private float addCollectCount = 3.5f; 
         [SerializeField] private float autoHideDelay = 0.5f; // 縮短延遲以配合操作感
         [SerializeField] private ObstacleGroup rockEffect;
 

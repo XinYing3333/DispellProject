@@ -8,7 +8,7 @@ public class BossHealth : MonoBehaviour
     [SerializeField] private float stunDuration = 1.5f;
 
     private int _currentHealth;
-    private bool _isStunned;
+    private bool _isHurt;
     private bool _isDead;
 
     // 可供 BossController 監聽的事件
@@ -25,7 +25,7 @@ public class BossHealth : MonoBehaviour
     /// </summary>
     public void TakeDamage(int damage)
     {
-        if (_isDead || _isStunned) return;
+        if (_isDead || _isHurt) return;
 
         _currentHealth -= damage;
         OnDamaged?.Invoke();
@@ -43,12 +43,12 @@ public class BossHealth : MonoBehaviour
 
     private IEnumerator StunRoutine()
     {
-        _isStunned = true;
+        _isHurt = true;
         //OnStunned?.Invoke(); // 這時可播放硬直動畫
         yield return new WaitForSeconds(stunDuration);
-        _isStunned = false;
+        _isHurt = false;
     }
 
-    public bool IsStunned => _isStunned;
+    public bool isHurt => _isHurt;
     public bool IsDead => _isDead;
 }

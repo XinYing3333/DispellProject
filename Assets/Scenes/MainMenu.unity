@@ -1562,6 +1562,10 @@ PrefabInstance:
       propertyPath: settingFirstButton
       value: 
       objectReference: {fileID: 1664160221}
+    - target: {fileID: 692638627498571147, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 961379780023319409, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1601,6 +1605,10 @@ PrefabInstance:
     - target: {fileID: 1901250583577598086, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2181465689886274796, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2255431234709062159, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
       propertyPath: m_IsActive
@@ -1646,7 +1654,15 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3943594077822985559, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4918087628222075504, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4937805910171877333, guid: 187674ef043e38243acc83808fd8e23e, type: 3}
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
@@ -1925,7 +1941,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 76ed11d84beb10846a746b4259e26d39, type: 3}
+    m_Font: {fileID: 12800000, guid: 3193103142992f044adcc8526b5031eb, type: 3}
     m_FontSize: 45
     m_FontStyle: 1
     m_BestFit: 0
@@ -2396,7 +2412,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 76ed11d84beb10846a746b4259e26d39, type: 3}
+    m_Font: {fileID: 12800000, guid: 3193103142992f044adcc8526b5031eb, type: 3}
     m_FontSize: 45
     m_FontStyle: 1
     m_BestFit: 0
@@ -4387,7 +4403,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 76ed11d84beb10846a746b4259e26d39, type: 3}
+    m_Font: {fileID: 12800000, guid: 3193103142992f044adcc8526b5031eb, type: 3}
     m_FontSize: 45
     m_FontStyle: 1
     m_BestFit: 0
@@ -5020,6 +5036,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 569eba50-6b89-402f-ba2c-b2909eb11ee3
     m_ActionName: 'UI/Pause[/Keyboard/escape,/XInputControllerWindows/start]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: e059f1c6-d153-45ad-8be0-901f9546cfe1
+    m_ActionName: 'Player/SettingLeft[/Keyboard/q,/XInputControllerWindows/leftShoulder]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 3cbf5765-ff03-4a0d-86ef-1c3b164e8d32
+    m_ActionName: 'Player/SettingRight[/Keyboard/e,/XInputControllerWindows/rightShoulder]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 611dfdb0-d975-48d3-b0f5-649c3dafa722
+    m_ActionName: 'UI/SettingLeft[/Keyboard/q,/XInputControllerWindows/leftShoulder]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a3b751fd-63ce-447e-ab1c-58dd4e7ed2c1
+    m_ActionName: 'UI/SettingRight[/Keyboard/e,/XInputControllerWindows/rightShoulder]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: UI

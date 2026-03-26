@@ -141,6 +141,16 @@ namespace DefaultNamespace
 
         private void OnCollisionEnter(Collision collision)
         {
+            var hitReceiver = collision.gameObject.GetComponentInParent<IHitReceiver>();
+
+            if (hitReceiver != null)
+            {
+                // 2. 觸發 Boss 的受傷邏輯並傳遞 Payload (這裡傳遞石頭自帶的 Payload)
+                hitReceiver.OnHit(_requiredPayloadSo);
+
+                // 3. 回收石頭
+                LandingAttack.ReturnRockToPool(this.gameObject);
+            }
             // 碰撞 Boss 後回收至物件池，而非 Destroy
             if (collision.gameObject.CompareTag("boss"))
             {
