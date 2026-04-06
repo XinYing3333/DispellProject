@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1097188583898900973}
   - component: {fileID: 1982016498768938874}
   - component: {fileID: 7212124010966951677}
-  - component: {fileID: 151565775598228139}
+  - component: {fileID: 1323689537714607980}
   - component: {fileID: 5044426207779772187}
   m_Layer: 10
   m_Name: CrossRoad
@@ -88,8 +88,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &151565775598228139
-MeshCollider:
+--- !u!65 &1323689537714607980
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -105,11 +105,10 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4541882709640066757, guid: 024cd3f43c7dfc5418fedbb09d3c8850, type: 3}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10.000002, y: 68.974686, z: 10}
+  m_Center: {x: 0.000030644693, y: -34.48734, z: -1.15920454e-10}
 --- !u!114 &5044426207779772187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,7 +631,7 @@ MonoBehaviour:
   objectHitMaterials:
   - {fileID: 2100000, guid: b36391ccc05468b45902efa23debc6b9, type: 2}
   road: {fileID: 5044426207779772187}
-  crossRoad: {fileID: 151565775598228139}
+  crossRoad: {fileID: 0}
   animator: {fileID: 937068801181222720}
   fadeInTime: 2
   openSeconds: 6

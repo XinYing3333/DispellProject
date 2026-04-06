@@ -186,6 +186,7 @@ public class PlayerMovement : MonoBehaviour
     private float _weaponHoldTimer = 0f;
     private const float WeaponHoldDuration = 3f;
     private bool _isAiming;
+    private bool _isHoldingWeapon;
     
     private EventBinding<OnPlayerDamaged> _binding;
 
@@ -342,12 +343,13 @@ public class PlayerMovement : MonoBehaviour
 
             if (!isWalkOnly || (isWalkOnly && !lockDashInWalkOnly))
             {
+                if(_isHoldingWeapon)return;
                 if (input.DashPressed)
                 {
                     if (cancelLandingBufferOnDash) _landingRecoverActive = false;
                     StartCoroutine(DashCoroutine());
-                    input.ResetDash();
                 }
+                input.ResetDash();
             }
         }
 
@@ -815,24 +817,24 @@ public class PlayerMovement : MonoBehaviour
             _weaponHoldTimer -= Time.deltaTime;
         }
 
-        bool isHoldingWeapon = _weaponHoldTimer > 0f;
+        _isHoldingWeapon = _weaponHoldTimer > 0f;
 
         // 處理角色轉向：瞄準時鎖定相機方向
-        if (isHoldingWeapon)
+        if (_isHoldingWeapon)
         {
             RotateTowardsCamera();
         }
 
-        if (isHoldingWeapon != _lastWeaponState)
+        if (_isHoldingWeapon != _lastWeaponState)
         {
-            _lastWeaponState = isHoldingWeapon;
-            spiritFollow1?.SetWeaponState(isHoldingWeapon);
-            spiritFollow2?.SetWeaponState(isHoldingWeapon);
+            _lastWeaponState = _isHoldingWeapon;
+            spiritFollow1?.SetWeaponState(_isHoldingWeapon);
+            spiritFollow2?.SetWeaponState(_isHoldingWeapon);
         }
     
         // 更新圖層權重：確保 AimMovement 圖層與 Shoot 圖層同步開啟
-        SetAnimatorLayerWeight("Shoot", isHoldingWeapon ? 1f : 0f);
-        SetAnimatorLayerWeight("AimMovement", isHoldingWeapon ? 1f : 0f);
+        SetAnimatorLayerWeight("Shoot", _isHoldingWeapon ? 1f : 0f);
+        SetAnimatorLayerWeight("AimMovement", _isHoldingWeapon ? 1f : 0f);
     }
 
 // 新增：強迫玩家轉向攝影機前方的方法
