@@ -22,19 +22,15 @@ public class ObstacleGroup : MonoBehaviour
     [Header("VFX & Audio")] 
     public ParticleSystem absorbParticlePrefab;
 
-    [Header("Cinemachine Shake")]
-    [SerializeField] private CinemachineImpulseSource impulseSource;
-    [SerializeField] private float globalShakeDelay = 0.2f; // 震動延遲，與碎塊顫抖同步
-
+    [Header("Shake Settings")] 
+    public float globalShakeDelay = 0.2f;
+    public float shakeForce = 1.0f;
+    
     private List<Transform> obstacleFragments = new List<Transform>();
     private bool isInteracted = false;
 
     private void Awake()
     {
-        // 自動獲取組件
-        if (impulseSource == null) 
-            impulseSource = GetComponent<CinemachineImpulseSource>();
-            
         if (obstacleParent != null)
         {
             foreach (Transform child in obstacleParent)
@@ -50,27 +46,16 @@ public class ObstacleGroup : MonoBehaviour
         if (isInteracted || obstacleFragments.Count == 0) return;
         isInteracted = true;
 
-        // 觸發相機震動
-        ExecuteCinemachineShake();
+        // 改用單例呼叫
+        if (CameraShakeManager.Instance != null)
+        {
+            CameraShakeManager.Instance.Shake(shakeForce, globalShakeDelay);
+        }
 
         foreach (Transform fragment in obstacleFragments)
         {
             AnimateFragment(fragment);
         }
-    }
-
-    private void ExecuteCinemachineShake()
-    {
-        if (impulseSource == null) return;
-
-        // 使用 Sequence 稍微延後震動，配合碎塊啟動的時機
-        DOTween.Sequence()
-            .AppendInterval(globalShakeDelay)
-            .OnComplete(() =>
-            {
-                // 產生震動訊號
-                impulseSource.GenerateImpulse();
-            });
     }
 
     private void AnimateFragment(Transform fragment)

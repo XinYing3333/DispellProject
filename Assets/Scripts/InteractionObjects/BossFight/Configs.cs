@@ -18,6 +18,8 @@ namespace BossFight
 
         [Header("Visual Settings")] 
         public ParticleSystem landVFXPrefab;
+        public float globalShakeDelay = 0.2f;
+        public float shakeForce = 1.0f;
         
         [Header("Rock Settings")]
         public GameObject rockPrefab;

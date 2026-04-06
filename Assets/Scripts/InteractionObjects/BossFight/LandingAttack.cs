@@ -61,6 +61,10 @@ public class LandingAttack : IBossAttack
 
         // --- 加入特效位置 ---
         if (cfg.landVFXPrefab) cfg.landVFXPrefab.Play();
+        if (CameraShakeManager.Instance != null)
+        {
+            CameraShakeManager.Instance.Shake(cfg.shakeForce, 0);
+        }
         // ------------------
         
         // 傷害與生成石頭
