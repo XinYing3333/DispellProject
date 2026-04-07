@@ -170,7 +170,7 @@ public class LevelSequenceTrigger : MonoBehaviour
             }
             case StepKind.PlayTutorial:
             {
-                TutorialPlayer.Instance.PlayTutorial(s.clip);
+                TutorialManager.Instance.TriggerTutorial(s.data);
                 yield break;
             }
         }

@@ -341,14 +341,21 @@ public class PlayerMovement : MonoBehaviour
                 }
             }
 
-            if (!isWalkOnly || (isWalkOnly && !lockDashInWalkOnly))
+            // 在 Update 內的動作處理區
+            if (input.DashPressed)
             {
-                if(_isHoldingWeapon)return;
-                if (input.DashPressed)
+                // 檢查所有禁止 Dash 的條件
+                bool canExecuteDash = !isDashing && 
+                                      !_isHoldingWeapon && 
+                                      (!isWalkOnly || (isWalkOnly && !lockDashInWalkOnly));
+
+                if (canExecuteDash)
                 {
                     if (cancelLandingBufferOnDash) _landingRecoverActive = false;
                     StartCoroutine(DashCoroutine());
                 }
+
+                // 無論是否成功執行，只要按下就重置，避免「存到下一幀」
                 input.ResetDash();
             }
         }

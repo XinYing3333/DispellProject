@@ -51,7 +51,7 @@ public class Step
     public BGMType bgm; // 要播放的 AudioSource
 
     [Header("Tutorial")]
-    public VideoClip clip;
+    public TutorialData data;
 }
 
 public enum StepKind

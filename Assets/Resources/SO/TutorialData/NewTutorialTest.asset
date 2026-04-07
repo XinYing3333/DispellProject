@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54417ef4d99f4267b6c96d3a6730a7c3, type: 3}
   m_Name: NewTutorialTest
   m_EditorClassIdentifier: 
-  actionName: hint
-  description: absorb
+  actionName: 
+  description: Absorb
   tutorialVideo: {fileID: 32900000, guid: c8469e6a82d976c488bb284319e8c198, type: 3}
   requiredInputActions:
-  - Absort
-  - Absorb
+  - Collect
+  requiredRequirements:
+  - Collect
+  displayDuration: 6

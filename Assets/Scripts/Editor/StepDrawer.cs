@@ -93,7 +93,7 @@ public class StepDrawer : PropertyDrawer
                 Draw("bgm", "BMGType", false);
                 break;
             case StepKind.PlayTutorial:
-                Draw("clip", "Clip", false);
+                Draw("data", "TutorialData", false);
                 break;
         }
 
@@ -159,7 +159,7 @@ public class StepDrawer : PropertyDrawer
                 total += H("bgm", false);
                 break;
             case StepKind.PlayTutorial:
-                total += H("clip", false);
+                total += H("data", false);
                 break;
         }
 

@@ -157,14 +157,59 @@ namespace Player
             }
         }
 
+        // 在 PlayerInputHandler.cs 內部修改
+
         private void OnControlsChanged(PlayerInput input)
         {
             UpdateControlSchemeCache();
+    
+            // 關鍵加入：通知 UI 系統控制方案已改變
+            if (ControlSchemeHint.Instance != null)
+            {
+                ControlSchemeHint.Instance.OnControlSchemeChanged(_playerInput);
+            }
         }
 
         private void UpdateControlSchemeCache()
         {
             _isGamepadControl = _playerInput.currentControlScheme == "Gamepad";
+        }
+        
+        // 修正後的 CheckActionPressed
+        public bool CheckActionPressed(string actionName)
+        {
+            if (string.IsNullOrEmpty(actionName)) return false;
+
+            // 建議直接檢查 InputAction 的 triggered 屬性，這在整幀內都是有效的
+            return actionName switch
+            {
+                "Jump"    => _jump.triggered,
+                "Dash"    => _dash.triggered,
+                "Shoot"   => _shoot.triggered,
+                "Collect" => _collect.triggered,
+                "Interact"=> _interact.triggered,
+                "Target"  => _target.triggered,
+                // 萬用後備
+                _ => _playerInput.actions.FindAction(actionName)?.triggered ?? false
+            };
+        }
+
+        // 修正後的 CheckPlayerState
+        public bool CheckPlayerState(string stateName)
+        {
+            if (string.IsNullOrEmpty(stateName)) return false;
+
+            return stateName switch
+            {
+                "IsAiming"     => IsAiming,
+                "IsCollecting" => IsCollecting,
+                "IsPaused"     => IsPaused,
+                "IsTargeting"  => IsTargetPressed,
+                "IsMoving"     => MoveInput.sqrMagnitude > 0.01f, 
+                "JumpPressed"  => JumpPressed, // 檢查你的內部 flag
+                "DashPressed"  => DashPressed,
+                _ => false
+            };
         }
 
         private void Update()

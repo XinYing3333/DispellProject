@@ -4,6 +4,10 @@ using UnityEngine.Video;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using Player; 
+using DG.Tweening;
+using EventBus.Events.Tutorial;
+
 
 [RequireComponent(typeof(CanvasGroup))]
 public class TutorialUI : MonoBehaviour
@@ -12,49 +16,69 @@ public class TutorialUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI descText;
     [SerializeField] private VideoPlayer videoPlayer;
-    [SerializeField] private RawImage videoDisplay;
     [SerializeField] private RectTransform iconContainer;
     [SerializeField] private GameObject iconPrefab;
-    [SerializeField] private InputBindingLibrary bindingLibrary; // 必須指派資料庫
+    [SerializeField] private GameObject completionCheckmark; 
+    [SerializeField] private InputBindingLibrary bindingLibrary;
 
-    [Header("Settings")]
+    [Header("Animation Settings")]
     [SerializeField] private float fadeDuration = 0.4f;
-    [SerializeField] private float displayDuration = 6.0f;
+    [SerializeField] private float completeDelay = 0.8f; 
     [SerializeField] private Vector2 hiddenPosition = new Vector2(500, 0);
     [SerializeField] private Vector2 visiblePosition = Vector2.zero;
 
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
+    private TutorialData currentData;
     private Coroutine displayCoroutine;
-    private TutorialData currentData; // 追蹤當前資料以利模式切換
+
+    // 狀態追蹤
+    private HashSet<string> _metRequirements = new HashSet<string>();
+    private bool _isStepCompleted = false;
+    
+    private EventBinding<OnTutorialRequirementMet> _binding;
 
     private void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
         rectTransform = GetComponent<RectTransform>();
+        
         canvasGroup.alpha = 0;
         rectTransform.anchoredPosition = hiddenPosition;
+        if (completionCheckmark) completionCheckmark.SetActive(false);
     }
 
     private void OnEnable()
     {
-        // 註冊模式切換事件
+        // 1. 訂閱控制方案切換 (用於響應式圖示)
         if (ControlSchemeHint.Instance != null)
             ControlSchemeHint.Instance.OnModeChanged += RefreshIcons;
-    }
+
+        // 2. 訂閱 EventBus 外部邏輯事件
+        _binding = new EventBinding<OnTutorialRequirementMet>(OnExternalRequirementMet);
+        EventBus<OnTutorialRequirementMet>.Register(_binding);    }
 
     private void OnDisable()
     {
-        // 註銷事件防止記憶體洩漏
         if (ControlSchemeHint.Instance != null)
             ControlSchemeHint.Instance.OnModeChanged -= RefreshIcons;
+        
+        if (_binding == null) return; 
+        EventBus<OnTutorialRequirementMet>.Deregister(_binding);
+        _binding = null; 
     }
 
     public void SetupAndShow(TutorialData data)
     {
         if (displayCoroutine != null) StopCoroutine(displayCoroutine);
-        
-        currentData = data; // 儲存當前教學資料
+
+        // 初始化狀態
+        currentData = data;
+        _isStepCompleted = false;
+        _metRequirements.Clear();
+        if (completionCheckmark) completionCheckmark.SetActive(false);
+
+        // 填充內容
         titleText.text = data.actionName;
         descText.text = data.description;
         
@@ -64,45 +88,91 @@ public class TutorialUI : MonoBehaviour
             videoPlayer.Prepare();
         }
 
-        // 初始化時根據當前模式生成圖示
-        var currentMode = ControlSchemeHint.Instance != null 
+        // 初始化圖示
+        var mode = ControlSchemeHint.Instance != null 
             ? ControlSchemeHint.Instance.CurrentMode 
             : ControlSchemeHint.UIInputMode.KeyboardMouse;
-            
-        RefreshIcons(currentMode);
+        RefreshIcons(mode);
 
         displayCoroutine = StartCoroutine(DisplaySequence());
     }
 
-    // 核心修改：統一圖示生成邏輯
-    private void RefreshIcons(ControlSchemeHint.UIInputMode mode)
+    private void Update()
     {
-        if (currentData == null) return;
+        if (currentData == null || _isStepCompleted) return;
 
-        // 1. 清除現有圖示
-        foreach (Transform child in iconContainer) Destroy(child.gameObject);
-
-        // 2. 根據模式判定 (Gamepad or KeyboardMouse)
-        bool isGamepad = (mode == ControlSchemeHint.UIInputMode.Gamepad);
-
-        // 3. 從 bindingLibrary 動態抓取對應 Action 的圖示
-        if (currentData.requiredInputActions != null)
+        bool changed = false;
+        foreach (var req in currentData.requiredRequirements)
         {
-            foreach (string actionName in currentData.requiredInputActions)
+            if (_metRequirements.Contains(req)) continue; // 已經達成的跳過
+
+            if (PlayerInputHandler.Instance.CheckActionPressed(req) || 
+                PlayerInputHandler.Instance.CheckPlayerState(req))
             {
-                if (string.IsNullOrEmpty(actionName)) continue;
-                
-                GameObject iconObj = Instantiate(iconPrefab, iconContainer);
-                Sprite s = bindingLibrary.GetSprite(actionName, isGamepad);
-                
-                if (s != null)
+                if (_metRequirements.Add(req))
                 {
-                    iconObj.GetComponent<Image>().sprite = s;
+                    Debug.Log($"<color=green>教學需求達成: {req}</color>");
+                    changed = true;
                 }
             }
         }
 
-        // 4. 立即刷新 Layout 以應用 Pivot X=1 的向左延伸效果
+        if (changed) CheckAllRequirements();
+    }
+
+    /// <summary>
+    /// 處理來自 EventBus 的外部事件（如：成功吸入、擊敗敵人）
+    /// </summary>
+    private void OnExternalRequirementMet(OnTutorialRequirementMet e)
+    {
+        if (currentData == null || _isStepCompleted) return;
+
+        if (currentData.requiredRequirements.Contains(e.RequirementName))
+        {
+            if (_metRequirements.Add(e.RequirementName))
+            {
+                CheckAllRequirements();
+            }
+        }
+    }
+
+    private void CheckAllRequirements()
+    {
+        // 只有當已達成的需求數量等於或超過清單總量時才完成
+        if (_metRequirements.Count >= currentData.requiredRequirements.Count)
+        {
+            SetComplete();
+        }
+    }
+
+    private void SetComplete()
+    {
+        _isStepCompleted = true;
+        if (completionCheckmark)
+        {
+            completionCheckmark.SetActive(true);
+            completionCheckmark.transform.localScale = Vector3.zero;
+            completionCheckmark.transform.DOScale(Vector3.one, 0.2f).SetEase(Ease.OutBack);
+            completionCheckmark.transform.DOPunchScale(Vector3.one * 0.3f, 0.3f);
+        }
+    }
+
+    private void RefreshIcons(ControlSchemeHint.UIInputMode mode)
+    {
+        if (currentData == null) return;
+
+        foreach (Transform child in iconContainer) Destroy(child.gameObject);
+
+        bool isGamepad = (mode == ControlSchemeHint.UIInputMode.Gamepad);
+
+        // 使用 requiredInputActions 或 requiredRequirements 中的對應 Key 來生成圖示
+        foreach (string action in currentData.requiredInputActions)
+        {
+            GameObject iconObj = Instantiate(iconPrefab, iconContainer);
+            Sprite s = bindingLibrary.GetSprite(action, isGamepad);
+            if (s != null) iconObj.GetComponent<Image>().sprite = s;
+        }
+
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(iconContainer);
     }
@@ -110,36 +180,29 @@ public class TutorialUI : MonoBehaviour
     private IEnumerator DisplaySequence()
     {
         while (!videoPlayer.isPrepared) yield return null;
-        
-        float elapsed = 0;
+
+        // 進入動畫
         videoPlayer.Play();
+        rectTransform.DOAnchorPos(visiblePosition, fadeDuration).SetEase(Ease.OutCubic);
+        canvasGroup.DOFade(1f, fadeDuration);
+
+        // 等待玩家達成所有條件
+        while (!_isStepCompleted)
+        {
+            yield return null;
+        }
+
+        // 完成後的視覺停頓
+        yield return new WaitForSeconds(completeDelay);
+
+        // 退出動畫
+        rectTransform.DOAnchorPos(hiddenPosition, fadeDuration).SetEase(Ease.InCubic);
+        canvasGroup.DOFade(0f, fadeDuration);
+
+        yield return new WaitForSeconds(fadeDuration);
         
-        // 淡入與位移
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.SmoothStep(0, 1, elapsed / fadeDuration);
-            canvasGroup.alpha = t;
-            rectTransform.anchoredPosition = Vector2.Lerp(hiddenPosition, visiblePosition, t);
-            yield return null;
-        }
-
-        // 停留
-        yield return new WaitForSeconds(displayDuration);
-
-        // 淡出與位移
-        elapsed = 0;
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = Mathf.SmoothStep(0, 1, elapsed / fadeDuration);
-            canvasGroup.alpha = 1 - t;
-            rectTransform.anchoredPosition = Vector2.Lerp(visiblePosition, hiddenPosition, t);
-            yield return null;
-        }
-
         videoPlayer.Stop();
-        currentData = null; // 清除狀態
+        currentData = null;
         TutorialManager.Instance.OnTutorialComplete();
     }
 }
