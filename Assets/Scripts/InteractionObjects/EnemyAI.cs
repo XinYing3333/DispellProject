@@ -1,5 +1,7 @@
 using System.Collections;
 using DefaultNamespace.Thought;
+using DefaultNamespace.Tutorial;
+using EventBus.Events.Tutorial;
 using UnityEngine;
 using UnityEngine.AI;
 using Player.InteractionSystem;
@@ -28,6 +30,9 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
     
     public bool NeedCollectAnimation => true; 
     public bool IsSpellStateActive => false;
+    
+    private static bool isStunningBefore;
+    private static bool isCollectingBefore;
 
 
     void Start()
@@ -64,6 +69,11 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
 
     IEnumerator OnStun()
     {
+        if (!isStunningBefore)
+        {
+            EventBus<OnTutorialRequirementMet>.Raise(
+                new OnTutorialRequirementMet { Requirement = TutorialRequirementType.FirstStunEnemy });
+        }
         _isStunned = true;
         agent.isStopped = true;
         isPlay = false;
@@ -104,6 +114,12 @@ public class EnemyAI : MonoBehaviour, ICollectable, IHitReceiver
         if (!_isStunned) return;
         //LevelStateStore.Instance.MarkCollectedSession(_spawnId);
         CollectionSystem.CollectItem(CollectionSystem.CollectedType.EnemyThough, 1);
+        CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 3);
+        if (!isCollectingBefore)
+        {
+            EventBus<OnTutorialRequirementMet>.Raise(
+                new OnTutorialRequirementMet { Requirement = TutorialRequirementType.FirstCollectEnemy });
+        }
         Destroy(gameObject);
         //_owner.ReturnThoughToPool(gameObject);
     }

@@ -4,5 +4,7 @@ public enum BGMType
     FirstLevel,
     Level1,
     Level2,
-    BossFight
+    BossFight,
+    Jungle,
+    None
 }

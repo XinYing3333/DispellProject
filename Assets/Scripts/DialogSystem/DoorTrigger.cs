@@ -6,6 +6,8 @@ namespace World
 {
     public class DoorTrigger : MonoBehaviour
     {
+        [Header("Ink JSON")] [SerializeField] private TextAsset inkJSON;
+
         [Header("Target Renderers (same material instances ok)")]
         [SerializeField] private Renderer[] targetRenderers;
 
@@ -63,7 +65,14 @@ namespace World
 
             // 條件：Though >= 20；成功則扣除 20 並開門
             if (!CollectionSystem.TryConsumeItem(costType, costAmount))
+            {
+                if (!DialogueManager.GetInstance().dialogueIsPlaying)
+                {
+                    DialogueManager.GetInstance().EnterDialogueMode(inkJSON,null, true, false);
+                }
                 return;
+            }
+                
 
             _triggered = true;
             StartCoroutine(CoRun());
@@ -72,6 +81,7 @@ namespace World
         IEnumerator CoRun()
         {
             _running = true;
+            PlayerInputHandler.Instance.SetLockMovement(true);
             
             LSTrigger.Play();
 
@@ -80,6 +90,7 @@ namespace World
 
             if (doorObject) doorObject.SetActive(false);
             PlayerInputHandler.Instance.SetLockMovement(false);
+            AudioManager.Instance.PlayBGM(BGMType.None);
 
             _running = false;
         }

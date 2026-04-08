@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
@@ -119,14 +120,36 @@ public class AudioManager : MonoBehaviour
         SetSFXVolume(sfxVolume);
     }
 
-    public void PlayBGM(BGMType bgmType)
+    public void PlayBGM(BGMType bgmType, float fadeDuration = 0.5f)
     {
         if (bgmLibrary.TryGetValue(bgmType, out AudioClip bgmClip))
         {
+            // 若相同音軌正在播放則跳過
             if (bgmSource.clip == bgmClip && bgmSource.isPlaying) return;
-            bgmSource.clip = bgmClip;
-            bgmSource.loop = true;
-            bgmSource.Play();
+
+            // 使用 Sequence 處理漸層序列
+            Sequence bgmSequence = DOTween.Sequence();
+
+            if (bgmSource.isPlaying)
+            {
+                // 1. 漸淡出
+                bgmSequence.Append(bgmSource.DOFade(0, fadeDuration).SetEase(Ease.Linear));
+                bgmSequence.AppendCallback(() =>
+                {
+                    bgmSource.clip = bgmClip;
+                    bgmSource.Play();
+                });
+            }
+            else
+            {
+                // 若目前沒音樂，直接初始化新音軌
+                bgmSource.clip = bgmClip;
+                bgmSource.volume = 0;
+                bgmSource.Play();
+            }
+
+            // 2. 漸淡入 (目標音量為 1，因為實際音量受 AudioMixer 控制)
+            bgmSequence.Append(bgmSource.DOFade(1, fadeDuration).SetEase(Ease.Linear));
         }
         else
         {

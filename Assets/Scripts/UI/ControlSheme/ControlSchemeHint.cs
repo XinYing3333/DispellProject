@@ -63,13 +63,13 @@ public class ControlSchemeHint : MonoBehaviour
         _lastScheme = scheme;
 
         var newMode = scheme.Contains("Gamepad") ? UIInputMode.Gamepad : UIInputMode.KeyboardMouse;
+    
+        ApplyCursorState(newMode);
+
         if (newMode != CurrentMode)
         {
             CurrentMode = newMode;
-
-            // ★ 交由 UICursorPolicy 依「是否有面板開著」＋「目前控制方案」決定游標
             UICursorPolicy.Instance?.Apply();
-
             OnModeChanged?.Invoke(CurrentMode);
         }
 
@@ -114,5 +114,23 @@ public class ControlSchemeHint : MonoBehaviour
                 toastRoot.anchoredPosition = startPos;
             })
             .SetUpdate(true);
+    }
+    
+    private void ApplyCursorState(UIInputMode mode)
+    {
+        if (!manageCursor) return;
+
+        if (mode == UIInputMode.Gamepad)
+        {
+            // 禁用游標：隱藏並鎖定到中心
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+        else
+        {
+            // 啟用游標：顯示並解鎖
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
     }
 }

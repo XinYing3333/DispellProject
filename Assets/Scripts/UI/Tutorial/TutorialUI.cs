@@ -4,6 +4,8 @@ using UnityEngine.Video;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace.ControlSheme;
+using DefaultNamespace.Tutorial;
 using Player; 
 using DG.Tweening;
 using EventBus.Events.Tutorial;
@@ -33,7 +35,7 @@ public class TutorialUI : MonoBehaviour
     private Coroutine displayCoroutine;
 
     // 狀態追蹤
-    private HashSet<string> _metRequirements = new HashSet<string>();
+    private HashSet<TutorialRequirementType> _metRequirements = new HashSet<TutorialRequirementType>(); 
     private bool _isStepCompleted = false;
     
     private EventBinding<OnTutorialRequirementMet> _binding;
@@ -104,19 +106,14 @@ public class TutorialUI : MonoBehaviour
         bool changed = false;
         foreach (var req in currentData.requiredRequirements)
         {
-            if (_metRequirements.Contains(req)) continue; // 已經達成的跳過
+            if (_metRequirements.Contains(req)) continue;
 
             if (PlayerInputHandler.Instance.CheckActionPressed(req) || 
                 PlayerInputHandler.Instance.CheckPlayerState(req))
             {
-                if (_metRequirements.Add(req))
-                {
-                    Debug.Log($"<color=green>教學需求達成: {req}</color>");
-                    changed = true;
-                }
+                if (_metRequirements.Add(req)) changed = true;
             }
         }
-
         if (changed) CheckAllRequirements();
     }
 
@@ -127,12 +124,9 @@ public class TutorialUI : MonoBehaviour
     {
         if (currentData == null || _isStepCompleted) return;
 
-        if (currentData.requiredRequirements.Contains(e.RequirementName))
+        if (currentData.requiredRequirements.Contains(e.Requirement))
         {
-            if (_metRequirements.Add(e.RequirementName))
-            {
-                CheckAllRequirements();
-            }
+            if (_metRequirements.Add(e.Requirement)) CheckAllRequirements();
         }
     }
 
@@ -148,6 +142,7 @@ public class TutorialUI : MonoBehaviour
     private void SetComplete()
     {
         _isStepCompleted = true;
+        AudioManager.Instance.PlaySFX(SFXType.Complete);
         if (completionCheckmark)
         {
             completionCheckmark.SetActive(true);
@@ -161,16 +156,19 @@ public class TutorialUI : MonoBehaviour
     {
         if (currentData == null) return;
 
+        // 清除舊圖示
         foreach (Transform child in iconContainer) Destroy(child.gameObject);
 
-        bool isGamepad = (mode == ControlSchemeHint.UIInputMode.Gamepad);
-
-        // 使用 requiredInputActions 或 requiredRequirements 中的對應 Key 來生成圖示
-        foreach (string action in currentData.requiredInputActions)
+        foreach (ActionName action in currentData.requiredInputActions)
         {
+            // 實例化抽離後的 Prefab
             GameObject iconObj = Instantiate(iconPrefab, iconContainer);
-            Sprite s = bindingLibrary.GetSprite(action, isGamepad);
-            if (s != null) iconObj.GetComponent<Image>().sprite = s;
+        
+            // 取得組件並初始化
+            if (iconObj.TryGetComponent<InputIconDisplay>(out var display))
+            {
+                display.SetAction(action);
+            }
         }
 
         Canvas.ForceUpdateCanvases();

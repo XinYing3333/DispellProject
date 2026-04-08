@@ -1,6 +1,8 @@
-﻿using UnityEngine;
+﻿using DefaultNamespace.Tutorial;
+using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using EventBus.Events.Tutorial;
 using Player.InteractionSystem;
 
 namespace DefaultNamespace
@@ -10,29 +12,31 @@ namespace DefaultNamespace
         [Header("UI Reference")]
         [SerializeField] private Slider slider;
         [SerializeField] private CanvasGroup sliderCanvasGroup;
+        [SerializeField] private TotemDiscoveryUI totemUI; 
 
         [Header("Collect Settings")]
         [SerializeField] private float requiredCollect = 1f; 
-        [SerializeField] private float addCollectCount = 3.5f; 
-        [SerializeField] private float autoHideDelay = 0.5f; // 縮短延遲以配合操作感
+        [SerializeField] private float addCollectCount = 1f; 
+        [SerializeField] private float autoHideDelay = 0.5f; 
         [SerializeField] private ObstacleGroup rockEffect;
 
         [Header("VFX & Model Settings")]
-        [SerializeField] private Transform modelTransform; // 禁行標誌的模型位移目標
-        [SerializeField] private float shakeStrength = 0.05f; // 顫抖強度
+        [SerializeField] private Transform modelTransform; 
+        [SerializeField] private float shakeStrength = 0.05f; 
         [SerializeField] private ParticleSystem collectingVFX;
         [SerializeField] private ParticleSystem completeVFXPrefab;
         [SerializeField] private float destroyDelay = 0.5f;
-
+        
+        [SerializeField] private GameObject spellSlot;
+        
         private float currentCollectCount;
         private bool isCompleted = false;
         private float _hideTimer;
         private bool _isSliderVisible = false;
-        private Tween _shakeTween; // 儲存顫抖動畫引用
+        private bool _isBeingCollected = false;
 
         public bool NeedCollectAnimation => false;
         public bool IsSpellStateActive => false;
-
 
         private void Start()
         {
@@ -43,17 +47,26 @@ namespace DefaultNamespace
                 sliderCanvasGroup.alpha = 0;
             }
             if (collectingVFX != null) collectingVFX.Stop();
+            spellSlot.SetActive(false);
         }
 
         private void Update()
         {
-            if (isCompleted || !_isSliderVisible) return;
+            if (isCompleted) return;
 
-            _hideTimer -= Time.deltaTime;
-            if (_hideTimer <= 0)
+            if (_isBeingCollected)
             {
-                HideSlider();
-                StopShake(); // 停止顫抖
+                UpdateProgress();
+                _isBeingCollected = false;
+            }
+            else if (_isSliderVisible)
+            {
+                _hideTimer -= Time.deltaTime;
+                if (_hideTimer <= 0)
+                {
+                    HideSlider();
+                    StopShake();
+                }
             }
         }
 
@@ -61,27 +74,28 @@ namespace DefaultNamespace
         {
             if (isCompleted) return;
 
+            _isBeingCollected = true;
             _hideTimer = autoHideDelay;
             
-            // 1. 處理粒子
             if (collectingVFX != null && !collectingVFX.isPlaying)
             {
                 collectingVFX.Play();
             }
 
-            // 2. 處理模型顫抖
             StartShake();
 
-            // 3. 處理 UI
             if (!_isSliderVisible)
             {
                 sliderCanvasGroup.DOKill();
                 sliderCanvasGroup.DOFade(1, 0.2f);
                 _isSliderVisible = true;
             }
+        }
 
+        private void UpdateProgress()
+        {
             currentCollectCount += Time.deltaTime * addCollectCount;
-            slider.value = currentCollectCount;
+            if (slider != null) slider.value = currentCollectCount;
 
             if (currentCollectCount >= requiredCollect)
             {
@@ -92,14 +106,10 @@ namespace DefaultNamespace
         private void StartShake()
         {
             if (modelTransform == null) return;
-    
-            // 檢查目前是否正在進行顫抖動畫，如果正在動就不重複觸發
-            // 這樣能確保一次抖動動畫完整跑完 (例如 0.1s)，才接下一次
             if (!DOTween.IsTweening(modelTransform))
             {
                 modelTransform.DOShakePosition(0.1f, shakeStrength, 15, 90, false, false)
                     .OnComplete(() => {
-                        // 每段抖動完畢後微調回原位，確保座標不偏移
                         modelTransform.DOLocalMove(Vector3.zero, 0.05f);
                     });
             }
@@ -107,8 +117,6 @@ namespace DefaultNamespace
 
         private void StopShake()
         {
-            // 停止 Collect 時，如果還在抖，可以讓它播完最後一次，或者立即 Kill
-            // 若要立即停止：
             if (DOTween.IsTweening(modelTransform))
             {
                 modelTransform.DOKill();
@@ -127,10 +135,12 @@ namespace DefaultNamespace
         private void CompleteCollection()
         {
             isCompleted = true;
+            _isBeingCollected = false;
             _isSliderVisible = false;
-            StopShake(); // 完成時停止顫抖
-            
+
+            StopShake();
             if (collectingVFX != null) collectingVFX.Stop();
+            
             if (completeVFXPrefab != null)
             {
                 ParticleSystem vfx = Instantiate(completeVFXPrefab, transform.position, Quaternion.identity);
@@ -143,10 +153,27 @@ namespace DefaultNamespace
             
             CollectionSystem.CollectItem(CollectionSystem.CollectedType.StopSignThough, 1);
             
-            if (rockEffect != null)
+            // 優先進入 UI 流程
+            if (totemUI != null)
             {
-                rockEffect.OnInteract();
+                totemUI.gameObject.SetActive(true);
+                totemUI.Show(FinalizeEffect);
             }
+            else
+            {
+                FinalizeEffect();
+            }
+        }
+
+        private void FinalizeEffect()
+        {
+            // 此處為 UI 消失後的執行點（此時 TimeScale 已恢復 1）
+            spellSlot.SetActive(true);
+            
+            EventBus<OnTutorialRequirementMet>.Raise(
+                new OnTutorialRequirementMet { Requirement = TutorialRequirementType.TotemCollectSuccess });
+            
+            if (rockEffect != null) rockEffect.OnInteract();
 
             DisableObjectState();
             Destroy(gameObject, destroyDelay);
@@ -162,6 +189,8 @@ namespace DefaultNamespace
 
         public void StopCollect()
         {
+            if (isCompleted) return;
+            _isBeingCollected = false;
             if (collectingVFX != null) collectingVFX.Stop();
             StopShake();
         }

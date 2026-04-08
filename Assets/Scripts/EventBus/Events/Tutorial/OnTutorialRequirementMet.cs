@@ -1,5 +1,9 @@
-﻿namespace EventBus.Events.Tutorial
+﻿using DefaultNamespace.Tutorial;
+
+namespace EventBus.Events.Tutorial
 {
     public class OnTutorialRequirementMet : IEvent
-    { public string RequirementName; }
+    {        
+        public TutorialRequirementType Requirement; 
+    }
 }

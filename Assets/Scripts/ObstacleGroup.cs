@@ -26,6 +26,9 @@ public class ObstacleGroup : MonoBehaviour
     public float globalShakeDelay = 0.2f;
     public float shakeForce = 1.0f;
     
+    [Header("Next Tutorial")]
+    [SerializeField] private TutorialData tutorialData;
+    
     private List<Transform> obstacleFragments = new List<Transform>();
     private bool isInteracted = false;
 
@@ -94,5 +97,6 @@ public class ObstacleGroup : MonoBehaviour
         s.Join(fragment.DOScale(Vector3.zero, randomDuration * 0.7f).SetEase(Ease.InQuad).SetDelay(0.2f));
 
         s.OnComplete(() => fragment.gameObject.SetActive(false));
+        TutorialManager.Instance.TriggerTutorial(tutorialData);
     }
 }

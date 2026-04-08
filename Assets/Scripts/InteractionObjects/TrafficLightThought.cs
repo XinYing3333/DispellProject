@@ -9,6 +9,8 @@ using DG.Tweening;
 using Player.InteractionSystem;
 using SpellSystem;
 using DefaultNamespace.Thought;
+using DefaultNamespace.Tutorial;
+using EventBus.Events.Tutorial;
 
 namespace DefaultNamespace
 {
@@ -24,7 +26,7 @@ namespace DefaultNamespace
         [SerializeField] private ParticleSystem hitVFX;
         
         [Header("Visual Material Settings")]
-        [SerializeField] private MeshRenderer targetRenderer; // 指定要替換材質的 Renderer
+        [SerializeField] private SkinnedMeshRenderer targetRenderer; // 指定要替換材質的 Renderer
         [SerializeField] private Material[] normalMaterials;  // 一般狀態下的材質陣列
         [SerializeField] private Material[] spellHitMaterials; // 被法術擊中時的材質陣列
         [SerializeField] private Material[] objectHitMaterials; // 被物品擊中時的材質陣列
@@ -60,6 +62,8 @@ namespace DefaultNamespace
         private int _originalLayer;
         private int _interactionLayer;
         private int _trafficLightActiveArea;
+
+        private static bool isHittingBefore;
 
         // Interface Properties
         public bool NeedCollectAnimation => false;
@@ -114,13 +118,20 @@ namespace DefaultNamespace
             // 加入 !_isInActiveArea 阻斷邏輯
             if (isStopSpellHit || _isPathBusy || !_isInActiveArea) return;
 
+            if (!isHittingBefore)
+            {
+                EventBus<OnTutorialRequirementMet>.Raise(
+                    new OnTutorialRequirementMet { Requirement = TutorialRequirementType.FirstThrowTraffic });
+            }
             if (animator) animator.SetTrigger("Hit");
+            SwapMaterials(objectHitMaterials);
             if (hitVFX) hitVFX.Play();
             StartCoroutine(RunPathCycle());
         }
         private IEnumerator RunPathCycle()
         {
             _isPathBusy = true;
+            if (crossRoad) crossRoad.enabled = true;
             if (road) yield return road.FadeIn(fadeInTime);
             
             if (!_consumed)
@@ -128,12 +139,11 @@ namespace DefaultNamespace
                 _consumed = true;
                 onFirstHit?.Invoke();
             }
-            SwapMaterials(objectHitMaterials);
-            if (crossRoad) crossRoad.enabled = true;
             yield return StartCoroutine(Co_CountdownUI(Mathf.CeilToInt(openSeconds)));
             
-            if (road) yield return road.FadeOut(fadeOutTime);
             SwapMaterials(normalMaterials);
+            if (animator) animator.SetTrigger("Red");
+            if (road) yield return road.FadeOut(fadeOutTime);
             if (crossRoad) crossRoad.enabled = false;
             _isPathBusy = false;
         }
@@ -142,43 +152,43 @@ namespace DefaultNamespace
         #region ISpellAffectable (狀態切換)
         public void OnSpellHit(SpellType spellType, Vector3 hitPoint)
         {
-            if (spellType == SpellType.StopSpell)
-            {
-                isStopSpellHit = true;
-                gameObject.layer = _interactionLayer;
-                animator.speed = 0f;
-                SwapMaterials(spellHitMaterials);
-            }
+            // if (spellType == SpellType.StopSpell)
+            // {
+            //     isStopSpellHit = true;
+            //     gameObject.layer = _interactionLayer;
+            //     animator.speed = 0f;
+            //     SwapMaterials(spellHitMaterials);
+            // }
         }
 
         public void OnSpellRecall()
         {
-            isStopSpellHit = false;
-            gameObject.layer = _originalLayer;
-            animator.speed = 1f;
-            SwapMaterials(normalMaterials);
+            // isStopSpellHit = false;
+            // gameObject.layer = _originalLayer;
+            // animator.speed = 1f;
+            // SwapMaterials(normalMaterials);
         }
         #endregion
 
         #region IMagnetAttachable (法術狀態下的移動)
         public void OnMagnetAttached(Transform parent)
         {
-            if (!_rb || !isStopSpellHit) return;
-            
-            _rb.isKinematic = true;
-            _rb.useGravity = false;
-            _rb.detectCollisions = false;
-            transform.root.SetParent(parent, true);
+            // if (!_rb || !isStopSpellHit) return;
+            //
+            // _rb.isKinematic = true;
+            // _rb.useGravity = false;
+            // _rb.detectCollisions = false;
+            // transform.root.SetParent(parent, true);
         }
 
         public void OnMagnetDetached()
         {
-            if (!_rb || !isStopSpellHit) return;
-            
-            transform.root.SetParent(null, true);
-            _rb.isKinematic = false;
-            _rb.useGravity = true;
-            _rb.detectCollisions = true;
+            // if (!_rb || !isStopSpellHit) return;
+            //
+            // transform.root.SetParent(null, true);
+            // _rb.isKinematic = false;
+            // _rb.useGravity = true;
+            // _rb.detectCollisions = true;
         }
         #endregion
 

@@ -1,4 +1,6 @@
 ﻿using System;
+using DefaultNamespace.Tutorial;
+using EventBus.Events.Tutorial;
 using UnityEngine;
 
 namespace DefaultNamespace
@@ -73,6 +75,8 @@ namespace DefaultNamespace
                         // stage = 1;
                         
                         finishTutorial.Play();
+                        EventBus<OnTutorialRequirementMet>.Raise(
+                            new OnTutorialRequirementMet { Requirement = TutorialRequirementType.FirstAdsorb });
                         isTutorialFinished = true;
                         
                         // 進入下一段前若你也想用 Delta，可在此建立新的 baseline（若第二段也需要）

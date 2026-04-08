@@ -134,55 +134,50 @@ public class InteractionController : MonoBehaviour
     }
 
     // ====== 投擲 / 射擊 (Input_Throw) ======
-    public void Input_Throw()
+    // 在 Input_Throw 中
+public void Input_Throw()
+{
+    if (Time.time - _lastSpellTime < spellCooldown) return;
+
+    if (handSlot && handSlot.HasItem)
     {
-        if (Time.time - _lastSpellTime < spellCooldown) return;
+        _isAbsorbHeld = false;
 
-        if (handSlot && handSlot.HasItem)
+        if (_canCurrentItemBeThrown)
         {
-            _isAbsorbHeld = false;
-
-            // 如果物件不具備投擲能力（如紅綠燈），點擊發射鍵改為執行 Drop
-            if (_canCurrentItemBeThrown)
-            {
-                if (playerMovement != null) playerMovement.SyncRotationToCameraInstant();
-                Vector3 targetPoint = GetCurrentTargetPoint();
-                //AudioManager.Instance.PlaySFX(SFXType.Shoot);
-                ExecuteThrow(handSlot.Take(), targetPoint);
-            }
-            else
-            {
-                Input_Drop(); 
-            }
-        }
-        else if (spellPrefab)
-        {
+            // 強制角色與發射點對齊當前視線方向
             if (playerMovement != null) playerMovement.SyncRotationToCameraInstant();
-            ExecuteSpell(GetCurrentTargetPoint());
+            
+            // 直接獲取目標點（基於 throwOrigin.forward）
+            Vector3 targetPoint = GetCurrentTargetPoint();
+            ExecuteThrow(handSlot.Take(), targetPoint);
         }
-
-        _lastSpellTime = Time.time;
-        State = InteractState.Idle;
+        else
+        {
+            Input_Drop(); 
+        }
     }
+    else if (spellPrefab)
+    {
+        if (playerMovement != null) playerMovement.SyncRotationToCameraInstant();
+        ExecuteSpell(GetCurrentTargetPoint());
+    }
+
+    _lastSpellTime = Time.time;
+    State = InteractState.Idle;
+}
 
     private Vector3 GetCurrentTargetPoint()
     {
-        // 優先權 1：自動鎖定目標
+        // 優先權 1：自動鎖定目標 (保持輔助瞄準功能)
         if (aimAssist && aimAssist.CurrentTarget)
         {
             return aimAssist.CurrentTarget.GetAimPoint();
         }
 
-        // 優先權 2：相機射線（修正：增加射線起始偏移避免射到自己）
-        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        if (Physics.Raycast(ray, out RaycastHit hit, maxAimDistance, aimRaycastMask))
-        {
-            return hit.point;
-        }
-    
-        // 優先權 3：當完全沒打到任何東西時，指向相機正前方固定距離
-        // 這能確保玩家抬頭看天空時，物件是往上飛而非水平飛
-        return ray.GetPoint(20f); 
+        // 優先權 2：改用發射點 (throwOrigin) 的正前方
+        // 既然角色已看向相機方向，throwOrigin.forward 即代表了正確的水平與垂直方向
+        return throwOrigin.position + throwOrigin.forward * 20f; 
     }
 
     private void ExecuteThrow(Rigidbody rb, Vector3 targetPoint)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using DefaultNamespace;
+using DefaultNamespace.Tutorial;
 using EventBus.Events.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -18,7 +19,7 @@ namespace Player
 
         // ===== Gameplay flags =====
         public bool JumpPressed { get; private set; }
-        public bool SkillPressed { get; private set; }
+        public bool SkillPressed => !InputLock && _skill.WasPressedThisFrame();
         public bool DashPressed { get; private set; }
         public bool ShootPressed { get; private set; }
         public bool IsCollecting { get; private set; }
@@ -175,39 +176,33 @@ namespace Player
             _isGamepadControl = _playerInput.currentControlScheme == "Gamepad";
         }
         
-        // 修正後的 CheckActionPressed
-        public bool CheckActionPressed(string actionName)
+        // 瞬時動作檢查
+        public bool CheckActionPressed(TutorialRequirementType type)
         {
-            if (string.IsNullOrEmpty(actionName)) return false;
-
-            // 建議直接檢查 InputAction 的 triggered 屬性，這在整幀內都是有效的
-            return actionName switch
+            return type switch
             {
-                "Jump"    => _jump.triggered,
-                "Dash"    => _dash.triggered,
-                "Shoot"   => _shoot.triggered,
-                "Collect" => _collect.triggered,
-                "Interact"=> _interact.triggered,
-                "Target"  => _target.triggered,
-                // 萬用後備
-                _ => _playerInput.actions.FindAction(actionName)?.triggered ?? false
+                TutorialRequirementType.Jump     => _jump.triggered,
+                TutorialRequirementType.Dash     => _dash.triggered,
+                TutorialRequirementType.Shoot    => _shoot.triggered,
+                TutorialRequirementType.Skill    => _skill.triggered,
+                TutorialRequirementType.Collect  => _collect.triggered,
+                TutorialRequirementType.Interact => _interact.triggered,
+                TutorialRequirementType.Target   => _target.triggered,
+                _ => false
             };
         }
 
-        // 修正後的 CheckPlayerState
-        public bool CheckPlayerState(string stateName)
+// 持續狀態檢查
+        public bool CheckPlayerState(TutorialRequirementType type)
         {
-            if (string.IsNullOrEmpty(stateName)) return false;
-
-            return stateName switch
+            return type switch
             {
-                "IsAiming"     => IsAiming,
-                "IsCollecting" => IsCollecting,
-                "IsPaused"     => IsPaused,
-                "IsTargeting"  => IsTargetPressed,
-                "IsMoving"     => MoveInput.sqrMagnitude > 0.01f, 
-                "JumpPressed"  => JumpPressed, // 檢查你的內部 flag
-                "DashPressed"  => DashPressed,
+                TutorialRequirementType.IsAiming     => IsAiming,
+                TutorialRequirementType.IsCollecting => IsCollecting,
+                TutorialRequirementType.IsPaused     => IsPaused,
+                TutorialRequirementType.IsTargeting  => IsTargetPressed,
+                TutorialRequirementType.IsMoving     => MoveInput.sqrMagnitude > 0.01f,
+                TutorialRequirementType.InAir        => !GetComponent<CharacterController>().isGrounded,
                 _ => false
             };
         }
@@ -297,7 +292,6 @@ namespace Player
             JumpPressed = false;
             DashPressed = false;
             ShootPressed = false;
-            SkillPressed = false;
             IsTargetPressed = false;
         }
 
@@ -339,7 +333,6 @@ namespace Player
         private void OnSkillPerformed(InputAction.CallbackContext ctx)
         {
             if (InputLock) return;
-            SkillPressed = true;
             OnSkill?.Invoke();
         }
 

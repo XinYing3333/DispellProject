@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using DefaultNamespace.Tutorial;
+using EventBus.Events.Tutorial;
 using SpellSystem;
 using UnityEngine;
 
@@ -14,6 +16,8 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
     private List<Transform> _targetableTransforms = new List<Transform>();
     private int _originalLayer;
     private int _defaultLayer;
+    
+    private static bool isStoppingBefore;
 
     void Awake()
     {
@@ -36,6 +40,12 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
         {
             StopObject();
             CreateVisualOverlays();
+            
+            if (!isStoppingBefore)
+            {
+                EventBus<OnTutorialRequirementMet>.Raise(
+                    new OnTutorialRequirementMet { Requirement = TutorialRequirementType.ThrowAStoppablePlatform });
+            }
         }
     }
 
@@ -47,23 +57,29 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
 
     private void StopObject()
     {
-        if (_anim != null) _anim.speed = 0f;
+        if (_anim != null) 
+        {
+            // 取得當前狀態資訊
+            var stateInfo = _anim.GetCurrentAnimatorStateInfo(0);
+            _anim.speed = 0f;
         
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null) rb.isKinematic = true;
-
-        // 停止時，切換 Layer 讓 AimAssist 找不到它
+            // 強制 Animator 停在當前時間點並立即採樣
+            _anim.Play(stateInfo.fullPathHash, 0, stateInfo.normalizedTime);
+            _anim.Update(0f); 
+        
+            Debug.Log($"[StoppablePlatform] Animator Forced Sampled at {stateInfo.normalizedTime}");
+        }
         SetTargetablesLayer(_defaultLayer);
     }
 
     private void ResumeObject()
     {
-        if (_anim != null) _anim.speed = 1f;
+        if (_anim != null)
+        {
+            _anim.speed = 1f;
+        }
 
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null) rb.isKinematic = false;
-
-        // 恢復時，切換回 Target Layer 重新允許瞄準
+        
         SetTargetablesLayer(_originalLayer);
     }
 
@@ -84,28 +100,37 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
         }
     }
 
-    // CreateVisualOverlays 與 RemoveVisualOverlays 邏輯維持不變...
     private void CreateVisualOverlays()
     {
         if (_overlayObjects.Count > 0) return;
         MeshRenderer[] childRenderers = GetComponentsInChildren<MeshRenderer>();
+    
         foreach (var renderer in childRenderers)
         {
             if (renderer.gameObject.name == "SpellOverlay") continue;
             MeshFilter mf = renderer.GetComponent<MeshFilter>();
-            if (mf == null) continue;
+            if (mf == null || mf.sharedMesh == null) continue;
 
             GameObject overlay = new GameObject("SpellOverlay");
             overlay.transform.SetParent(renderer.transform); 
             overlay.transform.localPosition = Vector3.zero;
             overlay.transform.localRotation = Quaternion.identity;
             overlay.transform.localScale = Vector3.one * scaleMultiplier;
-            overlay.AddComponent<MeshFilter>().mesh = mf.mesh;
+        
+            // 使用 sharedMesh 避免實例化開銷
+            overlay.AddComponent<MeshFilter>().mesh = mf.sharedMesh;
             MeshRenderer mr = overlay.AddComponent<MeshRenderer>();
-            mr.material = overlayMaterial;
+        
+            // 強制賦值材質
+            mr.sharedMaterial = overlayMaterial;
             overlay.layer = LayerMask.NameToLayer("Ignore Raycast");
+        
+            // 確保 Renderer 是啟動狀態
+            mr.enabled = true;
+        
             _overlayObjects.Add(overlay);
         }
+        Debug.Log($"[StoppablePlatform] {_overlayObjects.Count} Overlays Created and Enabled.");
     }
 
     private void RemoveVisualOverlays()

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4998342863438556844}
   - component: {fileID: 1438203626043398240}
   - component: {fileID: 6699552888309443238}
+  - component: {fileID: 9157277756329725884}
   m_Layer: 5
   m_Name: IconPrefab
   m_TagString: Untagged
@@ -75,3 +76,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &9157277756329725884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1793110140592408749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b69a91ef7fc409daa0b3a5d1f09a700, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  actionName: 0
+  iconImage: {fileID: 6699552888309443238}
+  bindingLibrary: {fileID: 11400000, guid: 57db8e4778885f44096797803d43478f, type: 2}

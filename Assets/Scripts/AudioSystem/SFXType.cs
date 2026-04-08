@@ -14,6 +14,7 @@ public enum SFXType
     CoinPickup,
     RockShake,
     Hurt,
+    Complete,
     Explosion,
     EnemyHit,
     Victory,

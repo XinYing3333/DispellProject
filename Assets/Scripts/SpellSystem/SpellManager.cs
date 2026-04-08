@@ -6,16 +6,18 @@ using UnityEngine;
 public class SpellManager : MonoBehaviour
 {
     public static SpellManager Instance { get; private set; }
-
+    
     [SerializeField] private int maxActiveNodes = 2;
     private Queue<ISpellAffectable> _activeEffects = new Queue<ISpellAffectable>();
+
+    // 提供外部查詢目前是否有啟用的法術
+    public bool HasActiveSpells => _activeEffects.Count > 0;
 
     private void Awake() => Instance = this;
 
     private void Update()
     {
-        // 偵測 Y 鍵收回
-        if (PlayerInputHandler.Instance.SkillPressed)
+        if (PlayerInputHandler.Instance.SkillPressed && HasActiveSpells)
         {
             RecallAll();
         }
@@ -23,7 +25,6 @@ public class SpellManager : MonoBehaviour
 
     public void RegisterEffect(ISpellAffectable target, SpellType type, Vector3 hitPoint)
     {
-        // 自動恢復邏輯：超過數量則彈出最舊的
         if (_activeEffects.Count >= maxActiveNodes)
         {
             var oldest = _activeEffects.Dequeue();
