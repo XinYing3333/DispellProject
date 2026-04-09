@@ -41,7 +41,7 @@ public class TutorialTestTrigger : MonoBehaviour
 
         if (triggerOnlyOnce && hasTriggered) return;
 
-        Debug.Log($"觸發教學: {testData.actionName}");
+        Debug.Log($"觸發教學: {testData}");
         TutorialManager.Instance.TriggerTutorial(testData);
         hasTriggered = true;
     }

@@ -18,8 +18,10 @@ public class LevelSequenceTrigger : MonoBehaviour
     [Header("One-shot / Persistence")]
     [Tooltip("是否只執行一次（本場景生命週期）")]
     public bool onlyOnce = true;
-    [Tooltip("（可選）持久化ID。填了就會用 PlayerPrefs 記錄 seq_played_{persistId}=1")]
-    public string persistId = ""; // 例：L1_Intro_01
+    
+    [Tooltip("（自動產生）持久化ID。用於記錄此觸發器是否已執行過。")]
+    [SerializeField] private string persistId = ""; 
+    public string PersistId => persistId;
 
     [Header("Steps (依序執行)")]
     public List<Step> steps = new();
@@ -42,6 +44,37 @@ public class LevelSequenceTrigger : MonoBehaviour
     {
         var col = GetComponent<Collider>();
         col.isTrigger = true;
+
+        // 第一次掛載時自動生成
+        if (string.IsNullOrEmpty(persistId))
+        {
+            GenerateId();
+        }
+    }
+    
+    private void OnValidate()
+    {
+        // 確保在 Inspector 編輯時，如果開啟了 onlyOnce 卻沒 ID，就補上
+        if (onlyOnce && string.IsNullOrEmpty(persistId))
+        {
+            GenerateId();
+        }
+    }
+    
+    /// <summary>
+    /// 右鍵點擊組件名稱可手動重新生成
+    /// </summary>
+    [ContextMenu("Generate New Persist ID")]
+    public void GenerateId()
+    {
+        // 格式：場景名_物件名_唯一碼 (增加辨識度)
+        string sceneName = gameObject.scene.name ?? "Prefab";
+        string uniquePart = System.Guid.NewGuid().ToString().Substring(0, 8);
+        persistId = $"{sceneName}_{gameObject.name}_{uniquePart}";
+        
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+#endif
     }
 
     private void OnTriggerEnter(Collider other)
@@ -108,11 +141,10 @@ public class LevelSequenceTrigger : MonoBehaviour
                 if (!s.inkJSON) yield break;
 
                 var dm = DialogueManager.GetInstance();
-                if (dm == null) yield break;
+                if (dm == null || dm.dialogueIsPlaying) yield break;
 
                 var input = PlayerInputHandler.Instance;
                 if (s.lockMoveDuringDialogue && input) input.SetLockMovement(true);
-
                 dm.EnterDialogueMode(s.inkJSON, s.emoteAnimator, s.autoPlay, s.lockMoveDuringDialogue);
 
                 while (dm.dialogueIsPlaying) yield return null;

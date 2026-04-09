@@ -1,32 +1,74 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ChildCountDetector : MonoBehaviour
 {
-    public Transform enemyContainer;
-    public GameObject triggerLS;
-    private bool isCleared = false;
+    public enum DetectionMode
+    {
+        ChildrenCountZero,    // 判斷子物件數量是否為 0
+        AllChildrenDisabled   // 判斷子物件是否都已關閉 (Active Off)
+    }
 
+    [Header("Settings")]
+    public Transform enemyContainer;
+    public DetectionMode detectionMode = DetectionMode.ChildrenCountZero;
+    
+    [Header("Target Trigger")]
+    public GameObject triggerLS;
+    [SerializeField] private bool isExternalLS = false;
+
+    private bool isCleared = false;
 
     private void Awake()
     {
-        triggerLS.SetActive(false);
+        if (triggerLS != null && !isExternalLS) 
+            triggerLS.SetActive(false);
     }
 
     void Update()
     {
-        if (isCleared) return;
+        if (isCleared || enemyContainer == null) return;
 
-        // 當父物件下沒有任何子物件時
-        if (enemyContainer.childCount == 0)
+        if (CheckConditions())
         {
-            isCleared = true;
-            TriggerCutscene();
+            ExecuteTrigger();
         }
     }
 
-    void TriggerCutscene()
+    private bool CheckConditions()
     {
-        triggerLS.SetActive(true);
+        switch (detectionMode)
+        {
+            case DetectionMode.ChildrenCountZero:
+                return enemyContainer.childCount == 0;
+
+            case DetectionMode.AllChildrenDisabled:
+                // 如果連子物件都沒有，也視為符合關閉條件
+                if (enemyContainer.childCount == 0) return true;
+
+                foreach (Transform child in enemyContainer)
+                {
+                    if (child.gameObject.activeInHierarchy)
+                        return false;
+                }
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    private void ExecuteTrigger()
+    {
+        isCleared = true;
+        
+        if (isExternalLS)
+        {
+            var ls = triggerLS.GetComponent<LevelSequenceTrigger>();
+            if (ls != null) ls.Play();
+        }
+        else
+        {
+            if (triggerLS != null) triggerLS.SetActive(true);
+        }
     }
 }

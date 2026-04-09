@@ -1,4 +1,5 @@
 ﻿using System;
+using DefaultNamespace.ControlSheme;
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
@@ -10,6 +11,8 @@ public class TutorialHintTrigger : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private CanvasGroup hintCanvasGroup;
     [SerializeField] private bool isTriggerEnter = false;
+    [SerializeField] private ActionName actionName;
+    [SerializeField] private InputIconDisplay iconShow;
 
     [SerializeField] private TMP_Text hintText;
 
@@ -74,6 +77,7 @@ public class TutorialHintTrigger : MonoBehaviour
         }
 
         hintCanvasGroup.alpha = 0f;
+        iconShow.SetAction(actionName);
         hintText.text = ResolveMessage();
 
         _seq = DOTween.Sequence().SetUpdate(UpdateType.Late);

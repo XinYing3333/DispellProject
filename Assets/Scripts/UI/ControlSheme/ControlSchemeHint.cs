@@ -4,6 +4,9 @@ using UnityEngine.InputSystem;
 using TMPro;
 using DG.Tweening;
 using UnityEngine.UI;
+using DefaultNamespace.EventBus;
+using DefaultNamespace.EventBus.Events.UI;
+using UI.Localization;
 
 public class ControlSchemeHint : MonoBehaviour
 {
@@ -34,14 +37,15 @@ public class ControlSchemeHint : MonoBehaviour
     [SerializeField] private Sprite keyboardMouse;
 
     [Header("Cursor (optional)")]
-    [SerializeField] private bool manageCursor = true; // 勾選則自動顯示/隱藏游標
+    [SerializeField] private bool manageCursor = true;
 
     private Tween _tween;
     private string _lastScheme;
+    private EventBinding<LanguageChanged> _langBinding;
 
     private void Awake()
     {
-        if (Instance) { Destroy(gameObject); return; }
+        if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
         if (canvasGroup == null) canvasGroup = toastRoot.GetComponent<CanvasGroup>();
@@ -49,7 +53,26 @@ public class ControlSchemeHint : MonoBehaviour
         toastRoot.gameObject.SetActive(false);
     }
 
-    // 讓 PlayerInput inspector 直接綁這個
+    private void OnEnable()
+    {
+        _langBinding = new EventBinding<LanguageChanged>(OnLanguageChanged);
+        EventBus<LanguageChanged>.Register(_langBinding);
+    }
+
+    private void OnDisable()
+    {
+        EventBus<LanguageChanged>.Deregister(_langBinding);
+    }
+
+    private void OnLanguageChanged(LanguageChanged evt)
+    {
+        // 若當前 Toast 正在顯示，即時更新文字
+        if (toastRoot.gameObject.activeInHierarchy)
+        {
+            RefreshToastText();
+        }
+    }
+
     public void OnControlSchemeChanged(PlayerInput pi)
     {
         if (pi == null) return;
@@ -69,25 +92,32 @@ public class ControlSchemeHint : MonoBehaviour
         if (newMode != CurrentMode)
         {
             CurrentMode = newMode;
-            UICursorPolicy.Instance?.Apply();
+            // 假設你有這個類別處理政策
+            // UICursorPolicy.Instance?.Apply();
             OnModeChanged?.Invoke(CurrentMode);
         }
 
-        // 原本的 toast 顯示邏輯保留
-        if (CurrentMode == UIInputMode.Gamepad)
-        {
-            label.text = "已切換至 控制器";
-            iconImage.sprite = controller;
-        }
-        else
-        {
-            label.text = "已切換至 鍵盤滑鼠";
-            iconImage.sprite = keyboardMouse;
-        }
-
+        RefreshToastText();
         PlayToastAnimation();
     }
 
+    private void RefreshToastText()
+    {
+        var lang = LocalizationService.Instance != null 
+            ? LocalizationService.Instance.CurrentAppLanguage 
+            : Language.en;
+
+        if (CurrentMode == UIInputMode.Gamepad)
+        {
+            iconImage.sprite = controller;
+            label.text = lang == Language.zh ? "已切換至 控制器" : "Gamepad Connected";
+        }
+        else
+        {
+            iconImage.sprite = keyboardMouse;
+            label.text = lang == Language.zh ? "已切換至 鍵盤滑鼠" : "Keyboard & Mouse Connected";
+        }
+    }
 
     private void PlayToastAnimation()
     {
@@ -122,13 +152,11 @@ public class ControlSchemeHint : MonoBehaviour
 
         if (mode == UIInputMode.Gamepad)
         {
-            // 禁用游標：隱藏並鎖定到中心
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
         }
         else
         {
-            // 啟用游標：顯示並解鎖
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
         }

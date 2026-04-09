@@ -39,6 +39,7 @@ public class SpellManager : MonoBehaviour
     {
         while (_activeEffects.Count > 0)
         {
+            AudioManager.Instance.PlaySFX(SFXType.Recall);
             _activeEffects.Dequeue().OnSpellRecall();
         }
     }

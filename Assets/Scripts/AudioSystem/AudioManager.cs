@@ -124,15 +124,15 @@ public class AudioManager : MonoBehaviour
     {
         if (bgmLibrary.TryGetValue(bgmType, out AudioClip bgmClip))
         {
-            // 若相同音軌正在播放則跳過
             if (bgmSource.clip == bgmClip && bgmSource.isPlaying) return;
 
-            // 使用 Sequence 處理漸層序列
+            // 強制開啟循環
+            bgmSource.loop = true;
+
             Sequence bgmSequence = DOTween.Sequence();
 
             if (bgmSource.isPlaying)
             {
-                // 1. 漸淡出
                 bgmSequence.Append(bgmSource.DOFade(0, fadeDuration).SetEase(Ease.Linear));
                 bgmSequence.AppendCallback(() =>
                 {
@@ -142,18 +142,13 @@ public class AudioManager : MonoBehaviour
             }
             else
             {
-                // 若目前沒音樂，直接初始化新音軌
                 bgmSource.clip = bgmClip;
                 bgmSource.volume = 0;
                 bgmSource.Play();
             }
 
-            // 2. 漸淡入 (目標音量為 1，因為實際音量受 AudioMixer 控制)
+            // 確保無論是否正在播放，最後都會執行淡入
             bgmSequence.Append(bgmSource.DOFade(1, fadeDuration).SetEase(Ease.Linear));
-        }
-        else
-        {
-            Debug.LogWarning($"BGM {bgmType} 未找到！");
         }
     }
 

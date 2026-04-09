@@ -51,7 +51,7 @@ namespace Player
             {
                 PlayerPrefs.DeleteAll();
                 CollectionSystem.ClearCollection();
-                ForTutorialDemo.isTutorialFinished = false;
+                //ForTutorialDemo.isTutorialFinished = false;
                 Time.timeScale = 1;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 return;

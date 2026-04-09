@@ -6,6 +6,9 @@
         Adsorb,
         Throw,
         Interact,
-        RecallSpell
+        RecallSpell,
+        SelectLeft,
+        SelectRight,
+        Dash
     }
 }

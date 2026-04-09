@@ -1004,11 +1004,11 @@ RectTransform:
   - {fileID: 8071192179924886745}
   - {fileID: 3469574982252166153}
   - {fileID: 5795390678879986766}
-  - {fileID: 1811240134717204379}
   - {fileID: 4126614154372764279}
   - {fileID: 4365588212326478424}
   - {fileID: 3786864533282944140}
   - {fileID: 7870263430313046698}
+  - {fileID: 1811240134717204379}
   - {fileID: 573122370137274463}
   - {fileID: 5853579483090992561}
   m_Father: {fileID: 0}
@@ -2717,13 +2717,16 @@ MonoBehaviour:
   spellDataList:
   - type: 1
     icon: {fileID: 21300000, guid: e4abe0a6a8605aa48a1eb68405b7989d, type: 3}
-    spellName: "\u653B\u64CA\u5716\u9A30"
+    ENName: 
+    CHName: 
   - type: 0
     icon: {fileID: 0}
-    spellName: 
+    ENName: 
+    CHName: 
   - type: 0
     icon: {fileID: 0}
-    spellName: 
+    ENName: 
+    CHName: 
   activeColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveColor: {r: 1, g: 1, b: 1, a: 0.5}
   tweenDuration: 0.25

@@ -15,6 +15,7 @@ public enum SFXType
     RockShake,
     Hurt,
     Complete,
+    Recall,
     Explosion,
     EnemyHit,
     Victory,

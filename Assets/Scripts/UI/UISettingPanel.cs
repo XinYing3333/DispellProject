@@ -73,20 +73,20 @@ namespace DefaultNamespace
                 case SettingPanel.Audio:
                     target = audioFirst;
                     audioTitle.color = Color.yellow;
-                    graphicsTitle.color = Color.white;
-                    controlsTitle.color = Color.white;
+                    graphicsTitle.color = Color.black;
+                    controlsTitle.color = Color.black;
                     break;
                 case SettingPanel.Graphics:
                     target = graphicsFirst;   
                     graphicsTitle.color = Color.yellow;
-                    controlsTitle.color = Color.white;
-                    audioTitle.color = Color.white;
+                    controlsTitle.color = Color.black;
+                    audioTitle.color = Color.black;
                     break;
                 case SettingPanel.Controls:
                     target = controlsFirst; 
                     controlsTitle.color = Color.yellow;
-                    graphicsTitle.color = Color.white;
-                    audioTitle.color = Color.white;
+                    graphicsTitle.color = Color.black;
+                    audioTitle.color = Color.black;
                     break;
             }
 

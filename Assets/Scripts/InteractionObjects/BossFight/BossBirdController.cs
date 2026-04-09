@@ -11,7 +11,7 @@ namespace BossFight
     {
         public enum BossState { Idle, Attacking, Stunned }
 
-        [SerializeField] private GameObject demoCanvas;
+        [SerializeField] private DemoShow demoCanvas;
         
         [Header("Refs")]
         [SerializeField] private Transform modelRoot;
@@ -135,7 +135,7 @@ namespace BossFight
         {
             yield return new WaitForSeconds(5f);
             PlayerInputHandler.Instance.SetLockMovement(true);
-            demoCanvas.SetActive(true);
+            demoCanvas.ShowDemoEndPanel();
             Time.timeScale = 0f;
         }
 

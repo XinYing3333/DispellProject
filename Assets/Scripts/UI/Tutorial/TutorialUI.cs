@@ -5,10 +5,12 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using DefaultNamespace.ControlSheme;
+using DefaultNamespace.EventBus.Events.UI;
 using DefaultNamespace.Tutorial;
 using Player; 
 using DG.Tweening;
 using EventBus.Events.Tutorial;
+using UI.Localization;
 
 
 [RequireComponent(typeof(CanvasGroup))]
@@ -39,6 +41,7 @@ public class TutorialUI : MonoBehaviour
     private bool _isStepCompleted = false;
     
     private EventBinding<OnTutorialRequirementMet> _binding;
+    private EventBinding<LanguageChanged> _langBinding;
 
     private void Awake()
     {
@@ -58,16 +61,18 @@ public class TutorialUI : MonoBehaviour
 
         // 2. 訂閱 EventBus 外部邏輯事件
         _binding = new EventBinding<OnTutorialRequirementMet>(OnExternalRequirementMet);
-        EventBus<OnTutorialRequirementMet>.Register(_binding);    }
+        EventBus<OnTutorialRequirementMet>.Register(_binding);
+        _langBinding = new EventBinding<LanguageChanged>(OnLanguageChanged);
+        EventBus<LanguageChanged>.Register(_langBinding);
+    }
 
     private void OnDisable()
     {
         if (ControlSchemeHint.Instance != null)
             ControlSchemeHint.Instance.OnModeChanged -= RefreshIcons;
         
-        if (_binding == null) return; 
         EventBus<OnTutorialRequirementMet>.Deregister(_binding);
-        _binding = null; 
+        EventBus<LanguageChanged>.Deregister(_langBinding); // 解除註冊
     }
 
     public void SetupAndShow(TutorialData data)
@@ -80,9 +85,7 @@ public class TutorialUI : MonoBehaviour
         _metRequirements.Clear();
         if (completionCheckmark) completionCheckmark.SetActive(false);
 
-        // 填充內容
-        titleText.text = data.actionName;
-        descText.text = data.description;
+        RefreshText();
         
         if (data.tutorialVideo != null)
         {
@@ -115,6 +118,25 @@ public class TutorialUI : MonoBehaviour
             }
         }
         if (changed) CheckAllRequirements();
+    }
+    
+    private void OnLanguageChanged(LanguageChanged e)
+    {
+        RefreshText();
+    }
+    
+    // 抽離文字更新邏輯
+    private void RefreshText()
+    {
+        if (currentData == null) return;
+
+        var lang = LocalizationService.Instance != null 
+            ? LocalizationService.Instance.CurrentAppLanguage 
+            : Language.en;
+
+        var content = currentData.GetContent(lang);
+        titleText.text = content.title;
+        descText.text = content.desc;
     }
 
     /// <summary>

@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using DefaultNamespace.EventBus;
+using DefaultNamespace.EventBus.Events.UI;
+using UI.Localization;
 
 public class SpellSelectionUI : MonoBehaviour
 {
@@ -30,11 +33,12 @@ public class SpellSelectionUI : MonoBehaviour
     [SerializeField] private bool showDebug = true;
 
     private Dictionary<SpellType, SpellUIEntry> _uiLookup = new Dictionary<SpellType, SpellUIEntry>();
+    private EventBinding<LanguageChanged> _langBinding;
     
-    // UI 排版快取
     private RectTransform _centerRect, _prevRect, _nextRect;
     private float _origCenterX, _origPrevX, _origNextX;
     private int _lastIndex = -1;
+    private SpellType _currentTypeCache;
 
     private void Awake()
     {
@@ -44,7 +48,6 @@ public class SpellSelectionUI : MonoBehaviour
                 _uiLookup.Add(entry.type, entry);
         }
 
-        // 快取初始座標，作為動畫的絕對歸位點
         _centerRect = centerIcon.rectTransform;
         _prevRect = prevIcon.rectTransform;
         _nextRect = nextIcon.rectTransform;
@@ -60,6 +63,10 @@ public class SpellSelectionUI : MonoBehaviour
         {
             inventory.OnSpellChanged += UpdateUI;
         }
+
+        // 註冊語言切換事件
+        _langBinding = new EventBinding<LanguageChanged>(OnLanguageChanged);
+        EventBus<LanguageChanged>.Register(_langBinding);
     }
 
     private void OnDisable()
@@ -68,16 +75,24 @@ public class SpellSelectionUI : MonoBehaviour
         {
             inventory.OnSpellChanged -= UpdateUI;
         }
+
+        // 解除語言切換事件
+        EventBus<LanguageChanged>.Deregister(_langBinding);
+    }
+
+    private void OnLanguageChanged(LanguageChanged evt)
+    {
+        RefreshText();
     }
 
     private void UpdateUI(SpellType currentType)
     {
+        _currentTypeCache = currentType;
         List<SpellType> spells = inventory.GetUnlockedSpells();
         int currentIndex = spells.IndexOf(currentType);
 
         if (spells.Count == 0) return;
 
-        // 1. 計算滾動方向 (判斷是向左切還是向右切，處理陣列循環)
         int direction = 0;
         if (_lastIndex != -1 && spells.Count > 1)
         {
@@ -87,15 +102,12 @@ public class SpellSelectionUI : MonoBehaviour
         }
         _lastIndex = currentIndex;
 
-        // 2. 計算起始偏移量
-        // 如果切換下一個(direction=1)，所有物件需從「右側」往原位滑動
         float slideDistance = Mathf.Abs(_origNextX - _origCenterX);
         float startOffsetX = (direction == 1) ? slideDistance : (direction == -1 ? -slideDistance : 0f);
 
         int prevIdx = (currentIndex - 1 + spells.Count) % spells.Count;
         int nextIdx = (currentIndex + 1) % spells.Count;
 
-        // 3. 執行替換與動畫
         ExecuteSlotAnimation(centerIcon, _centerRect, spells[currentIndex], true, _origCenterX, startOffsetX);
         
         if (spells.Count > 1)
@@ -111,16 +123,26 @@ public class SpellSelectionUI : MonoBehaviour
             nextIcon.gameObject.SetActive(false);
         }
 
-        if (_uiLookup.ContainsKey(currentType))
-        {
-            spellNameText.text = _uiLookup[currentType].spellName;
-            
-            spellNameText.DOKill();
-            spellNameText.color = new Color(spellNameText.color.r, spellNameText.color.g, spellNameText.color.b, 0f);
-            spellNameText.DOFade(1f, tweenDuration);
-        }
+        RefreshText();
 
-        if (showDebug) Debug.Log($"[SpellUI] 畫面已更新為: {currentType} | 方向: {direction}");
+        if (showDebug) Debug.Log($"[SpellUI] 更新: {currentType} | 方向: {direction}");
+    }
+
+    private void RefreshText()
+    {
+        if (!_uiLookup.ContainsKey(_currentTypeCache)) return;
+
+        var entry = _uiLookup[_currentTypeCache];
+        var lang = LocalizationService.Instance != null 
+            ? LocalizationService.Instance.CurrentAppLanguage 
+            : Language.en;
+
+        spellNameText.text = entry.GetLocalizedName(lang);
+        
+        // 觸發文字淡入動畫
+        spellNameText.DOKill();
+        spellNameText.color = new Color(spellNameText.color.r, spellNameText.color.g, spellNameText.color.b, 0f);
+        spellNameText.DOFade(1f, tweenDuration);
     }
 
     private void ExecuteSlotAnimation(Image img, RectTransform rect, SpellType type, bool isActive, float origX, float startOffsetX)
@@ -128,25 +150,20 @@ public class SpellSelectionUI : MonoBehaviour
         if (_uiLookup.ContainsKey(type))
         {
             img.sprite = _uiLookup[type].icon;
-
             img.DOKill();
             rect.DOKill();
 
-            // 若有偏移，表示發生切換，強制重置錨點 X 至反方向
             if (startOffsetX != 0f)
             {
                 rect.anchoredPosition = new Vector2(origX + startOffsetX, rect.anchoredPosition.y);
             }
 
-            // 動態目標數值
             Color targetColor = isActive ? activeColor : inactiveColor;
             Vector3 targetScale = isActive ? Vector3.one * centerScale : Vector3.one * sideScale;
 
-            // 觸發並行補間：位移歸位 + 縮放 + 顏色變化
             rect.DOAnchorPosX(origX, tweenDuration).SetEase(tweenEase);
             rect.DOScale(targetScale, tweenDuration).SetEase(tweenEase);
             
-            // 處理淡入：如果物件從邊緣進入，將初始透明度設為 0，強化流動感
             if (startOffsetX != 0f)
             {
                 Color startColor = targetColor;
