@@ -53,6 +53,7 @@ public class ObstacleGroup : MonoBehaviour
         if (CameraShakeManager.Instance != null)
         {
             CameraShakeManager.Instance.Shake(shakeForce, globalShakeDelay);
+            RumbleManager.Instance.Rumble(0.4f, 0.8f, 2f);
         }
 
         foreach (Transform fragment in obstacleFragments)

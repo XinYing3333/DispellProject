@@ -114,7 +114,7 @@ namespace Player
         {
             BindEvents(false);
             _playerInput.onControlsChanged -= OnControlsChanged;
-            StopHoldRumble();
+            RumbleManager.Instance.StopPersistentRumble();
         }
 
         // 統一事件綁定管理
@@ -173,7 +173,7 @@ namespace Player
 
         private void UpdateControlSchemeCache()
         {
-            _isGamepadControl = _playerInput.currentControlScheme == "Gamepad";
+            _isGamepadControl = _playerInput.currentControlScheme == "Gamepad" || (Gamepad.current != null);
         }
         
         // 瞬時動作檢查
@@ -229,18 +229,6 @@ namespace Player
                     ? Mathf.Clamp(MoveInput.magnitude, 0.1f, 1f)
                     : (_run.ReadValue<float>() > 0.1f ? 0.5f : 1f);
             }
-
-            if (_isRumbling)
-            {
-                if (!_isGamepadControl || Gamepad.current == null)
-                {
-                    StopHoldRumble();
-                }
-                else
-                {
-                    Gamepad.current.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
-                }
-            }
         }
 
         private void OnPausePerformed(InputAction.CallbackContext ctx)
@@ -271,7 +259,7 @@ namespace Player
 
             if (InputLock)
             {
-                StopHoldRumble();
+                RumbleManager.Instance.StopPersistentRumble();
                 ClearAllGameplayStates();
             }
         }
@@ -300,13 +288,12 @@ namespace Player
             if (InputLock || interaction == null) return;
             IsCollecting = true;
             interaction.Input_StartAbsorbHold();
-            StartHoldRumble(0.15f, 0.30f);
         }
 
         private void OnCollectCanceled(InputAction.CallbackContext ctx)
         {
-            StopHoldRumble();
             IsCollecting = false;
+            
             if (interaction != null)
                 interaction.Input_Drop();
         }
@@ -346,12 +333,13 @@ namespace Player
         private void OnShootPerformed(InputAction.CallbackContext ctx)
         {
             if (InputLock || interaction == null) return;
-
+    
             ShootPressed = true;
             interaction.Input_Throw();
             StartCoroutine(ClearShootFlagNextFrame());
 
-            Rumble(0.3f, 0.7f, 0.1f);
+            if (_isGamepadControl )
+                RumbleManager.Instance.Rumble(0.5f, 0.5f, 0.1f);
         }
 
         private void OnInteractPerformed(InputAction.CallbackContext ctx)
@@ -372,59 +360,5 @@ namespace Player
             ShootPressed = false;
         }
         
-
-        // ========= Rumble =========
-        private bool _isRumbling;
-        private float _rumbleLow;
-        private float _rumbleHigh;
-
-        private void StartHoldRumble(float low, float high)
-        {
-            if (!_isGamepadControl) return;
-            var pad = Gamepad.current;
-            if (pad == null) return;
-
-            _rumbleLow = low;
-            _rumbleHigh = high;
-            _isRumbling = true;
-
-            pad.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
-        }
-
-        private void StopHoldRumble()
-        {
-            _isRumbling = false;
-
-            var pad = Gamepad.current;
-            if (pad != null)
-                pad.SetMotorSpeeds(0f, 0f);
-        }
-
-        private void Rumble(float low, float high, float duration)
-        {
-            if (!_isGamepadControl) return;
-
-            var pad = Gamepad.current;
-            if (pad == null) return;
-
-            pad.SetMotorSpeeds(low, high);
-            StartCoroutine(StopRumbleAfter(duration));
-        }
-
-        private IEnumerator StopRumbleAfter(float t)
-        {
-            yield return new WaitForSecondsRealtime(t);
-
-            if (_isRumbling)
-            {
-                if (Gamepad.current != null)
-                    Gamepad.current.SetMotorSpeeds(_rumbleLow, _rumbleHigh);
-            }
-            else
-            {
-                if (Gamepad.current != null)
-                    Gamepad.current.SetMotorSpeeds(0f, 0f);
-            }
-        }
     }
 }

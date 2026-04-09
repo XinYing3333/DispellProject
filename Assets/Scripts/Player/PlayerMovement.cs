@@ -211,6 +211,7 @@ public class PlayerMovement : MonoBehaviour
     
         anim.SetTrigger("Hurt");
         AudioManager.Instance.PlaySFX(SFXType.Hurt);
+        RumbleManager.Instance.Rumble(0.7f, 0.9f, 0.1f);
     
         if (hurtVFX != null) 
         {

@@ -189,6 +189,9 @@ public void Input_Throw()
 
         _thrower.ThrowToPoint(rb, targetPoint);
         if (throwVFX) throwVFX.Play();
+        
+        RumbleManager.Instance.StopPersistentRumble();
+        RumbleManager.Instance.Rumble(0.6f, 0.6f, 0.1f);
     }
 
     private void ExecuteSpell(Vector3 targetPoint)
@@ -249,6 +252,7 @@ public void Input_Throw()
         if (handSlot && handSlot.HasItem)
             handSlot.Detach();
 
+        RumbleManager.Instance.StopPersistentRumble();
         State = InteractState.Idle;
     }
 
@@ -264,6 +268,7 @@ public void Input_Throw()
         {
             _canCurrentItemBeThrown = canThrow; // 紀錄此物件是否能被投擲
             State = InteractState.ReadyToThrow;
+            RumbleManager.Instance.StartPersistentRumble(0.3f, 0.5f);
             particleVFX?.ForEach(p => p.Stop());
         }
         else

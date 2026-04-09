@@ -64,6 +64,8 @@ public class LandingAttack : IBossAttack
         if (CameraShakeManager.Instance != null)
         {
             CameraShakeManager.Instance.Shake(cfg.shakeForce, 0);
+            RumbleManager.Instance.Rumble(0.4f, 0.8f, 1f);
+
         }
         // ------------------
         

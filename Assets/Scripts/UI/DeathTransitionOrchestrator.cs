@@ -15,7 +15,7 @@ public class DeathTransitionOrchestrator : MonoBehaviour
 
     [Tooltip("死亡瞬間是否做慢動作（TimeScale）")]
     public bool slowMoOnDeath = true;
-    [Range(0.05f, 1f)] public float slowMoScale = 0.2f;
+    [Range(0.05f, 1f)] public float slowMoScale = 0.1f;
 
     [Header("Reload")]
     [SerializeField] private bool reloadSameScene = false;
