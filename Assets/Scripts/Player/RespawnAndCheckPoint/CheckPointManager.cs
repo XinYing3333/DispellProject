@@ -1,81 +1,50 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DefaultExecutionOrder(-1000)]
 public class CheckpointManager : MonoBehaviour
 {
     public static CheckpointManager Instance { get; private set; }
-
-    [Serializable]
-    public struct SaveStruct
-    {
-        public string scene;
-        public string checkpointId;   // 用唯一ID
-        public Vector3 fallbackPos;   // 地圖改動找不到ID時的備援
-        public Vector3 fallbackEuler;
-    }
-
-    private const string LAST_KEY   = "LAST_CHECKPOINT_V2";
-    private const string ACT_PREFIX = "CP_ACT_"; // 是否曾觸發過某 checkpoint
+    
+    // 優化：用 Dictionary 存儲場景內的 CP，避免 FindObjectsOfType
+    private Dictionary<string, CheckpointSetter> _sceneCheckpoints = new();
 
     private void Awake()
     {
-        if (Instance && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
 
-    // ---- 查詢/讀取 ----
-    public bool HasSavedCheckpoint() => PlayerPrefs.HasKey(LAST_KEY);
+    public void RegisterCheckpoint(CheckpointSetter cp) => _sceneCheckpoints[cp.id] = cp;
 
-    public bool TryLoadSavedCheckpoint(out SaveStruct data)
-    {
-        data = default;
-        if (!PlayerPrefs.HasKey(LAST_KEY)) return false;
-        try
-        {
-            data = JsonUtility.FromJson<SaveStruct>(PlayerPrefs.GetString(LAST_KEY));
-            return !string.IsNullOrEmpty(data.scene) && !string.IsNullOrEmpty(data.checkpointId);
-        }
-        catch { return false; }
-    }
+    public bool HasSavedCheckpoint() => !string.IsNullOrEmpty(DataManager.Instance.gameData.lastCheckpointId);
 
-    public bool IsCheckpointActivated(string checkpointId)
-    {
-        return PlayerPrefs.GetInt(ACT_PREFIX + checkpointId, 0) == 1;
-    }
+    public bool IsCheckpointActivated(string id) => DataManager.Instance.gameData.triggeredTutorialIds.Contains("CP_" + id);
 
-    // ---- 寫入（只在第一次踏入該ID時生效） ----
     public bool SaveCheckpointFirstTime(string checkpointId, Transform spawn)
     {
-        if (IsCheckpointActivated(checkpointId)) return false; // 已經記過就不覆寫
+        // 借用 triggeredTutorialIds 來存 CP 是否啟動過，或者你可以在 GameData 加個清單
+        if (IsCheckpointActivated(checkpointId)) return false;
 
-        var data = new SaveStruct
-        {
-            scene        = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
-            checkpointId = checkpointId,
-            fallbackPos  = spawn.position,
-            fallbackEuler= spawn.rotation.eulerAngles
-        };
-
-        var json = JsonUtility.ToJson(data);
-        PlayerPrefs.SetString(LAST_KEY, json);
-        PlayerPrefs.SetInt(ACT_PREFIX + checkpointId, 1);
-        PlayerPrefs.Save();
-
-        Debug.Log($"[Checkpoint] First time reach: {data.scene}:{checkpointId} -> saved to PlayerPrefs");
+        var data = DataManager.Instance.gameData;
+        data.lastSceneName = SceneManager.GetActiveScene().name;
+        data.lastCheckpointId = checkpointId;
+        data.fallbackPos = spawn.position;
+        data.fallbackEuler = spawn.rotation.eulerAngles;
+        
+        data.triggeredTutorialIds.Add("CP_" + checkpointId);
+        
+        DataManager.Instance.SaveToDisk(); // 統一由數據中心存檔
+        Debug.Log($"[Checkpoint] {checkpointId} Saved.");
         return true;
     }
 
-    // ---- 清除 ----
-    public void ClearLastCheckpoint()
+    public CheckpointSetter GetCheckpointById(string id)
     {
-        PlayerPrefs.DeleteKey(LAST_KEY);
-    }
-
-    public void ClearAllActivationFlags()
-    {
-        // 若要全清，建議你另外維護一份所有 checkpointId 清單再逐一刪除
-        Debug.LogWarning("ClearAllActivationFlags: 需要你自行實作遍歷所有ID刪除 ACT_PREFIX。");
+        _sceneCheckpoints.TryGetValue(id, out var cp);
+        return cp;
     }
 }

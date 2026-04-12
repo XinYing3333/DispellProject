@@ -34,16 +34,20 @@ public class RespawnController : MonoBehaviour
         }
 
         // 回 checkpoint
-        if (CheckpointManager.Instance.TryLoadSavedCheckpoint(out var data) &&
-            data.scene == UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)
+        var data = DataManager.Instance.gameData; // 直接從數據中心拿
+        if (!string.IsNullOrEmpty(data.lastCheckpointId) && 
+            data.lastSceneName == UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)
         {
-            if (TryFindCheckpointSpawn(data.checkpointId, out var cpos, out var crot))
+            // 優先找場景內的實體 CheckpointSetter
+            if (TryFindCheckpointSpawn(data.lastCheckpointId, out var cpos, out var crot))
             {
-                PlaceAt(cpos, crot); 
-                return;
+                PlaceAt(cpos, crot);
             }
-            PlaceAt(data.fallbackPos, Quaternion.Euler(data.fallbackEuler));
-            return;
+            else
+            {
+                // 如果場景剛載入還沒找到實體，則使用備援座標
+                PlaceAt(data.fallbackPos, Quaternion.Euler(data.fallbackEuler));
+            }
         }
 
         // 最後用傳入的 fallback（通常是場景 defaultSpawnPoint）
@@ -84,18 +88,16 @@ public class RespawnController : MonoBehaviour
         transform.SetPositionAndRotation(pos, rot);
     }
 
+    // 在 RespawnController 內部修改 TryFindCheckpointSpawn 方法
     private bool TryFindCheckpointSpawn(string checkpointId, out Vector3 pos, out Quaternion rot)
     {
         pos = default; rot = default;
-        var cps = GameObject.FindObjectsOfType<CheckpointSetter>(true);
-        foreach (var cp in cps)
+        var cp = CheckpointManager.Instance.GetCheckpointById(checkpointId);
+        if (cp != null)
         {
-            if (cp.id == checkpointId)
-            {
-                var t = cp.GetSpawnTransform();
-                pos = t.position; rot = t.rotation;
-                return true;
-            }
+            var t = cp.GetSpawnTransform();
+            pos = t.position; rot = t.rotation;
+            return true;
         }
         return false;
     }

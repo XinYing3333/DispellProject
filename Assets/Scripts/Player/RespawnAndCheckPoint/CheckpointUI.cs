@@ -44,15 +44,6 @@ namespace Player.RespawnAndCheckPoint
             _rt = GetComponent<RectTransform>();
         }
 
-
-        private void Update()
-        {
-            if(Input.GetKey(KeyCode.L))
-            {
-                SlideIn();
-            }
-        }
-
         void OnEnable()
         {
             // 記錄顯示位置（目前錨點）

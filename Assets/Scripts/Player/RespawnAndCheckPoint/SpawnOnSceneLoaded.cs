@@ -26,11 +26,12 @@ public class SpawnOnSceneLoaded : MonoBehaviour
         if (!respawn) yield break;
 
         // 1) 嘗試從 PlayerPrefs 還原
-        if (CheckpointManager.Instance.TryLoadSavedCheckpoint(out var data) &&
-            data.scene == SceneManager.GetActiveScene().name)
+        var data = DataManager.Instance.gameData; // 直接從數據中心拿
+        if (!string.IsNullOrEmpty(data.lastCheckpointId) && 
+            data.lastSceneName == SceneManager.GetActiveScene().name)
         {
             // 先找實際 checkpoint 位置
-            if (TryFindCheckpointSpawn(data.checkpointId, out var pos, out var rot))
+            if (TryFindCheckpointSpawn(data.lastCheckpointId, out var pos, out var rot))
             {
                 respawn.PlaceAt(pos, rot);
                 yield break;
