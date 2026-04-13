@@ -19,8 +19,15 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     public bool NeedCollectAnimation => true;
     public bool IsSpellStateActive => false;
 
-    void Start() { timer = Random.Range(minGap, maxGap); }
-
+    void Start() 
+    { 
+        timer = Random.Range(minGap, maxGap);
+        // 如果是手動擺放在場景中的物件，檢查是否已被收集
+        if (_owner == null && DataManager.Instance.gameData.collectedThoughtIds.Contains(persistentId))
+        {
+            gameObject.SetActive(false);
+        }
+    }
     void Update()
     {
         timer -= Time.deltaTime;
@@ -36,25 +43,33 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     {
         _runtimeId = id;
         _owner = owner;
+        // 動態生成的物件在 Init 時檢查
+        if (DataManager.Instance.gameData.collectedThoughtIds.Contains(id))
+        {
+            if (_owner != null) _owner.ReturnThoughToPool(gameObject);
+            else gameObject.SetActive(false);
+        }
     }
 
     public void Collect()
     {
+        string finalId = string.IsNullOrEmpty(_runtimeId) ? persistentId : _runtimeId;
+    
+        // 改為存入 DataManager 的暫存清單
+        if (!DataManager.Instance.gameData.sessionCollectedIds.Contains(finalId))
+        {
+            DataManager.Instance.gameData.sessionCollectedIds.Add(finalId);
+        }
+
         CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
-        
-        if (_owner != null)
-            _owner.ReturnThoughToPool(gameObject);
-        else
-            gameObject.SetActive(false); // 若非 Placer 生成則直接關閉
-        
-        _runtimeId = null;
+    
+        if (_owner != null) _owner.ReturnThoughToPool(gameObject);
+        else gameObject.SetActive(false);
     }
 
-    
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        // 僅在物件位於場景中且沒有 ID 時生成（排除 Prefab 資源本身）
         if (!Application.isPlaying && string.IsNullOrEmpty(persistentId) && !UnityEditor.EditorUtility.IsPersistent(this))
         {
             persistentId = $"{gameObject.scene.name}_{System.Guid.NewGuid().ToString("N").Substring(0, 8)}";

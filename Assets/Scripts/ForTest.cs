@@ -50,7 +50,6 @@ namespace Player
             if (PlayerInputHandler.Instance.SelectPressed)
             {
                 PlayerPrefs.DeleteAll();
-                CollectionSystem.ClearCollection();
                 //ForTutorialDemo.isTutorialFinished = false;
                 Time.timeScale = 1;
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);

@@ -22,7 +22,7 @@ public class CheckpointSetter : MonoBehaviour
         if (CheckpointManager.Instance.SaveCheckpointFirstTime(id, GetSpawnTransform()))
         {
             EventBus<OnCheckpointUpdated>.Raise(new OnCheckpointUpdated());
-            // 這裡可以發送存檔事件給 CollectionSystem
+            CollectionSystem.SaveCollection();
         }
     }
 

@@ -37,7 +37,7 @@ public class CheckpointManager : MonoBehaviour
         
         data.triggeredTutorialIds.Add("CP_" + checkpointId);
         
-        DataManager.Instance.SaveToDisk(); // 統一由數據中心存檔
+        DataManager.Instance.SaveToDisk();
         Debug.Log($"[Checkpoint] {checkpointId} Saved.");
         return true;
     }

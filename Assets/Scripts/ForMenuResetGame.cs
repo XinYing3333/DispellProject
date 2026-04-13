@@ -31,7 +31,6 @@ namespace DefaultNamespace
 
             // 1. 執行重置邏輯
             PlayerPrefs.DeleteAll();
-            CollectionSystem.ClearCollection();
             Time.timeScale = 1;
 
             // 2. 淡入提示 (Alpha: 0 -> 1)

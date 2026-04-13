@@ -99,7 +99,6 @@ public class DemoShow : MonoBehaviour
     public void OnClickReturnMenu()
     {
         PlayerPrefs.DeleteAll();
-        CollectionSystem.ClearCollection();
         Time.timeScale = 1;
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
@@ -108,7 +107,6 @@ public class DemoShow : MonoBehaviour
     public void OnClickQuit()
     {
         PlayerPrefs.DeleteAll();
-        CollectionSystem.ClearCollection();
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
         #else

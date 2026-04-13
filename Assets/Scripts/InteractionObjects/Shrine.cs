@@ -27,11 +27,11 @@ public class Shrine : MonoBehaviour
     {
         if (isPlayerInRange && isReady && PlayerInputHandler.Instance.InteractPressed)
         {
-            PerformHeal();
+            SavePerformHeal();
         }
     }
 
-    void PerformHeal()
+    void SavePerformHeal()
     {
         isReady = false;
         interactUI.SetActive(false);
@@ -41,6 +41,8 @@ public class Shrine : MonoBehaviour
         AudioManager.Instance.PlaySFX(SFXType.PickUp);
 
         _playerHP.FullHeal();
+        CollectionSystem.SaveCollection();
+
 
         StartCoroutine(CooldownRoutine());
     }
