@@ -90,6 +90,7 @@ namespace World
 
             if (doorObject) doorObject.SetActive(false);
             PlayerInputHandler.Instance.SetLockMovement(false);
+            DataManager.Instance.gameData.isTotemDoorDone = true;
             AudioManager.Instance.PlayBGM(BGMType.None);
 
             _running = false;

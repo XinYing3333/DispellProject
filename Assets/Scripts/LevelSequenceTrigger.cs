@@ -88,7 +88,10 @@ public class LevelSequenceTrigger : MonoBehaviour
     public void Play()
     {
         if (Time.time - _lastTime < cooldown) return;
-        if (onlyOnce && (_playedThisSession || HasPlayedPersistent())) return;
+        
+        // 修改：使用 DataManager 檢查是否已觸發過
+        if (onlyOnce && (_playedThisSession || DataManager.Instance.IsTriggered(persistId))) 
+            return;
 
         _lastTime = Time.time;
 
@@ -105,7 +108,12 @@ public class LevelSequenceTrigger : MonoBehaviour
         }
 
         _playedThisSession = true;
-        if (onlyOnce) MarkPlayedPersistent();
+        
+        // 修改：完成後記在 DataManager 的暫存清單中
+        if (onlyOnce && !string.IsNullOrEmpty(persistId))
+        {
+            DataManager.Instance.sessionTriggeredIds.Add(persistId);
+        }
     }
 
     private IEnumerator ExecuteStep(Step s)
@@ -206,18 +214,6 @@ public class LevelSequenceTrigger : MonoBehaviour
                 yield break;
             }
         }
-    }
-
-    private bool HasPlayedPersistent()
-    {
-        if (string.IsNullOrEmpty(persistId)) return false;
-        return PlayerPrefs.GetInt($"seq_played_{persistId}", 0) == 1;
-    }
-
-    private void MarkPlayedPersistent()
-    {
-        if (string.IsNullOrEmpty(persistId)) return;
-        PlayerPrefs.SetInt($"seq_played_{persistId}", 1);
     }
     
     // ---------------- Gizmo 繪製 ----------------

@@ -8,9 +8,13 @@ public class SceneDirector : MonoBehaviour
     public Transform defaultSpawnPoint;
     public GameObject[] tutorialObjects; // 把需要根據進度關閉的教學物件放這
 
+    [SerializeField] private GameObject pangolinIdle, pangolinFollow1, pangolinFollow2, collectPanel;
+    [SerializeField] private GameObject totemDoor;
+
     private void Start()
     {
         StartCoroutine(InitSceneRoutine());
+        
     }
 
     private IEnumerator InitSceneRoutine()
@@ -46,6 +50,19 @@ public class SceneDirector : MonoBehaviour
             if (DataManager.Instance.IsIdTriggered(obj.name)) {
                 obj.SetActive(false); 
             }
+        }
+        
+        if (DataManager.Instance.gameData.isFirstAdsorbDone)
+        {
+            pangolinIdle.SetActive(false);
+            pangolinFollow1.SetActive(true);
+            pangolinFollow2.SetActive(true);
+            collectPanel.SetActive(true);
+        }
+        if (DataManager.Instance.gameData.isTotemDoorDone)
+        {
+            totemDoor.SetActive(false);
+            AudioManager.Instance.PlayBGM(BGMType.None);
         }
 
         // 4. 最後才淡入畫面 (可選)

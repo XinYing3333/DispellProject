@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 using Cinemachine;
 using EventBus.Events.UI;
+using Player;
 
 /// <summary>
 /// Timeline 過場總管：統一處理輸入鎖定、鏡頭切換、可跳過、淡入淡出。
@@ -124,6 +125,7 @@ public class CutsceneManager : MonoBehaviour
         OnTogglePlayerInput?.Invoke(false);
         OnTogglePlayerMovement?.Invoke(false);
         OnStopPlayerVelocity?.Invoke();
+        PlayerInputHandler.Instance.SetLockMovement(false);
 
         // 提升虛擬鏡頭優先級
         int? savedPriority = null;
@@ -198,6 +200,8 @@ public class CutsceneManager : MonoBehaviour
         if (vcam && savedPriority.HasValue) vcam.Priority = savedPriority.Value;
         OnTogglePlayerInput?.Invoke(true);
         OnTogglePlayerMovement?.Invoke(true);
+        PlayerInputHandler.Instance.SetLockMovement(true);
+
 
         onComplete?.Invoke();
         _current = null;

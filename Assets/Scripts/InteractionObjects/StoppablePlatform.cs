@@ -45,6 +45,7 @@ public class StoppablePlatform : MonoBehaviour, ISpellAffectable
             {
                 EventBus<OnTutorialRequirementMet>.Raise(
                     new OnTutorialRequirementMet { Requirement = TutorialRequirementType.ThrowAStoppablePlatform });
+                DataManager.Instance.CommitSessionData();
             }
         }
     }

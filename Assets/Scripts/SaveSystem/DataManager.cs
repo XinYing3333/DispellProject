@@ -21,10 +21,18 @@ public class DataManager : MonoBehaviour
         public List<string> collectedThoughtIds = new();
         public List<string> sessionCollectedIds = new List<string>();
         
+        public List<string> persistentTriggerIds = new List<string>();
         public List<string> defeatedEnemyIds = new();
         
         public Vector3 fallbackPos;
         public Vector3 fallbackEuler;
+        
+        // 關卡狀態記錄
+        public bool isFirstAdsorbDone = false;
+        public bool isTotemCollectSuccessDone = false;
+        public bool isFirstStunDone = false;
+        public bool isFirstCollectEnemyDone = false;
+        public bool isTotemDoorDone = false;
     }
 
     [Serializable]
@@ -45,6 +53,7 @@ public class DataManager : MonoBehaviour
         }
     }
 
+    public HashSet<string> sessionTriggeredIds = new HashSet<string>();
     public GameData gameData = new();
 
     private void Awake()
@@ -69,6 +78,31 @@ public class DataManager : MonoBehaviour
             string json = PlayerPrefs.GetString("SaveSlot_1");
             gameData = JsonUtility.FromJson<GameData>(json);
         }
+    }
+    
+    public void CommitSessionData()
+    {
+        foreach (var id in sessionTriggeredIds)
+        {
+            if (!gameData.persistentTriggerIds.Contains(id))
+                gameData.persistentTriggerIds.Add(id);
+        }
+        sessionTriggeredIds.Clear();
+    
+        // 順便處理之前的念頭暫存搬運 (如果你有這部分邏輯的話)
+        foreach (var id in gameData.sessionCollectedIds)
+        {
+            if (!gameData.collectedThoughtIds.Contains(id))
+                gameData.collectedThoughtIds.Add(id);
+        }
+        gameData.sessionCollectedIds.Clear();
+
+        SaveToDisk();
+    }
+    
+    public bool IsTriggered(string id) 
+    {
+        return gameData.persistentTriggerIds.Contains(id) || sessionTriggeredIds.Contains(id);
     }
     // 提供給各系統檢查進度的簡單介面
     public bool IsIdTriggered(string id) => gameData.triggeredTutorialIds.Contains(id) || gameData.collectedThoughtIds.Contains(id);

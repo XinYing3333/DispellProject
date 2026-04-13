@@ -40,6 +40,13 @@ namespace DefaultNamespace
 
         private void Start()
         {
+            if (DataManager.Instance.gameData.isTotemCollectSuccessDone)
+            {
+                spellSlot.SetActive(true);
+                rockEffect.gameObject.SetActive(false);
+                gameObject.SetActive(false);
+                return;
+            }
             if (slider != null)
             {
                 slider.maxValue = requiredCollect;
@@ -172,7 +179,8 @@ namespace DefaultNamespace
             
             EventBus<OnTutorialRequirementMet>.Raise(
                 new OnTutorialRequirementMet { Requirement = TutorialRequirementType.TotemCollectSuccess });
-            
+            DataManager.Instance.gameData.isTotemCollectSuccessDone = true;
+
             if (rockEffect != null) rockEffect.OnInteract();
 
             DisableObjectState();

@@ -122,6 +122,8 @@ namespace DefaultNamespace
             {
                 EventBus<OnTutorialRequirementMet>.Raise(
                     new OnTutorialRequirementMet { Requirement = TutorialRequirementType.FirstThrowTraffic });
+                DataManager.Instance.CommitSessionData();
+
             }
             if (animator) animator.SetTrigger("Hit");
             SwapMaterials(objectHitMaterials);

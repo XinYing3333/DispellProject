@@ -22,5 +22,7 @@ public class ForTutorialDemo : MonoBehaviour
     {
         EventBus<OnTutorialRequirementMet>.Raise(
             new OnTutorialRequirementMet { Requirement = TutorialRequirementType.FirstAdsorb });
+        DataManager.Instance.gameData.isFirstAdsorbDone = true;
+        DataManager.Instance.CommitSessionData();
     }
 }
