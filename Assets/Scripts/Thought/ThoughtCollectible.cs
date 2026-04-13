@@ -40,9 +40,6 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
 
     public void Collect()
     {
-        if (LevelStateStore.Instance != null)
-            LevelStateStore.Instance.MarkCollectedSession(persistentId);
-
         CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 1);
         
         if (_owner != null)

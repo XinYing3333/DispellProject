@@ -13,7 +13,7 @@ public class DataManager : MonoBehaviour
     {
         // 玩家狀態
         public int hp;
-        public int collectedIdeasCount;
+        public int collectedThoughtCount;
         public List<string> unlockedSpells = new();
         
         // 進度狀態 (ID 系統)

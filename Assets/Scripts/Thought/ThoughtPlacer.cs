@@ -91,10 +91,7 @@ public class ThoughtPlacer : MonoBehaviour
         for (int i = 0; i < thoughPositions.Count; i++)
         {
             string id = spawnIds[i]; // Placer 產生的穩定 ID (scene:placerId:index)
-        
-            if (LevelStateStore.Instance != null && LevelStateStore.Instance.IsCollectedNow(id))
-                continue;
-
+            
             GameObject obj = ThoughtPoolManager.Instance.Get(thoughPositions[i]);
             if (obj != null)
             {
