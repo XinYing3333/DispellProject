@@ -51,8 +51,6 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] private float jumpForce = 10f;
     [SerializeField] private int maxJumpCount = 2;
-    [SerializeField] private PhysicsMaterial defaultMaterial;
-    [SerializeField] private PhysicsMaterial noFrictionMaterial;
 
     [Header("Ground Control (Scheme A)")] [SerializeField, Tooltip("可站立地面最大角度")]
     private float maxGroundAngle = 45f;
@@ -255,9 +253,6 @@ public class PlayerMovement : MonoBehaviour
         _rb.interpolation = RigidbodyInterpolation.Interpolate;
         _rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         _rb.freezeRotation = true;
-
-        if (noFrictionMaterial != null)
-            _col.material = noFrictionMaterial;
     }
 
     private void Start()
@@ -275,7 +270,16 @@ public class PlayerMovement : MonoBehaviour
     {
         if (input.InputLock)
         {
-            anim.Play("idle");
+            // 將所有移動輸入與動畫參數歸零
+            _rawInputMovement = Vector3.zero;
+            _currentSpeed = 0f;
+    
+            anim.SetFloat("Speed", 0f);
+            anim.SetFloat("velocityX", 0f);
+            anim.SetFloat("velocityZ", 0f);
+    
+            // 註：拿掉原本的 anim.Play("idle")，讓 Animator 透過參數自然過渡回 Idle 會更順暢
+
             if (stepVFX != null) stepVFX.Stop();
             AudioManager.Instance.StopSFXLoop();
             return;
@@ -368,12 +372,6 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (PlayerInputHandler.Instance.InputLock)
-        {
-            _rb.linearVelocity = new Vector3(0, _rb.linearVelocity.y, 0);
-            return;
-        }
-
         _touchingWall = false;
         _wallNormal = Vector3.zero;
 
@@ -474,6 +472,11 @@ public class PlayerMovement : MonoBehaviour
             else
             {
                 _rb.AddForce(-currentOnGround * groundBrake, ForceMode.Acceleration);
+
+                if (_rb.linearVelocity.magnitude < 0.5f)
+                {
+                    _rb.linearVelocity = Vector3.zero;
+                }
             }
 
             if (v.y <= 0.01f)
@@ -617,11 +620,14 @@ public class PlayerMovement : MonoBehaviour
     // ==========================================
     private bool IsGrounded(out RaycastHit hit, out float angle)
     {
-        Vector3 origin = transform.position + Vector3.up * 0.1f;
-        if (Physics.Raycast(origin, Vector3.down, out hit, 0.35f, groundLayer, QueryTriggerInteraction.Ignore))
+        Vector3 origin = transform.position + Vector3.up * 0.2f; 
+        if (Physics.Raycast(origin, Vector3.down, out hit, 0.4f, groundLayer, QueryTriggerInteraction.Ignore))
         {
             angle = Vector3.Angle(hit.normal, Vector3.up);
-            return angle <= maxGroundAngle;
+            if (angle <= maxGroundAngle)
+            {
+                return true;
+            }
         }
 
         angle = 999f;
