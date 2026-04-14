@@ -91,8 +91,11 @@ public class ThoughtPlacer : MonoBehaviour
         {
             string id = spawnIds[i]; 
         
-            // 關鍵修改：檢查存檔，若已收集則跳過不生成
-            if (DataManager.Instance.gameData.collectedThoughtIds.Contains(id))
+            // 關鍵修改：必須同時檢查「永久存檔」與「暫存清單」
+            bool isCollected = DataManager.Instance.gameData.collectedThoughtIds.Contains(id) || 
+                               DataManager.Instance.gameData.sessionCollectedIds.Contains(id);
+
+            if (isCollected)
                 continue;
 
             GameObject obj = ThoughtPoolManager.Instance.Get(thoughPositions[i]);
@@ -356,6 +359,15 @@ private static List<Vector3> ResampleBySpacing(List<Vector3> polyline, float spa
             placerId = System.Guid.NewGuid().ToString("N");
             UnityEditor.EditorUtility.SetDirty(this);
         }
+    }
+
+    // 新增：防護機制！如果在編輯器複製了 Placer，可以右鍵點擊腳本重置 ID
+    [ContextMenu("⚠️ 重置此擺放器的 ID (若為複製產生請務必點擊)")]
+    private void RegeneratePlacerID()
+    {
+        placerId = System.Guid.NewGuid().ToString("N");
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log($"<color=green>已經為 {gameObject.name} 生成全新的 Placer ID！</color>");
     }
 #endif
 

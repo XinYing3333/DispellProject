@@ -99,41 +99,50 @@ public class JumpFrictionBypassLite : MonoBehaviour
     private void FixedUpdate()
     {
         bool grounded = IsGroundedSmart(out float slopeDeg);
+        float vy = _rb.linearVelocity.y;
 
-        // ⭐ 起跳判定：上一幀在地面、這幀離地、速度向上
-        // 但如果上一幀是站在「可站坡」上，就不要啟動零摩擦，否則會滑
-        if (_wasGrounded && !grounded && _rb.linearVelocity.y > 0.01f)
+        // 如果不在地面，且不是站在「可站立的斜坡」上，就啟用零摩擦
+        if (!grounded)
         {
-            // 這裡的 slopeDeg 是「這一幀 fallback 射線量到的坡」，起跳那一刻多半量不到
-            // 所以我們在啟動前再量一次，如果是「小坡」就不要開
             if (!IsOnStandableSlope())
             {
                 ActivateNoFriction();
             }
-        }
-
-        float vy = _rb.linearVelocity.y;
-
-        // ⭐ 空中再次獲得向上動量才刷新
-        if (refreshOnUpwardImpulse && !grounded && (vy - _lastVelY) >= impulseThreshold)
-        {
-            ActivateNoFriction();
-        }
-
-        // ⭐ 在啟動狀態下，如果回到「可站坡」就立刻還原，避免在坡上滑
-        if (_active)
-        {
-            _timer -= Time.fixedDeltaTime;
-            if (grounded || _timer <= 0f || IsOnStandableSlope())
+            else
             {
+                // 如果雖然判定為空中，但射線打到了可站立的斜坡（可能只是微小浮空），則恢復摩擦力
                 DeactivateNoFriction();
             }
+        }
+        else
+        {
+            // 在地面上，恢復正常摩擦力
+            DeactivateNoFriction();
         }
 
         _wasGrounded = grounded;
         _lastVelY = vy;
     }
 
+    // 移除原本依賴 Timer 的 Deactivate 邏輯，改為直接切換
+    private void ActivateNoFriction()
+    {
+        var noFric = _pmNoFrictionMat ?? noFrictionMaterialOverride;
+        if (noFric == null) return;
+
+        if (_active) return;
+
+        ApplyMaterial(noFric);
+        _active = true;
+    }
+
+    private void DeactivateNoFriction()
+    {
+        if (!_active) return;
+        
+        ApplyMaterial(GetDefaultMaterialOrNull());
+        _active = false;
+    }
     // -------------------------------------------------
     // 地面偵測：回傳「是否 grounded」+「量到的坡度」
     // -------------------------------------------------
@@ -188,26 +197,7 @@ public class JumpFrictionBypassLite : MonoBehaviour
         }
         return false;
     }
-
-    private void ActivateNoFriction()
-    {
-        var noFric = _pmNoFrictionMat ?? noFrictionMaterialOverride;
-        if (noFric == null) return;
-
-        _timer = Mathf.Max(_timer, noFrictionSeconds);
-        if (_active) return;
-
-        ApplyMaterial(noFric);
-        _active = true;
-    }
-
-    private void DeactivateNoFriction()
-    {
-        ApplyMaterial(GetDefaultMaterialOrNull());
-        _active = false;
-        _timer = 0f;
-    }
-
+    
     private PhysicsMaterial GetDefaultMaterialOrNull()
     {
         return _pmDefaultMat ?? defaultMaterialOverride;

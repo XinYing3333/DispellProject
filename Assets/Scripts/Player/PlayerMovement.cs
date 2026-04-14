@@ -75,7 +75,7 @@ public class PlayerMovement : MonoBehaviour
     private float wallMinAngleFromUp = 80f;
 
     [SerializeField, Tooltip("貼牆力度（越大越黏，沿牆更難脫離）")]
-    private float wallStickStrength = 10f;
+    private float wallStickStrength = 2f;
 
     [SerializeField, Tooltip("貼牆時最大下落速度（做出貼牆滑）")]
     private float wallSlideDownSpeed = 3.5f;

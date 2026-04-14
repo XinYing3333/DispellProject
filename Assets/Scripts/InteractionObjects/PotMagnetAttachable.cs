@@ -69,8 +69,18 @@ public class PotMagnetAttachable : MagnetAttachable
         // 3. 生成念頭 (稍微遠離牆面避免穿模)
         if (thoughtPrefab)
         {
-            Instantiate(thoughtPrefab, hitPoint + hitNormal * 0.5f, Quaternion.identity);
+            GameObject thoughtObj = Instantiate(thoughtPrefab, hitPoint + hitNormal * 0.5f, Quaternion.identity);
+            
+            // 抓取腳本並標記為動態掉落，避免繼承 Prefab 的 ID
+            ThoughtCollectible collectible = thoughtObj.GetComponent<ThoughtCollectible>();
+            if (collectible != null)
+            {
+                collectible.InitAsDynamicDrop();
+            }
         }
+
+        // 4. 銷毀原始陶罐
+        Destroy(gameObject);
 
         // 4. 銷毀原始陶罐
         Destroy(gameObject);

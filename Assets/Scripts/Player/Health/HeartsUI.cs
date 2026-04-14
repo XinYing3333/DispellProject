@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using DG.Tweening;
 
 using EventBus.Events.Health;
+using Player; // 🔽 引入 Player 命名空間以讀取 PlayerInputHandler
 
 [RequireComponent(typeof(RectTransform))]
 public class HeartsUI : MonoBehaviour
@@ -28,6 +29,11 @@ public class HeartsUI : MonoBehaviour
     public float exitDuration = 0.3f;
     [Tooltip("非低血時，顯示後多久自動滑出")]
     public float autoHideDelay = 1.6f;
+    
+    // 🔽 新增：閒置顯示設定
+    [Tooltip("滿血時，閒置多久後自動顯示面板")]
+    public float idleShowDelay = 3.0f;
+    
     [Tooltip("超出可視區的額外距離（像素）")]
     public float offscreenPadding = 60f;
     public Ease enterEase = Ease.OutCubic;
@@ -57,6 +63,10 @@ public class HeartsUI : MonoBehaviour
     private Vector2 _shownPos;      // 進場後的錨點座標
     private Vector2 _hiddenPos;     // 場外座標
     private int _lastHearts = -1;
+
+    // 🔽 新增：閒置狀態追蹤
+    private float _idleTimer = 0f;
+    private bool _isShownByIdle = false;
 
     // Tweens
     private Tween _slideTween;
@@ -91,16 +101,13 @@ public class HeartsUI : MonoBehaviour
             {
                 SlideIn();
 
-                // 🔽 開場時：如果一開始就是滿血就排程隱藏，否則常駐
                 if (IsFullHp())
                     TryAutoHide();
             }
 
-            // 低血心跳照舊
             TryLowHpBeat();
         }
     }
-
 
     void OnDisable()
     {
@@ -120,6 +127,53 @@ public class HeartsUI : MonoBehaviour
         }
     }
 
+    // 🔽 新增：Update 負責監控玩家移動與閒置邏輯
+    private void Update()
+    {
+        // 如果沒有滿血，或者是沒有抓到 PlayerInputHandler，就不執行閒置顯示邏輯
+        if (!IsFullHp() || PlayerInputHandler.Instance == null)
+        {
+            _idleTimer = 0f;
+            _isShownByIdle = false;
+            return;
+        }
+
+        // 判斷玩家是否正在移動 (根據你的 InputHandler 邏輯)
+        bool isMoving = PlayerInputHandler.Instance.MoveInput.sqrMagnitude > 0.01f;
+
+        if (isMoving)
+        {
+            _idleTimer = 0f; // 重置閒置計時器
+
+            // 如果目前面板是因為閒置才顯示的，玩家一移動就收起來
+            if (_isShownByIdle)
+            {
+                _isShownByIdle = false;
+                
+                // 確認目前沒有因為剛補血/開場而在執行 AutoHide (避免搶動畫)
+                if (_autoHideCo == null) 
+                {
+                    SlideOut();
+                }
+            }
+        }
+        else
+        {
+            // 玩家沒有移動，開始計算閒置時間
+            _idleTimer += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+
+            // 當閒置時間達標，且面板還沒被標記為「閒置顯示」時
+            if (_idleTimer >= idleShowDelay && !_isShownByIdle)
+            {
+                _isShownByIdle = true;
+                
+                // 確保不會被原本受傷/補血的自動隱藏蓋過去
+                CancelAutoHide(); 
+                SlideIn();
+            }
+        }
+    }
+
     private void OnHealthChanged(OnHealthChanged e)
     {
         if (!target || e.target != target.gameObject) return;
@@ -130,17 +184,16 @@ public class HeartsUI : MonoBehaviour
         bool hpDecreased = (_lastHearts >= 0 && heartsNow < _lastHearts);
         _lastHearts = heartsNow;
 
-        // 只要有變化就顯示
+        // 只要有變化就顯示 (重置閒置狀態，讓變化邏輯優先)
+        _isShownByIdle = false;
         SlideIn();
 
-        // 低血就跳
         TryLowHpBeat();
 
-        // 🔽 這裡改掉：只有「滿血」才會自動收回去
         if (IsFullHp())
             TryAutoHide();
         else
-            CancelAutoHide();   // 不滿就不要收
+            CancelAutoHide();   
 
         if (hpDecreased)
             PlayHitBounce();
@@ -211,13 +264,11 @@ public class HeartsUI : MonoBehaviour
 
     private static Vector2 CalcHiddenPos(RectTransform rt, SlideFrom from, float padding)
     {
-        // 以父Rect做可視區，將元件推到外面
         var parent = rt.parent as RectTransform;
         Vector2 shown = rt.anchoredPosition;
         Vector2 size = rt.rect.size;
         Vector2 parentSize = parent ? parent.rect.size : size * 2f;
 
-        // 以錨點相對推離。這裡採用保守做法：直接朝方向推到螢幕外 + padding
         switch (from)
         {
             case SlideFrom.Top:
@@ -235,11 +286,9 @@ public class HeartsUI : MonoBehaviour
     // ---------- Hit Bounce ----------
     private void PlayHitBounce()
     {
-        // 終止低血心跳以免互搶縮放，播放後再恢復（若仍低血）
         bool wasLowBeat = IsLowHp();
         if (wasLowBeat) KillBeat();
 
-        // 從1縮到1.0再回到1.0（用Sequence做一個小彈）
         heartImage.rectTransform.DOKill();
         heartImage.rectTransform.localScale = Vector3.one;
         Sequence s = DOTween.Sequence().SetUpdate(useUnscaledTime);
@@ -247,7 +296,6 @@ public class HeartsUI : MonoBehaviour
         s.Append(heartImage.rectTransform.DOScale(1f, hitBounceDuration * 0.4f).SetEase(Ease.OutQuad));
         s.Play();
 
-        // 播完若仍低血，恢復心跳
         if (wasLowBeat && IsLowHp()) StartLowHpBeat();
     }
 
@@ -271,7 +319,6 @@ public class HeartsUI : MonoBehaviour
         t.DOKill();
         t.localScale = Vector3.one;
 
-        // 心跳：1 -> 放大 -> 1 -> 放大 … 無限
         _beatTween = t.DOScale(lowBeatScale, lowBeatPeriod * 0.5f)
             .SetEase(Ease.InOutSine)
             .SetLoops(-1, LoopType.Yoyo)
@@ -303,5 +350,4 @@ public class HeartsUI : MonoBehaviour
             _autoHideCo = null;
         }
     }
-
 }

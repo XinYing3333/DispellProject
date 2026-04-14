@@ -1,16 +1,18 @@
 ﻿using Player.InteractionSystem;
 using UnityEngine;
 
-public class  ThoughtCollectible : MonoBehaviour, ICollectable
+public class ThoughtCollectible : MonoBehaviour, ICollectable
 {
     [SerializeField, HideInInspector] 
     private string persistentId; // 固定的唯一編號
     private string _runtimeId;
     private ThoughtPlacer _owner;
+    
+    private bool _isDynamicDrop = false; // 新增：標記是否為陶罐掉落物
 
     public Animator anim;
-    public string idleSubSM = "IdlePool";  // 子狀態機名稱
-    public int idleCount = 2;//動畫總數，animator clips 命名排列以 0 開始
+    public string idleSubSM = "IdlePool";  
+    public int idleCount = 2;
     public float minGap = 1.8f, maxGap = 4.0f;
     public float crossFade = 0.12f;
     
@@ -19,15 +21,28 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     public bool NeedCollectAnimation => true;
     public bool IsSpellStateActive => false;
 
+    // 給陶罐專用的初始化，賦予隨機ID並跳過存檔檢查
+    public void InitAsDynamicDrop()
+    {
+        _isDynamicDrop = true;
+        _runtimeId = System.Guid.NewGuid().ToString("N");
+        _owner = null;
+    }
+
     void Start() 
     { 
         timer = Random.Range(minGap, maxGap);
+        
+        // 如果是陶罐掉落的，直接放行，不檢查存檔
+        if (_isDynamicDrop) return;
+
         // 如果是手動擺放在場景中的物件，檢查是否已被收集
         if (_owner == null && DataManager.Instance.gameData.collectedThoughtIds.Contains(persistentId))
         {
             gameObject.SetActive(false);
         }
     }
+    
     void Update()
     {
         timer -= Time.deltaTime;
@@ -43,8 +58,13 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     {
         _runtimeId = id;
         _owner = owner;
-        // 動態生成的物件在 Init 時檢查
-        if (DataManager.Instance.gameData.collectedThoughtIds.Contains(id))
+        _isDynamicDrop = false; // 確保 Placer 生成的不被當作掉落物
+
+        // 關鍵：必須同時檢查「永久存檔」與「暫存清單」
+        bool isCollected = DataManager.Instance.gameData.collectedThoughtIds.Contains(id) || 
+                           DataManager.Instance.gameData.sessionCollectedIds.Contains(id);
+
+        if (isCollected)
         {
             if (_owner != null) _owner.ReturnThoughToPool(gameObject);
             else gameObject.SetActive(false);
@@ -55,7 +75,7 @@ public class  ThoughtCollectible : MonoBehaviour, ICollectable
     {
         string finalId = string.IsNullOrEmpty(_runtimeId) ? persistentId : _runtimeId;
     
-        // 改為存入 DataManager 的暫存清單
+        // 存入 DataManager 的暫存清單
         if (!DataManager.Instance.gameData.sessionCollectedIds.Contains(finalId))
         {
             DataManager.Instance.gameData.sessionCollectedIds.Add(finalId);
