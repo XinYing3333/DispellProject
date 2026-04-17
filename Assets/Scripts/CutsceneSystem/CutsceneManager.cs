@@ -36,13 +36,7 @@ public class CutsceneManager : MonoBehaviour
 
     [Header("Skip/控制")]
     [SerializeField] private Key skipKey = Key.Space;
-
-    /// <summary>true=開，false=關</summary>
-    public Action<bool> OnTogglePlayerInput;
-    /// <summary>true=開，false=關</summary>
-    public Action<bool> OnTogglePlayerMovement;
-    /// <summary>清除速度（例如剛切過場時避免滑動）</summary>
-    public Action OnStopPlayerVelocity;
+    
 
     private bool _isPlaying;
     private PlayableDirector _current;
@@ -122,10 +116,7 @@ public class CutsceneManager : MonoBehaviour
         _current = director;
 
         // 鎖玩家
-        OnTogglePlayerInput?.Invoke(false);
-        OnTogglePlayerMovement?.Invoke(false);
-        OnStopPlayerVelocity?.Invoke();
-        PlayerInputHandler.Instance.SetLockMovement(false);
+        PlayerInputHandler.Instance.SetLockMovement(true);
 
         // 提升虛擬鏡頭優先級
         int? savedPriority = null;
@@ -198,9 +189,8 @@ public class CutsceneManager : MonoBehaviour
 
         // 還原鏡頭 & 解鎖
         if (vcam && savedPriority.HasValue) vcam.Priority = savedPriority.Value;
-        OnTogglePlayerInput?.Invoke(true);
-        OnTogglePlayerMovement?.Invoke(true);
-        PlayerInputHandler.Instance.SetLockMovement(true);
+      
+        PlayerInputHandler.Instance.SetLockMovement(false);
 
 
         onComplete?.Invoke();

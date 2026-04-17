@@ -14,10 +14,13 @@ namespace DefaultNamespace
         [SerializeField] private CanvasGroup sliderCanvasGroup;
         [SerializeField] private TotemDiscoveryUI totemUI; 
 
-        [Header("Collect Settings")]
-        [SerializeField] private float requiredCollect = 1f; 
-        [SerializeField] private float addCollectCount = 1f; 
-        [SerializeField] private float autoHideDelay = 0.5f; 
+        [Header("Collect Settings (一段一段吸收)")]
+        [SerializeField] private float requiredCollect = 100f;     // 滿值 100
+        [SerializeField] private float addAmountPerTick = 15f;     // 每次增加 15
+        [SerializeField] private float collectInterval = 0.8f;     // 吸收間隔 0.8 秒
+        [SerializeField, Tooltip("建議大於吸收間隔")] 
+        private float autoHideDelay = 1.5f; // 停止吸收多久後隱藏介面
+        
         [SerializeField] private ObstacleGroup rockEffect;
 
         [Header("VFX & Model Settings")]
@@ -31,9 +34,10 @@ namespace DefaultNamespace
         
         private float currentCollectCount;
         private bool isCompleted = false;
+        
         private float _hideTimer;
+        private float _cooldownTimer; // ★ 新增：控制 0.8 秒間隔的計時器
         private bool _isSliderVisible = false;
-        private bool _isBeingCollected = false;
 
         public bool NeedCollectAnimation => false;
         public bool IsSpellStateActive => false;
@@ -61,12 +65,14 @@ namespace DefaultNamespace
         {
             if (isCompleted) return;
 
-            if (_isBeingCollected)
+            // ★ 永遠都在倒數吸收的冷卻時間
+            if (_cooldownTimer > 0)
             {
-                UpdateProgress();
-                _isBeingCollected = false;
+                _cooldownTimer -= Time.deltaTime;
             }
-            else if (_isSliderVisible)
+
+            // 處理沒有繼續吸收時的 UI 隱藏邏輯
+            if (_isSliderVisible)
             {
                 _hideTimer -= Time.deltaTime;
                 if (_hideTimer <= 0)
@@ -81,28 +87,38 @@ namespace DefaultNamespace
         {
             if (isCompleted) return;
 
-            _isBeingCollected = true;
+            // 只要外部有在呼叫（玩家按住按鍵），就重置隱藏計時器，保持 UI 顯示
             _hideTimer = autoHideDelay;
-            
-            if (collectingVFX != null && !collectingVFX.isPlaying)
-            {
-                collectingVFX.Play();
-            }
-
-            StartShake();
-
             if (!_isSliderVisible)
             {
                 sliderCanvasGroup.DOKill();
                 sliderCanvasGroup.DOFade(1, 0.2f);
                 _isSliderVisible = true;
             }
+
+            // ★ 判斷是否過了 0.8 秒的冷卻時間
+            if (_cooldownTimer <= 0f)
+            {
+                ExecuteSingleCollectTick();
+                
+                // 重置冷卻時間，進入下一個 0.8 秒的等待
+                _cooldownTimer = collectInterval; 
+            }
         }
 
-        private void UpdateProgress()
+        // ★ 新增：單次吸收的具體執行邏輯
+        private void ExecuteSingleCollectTick()
         {
-            currentCollectCount += Time.deltaTime * addCollectCount;
+            currentCollectCount += addAmountPerTick;
             if (slider != null) slider.value = currentCollectCount;
+
+            // 每次吸收時觸發一次特效與震動
+            if (collectingVFX != null)
+            {
+                collectingVFX.Stop(); // 先停掉再播，確保每次都有爆發感
+                collectingVFX.Play();
+            }
+            StartShake();
 
             if (currentCollectCount >= requiredCollect)
             {
@@ -142,7 +158,6 @@ namespace DefaultNamespace
         private void CompleteCollection()
         {
             isCompleted = true;
-            _isBeingCollected = false;
             _isSliderVisible = false;
 
             StopShake();
@@ -160,7 +175,6 @@ namespace DefaultNamespace
             
             CollectionSystem.CollectItem(CollectionSystem.CollectedType.StopSignThough, 1);
             
-            // 優先進入 UI 流程
             if (totemUI != null)
             {
                 totemUI.gameObject.SetActive(true);
@@ -174,7 +188,6 @@ namespace DefaultNamespace
 
         private void FinalizeEffect()
         {
-            // 此處為 UI 消失後的執行點（此時 TimeScale 已恢復 1）
             spellSlot.SetActive(true);
             
             EventBus<OnTutorialRequirementMet>.Raise(
@@ -198,7 +211,10 @@ namespace DefaultNamespace
         public void StopCollect()
         {
             if (isCompleted) return;
-            _isBeingCollected = false;
+            // 當玩家主動放開按鍵時，可以選擇把冷卻時間歸零（這樣下次按會立刻吸收）
+            // 如果你希望放開重按也要等，就把這行註解掉
+            _cooldownTimer = 0f; 
+
             if (collectingVFX != null) collectingVFX.Stop();
             StopShake();
         }

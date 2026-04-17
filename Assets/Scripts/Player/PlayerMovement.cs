@@ -182,7 +182,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private PangolinSpiritFollow spiritFollow2; // 在 Inspector 拉進去
     private bool _lastWeaponState = false;
     private float _weaponHoldTimer = 0f;
-    private const float WeaponHoldDuration = 3f;
+    private const float WeaponHoldDuration = 1f;
     private bool _isAiming;
     private bool _isHoldingWeapon;
     
@@ -270,16 +270,13 @@ public class PlayerMovement : MonoBehaviour
     {
         if (input.InputLock)
         {
-            // 將所有移動輸入與動畫參數歸零
             _rawInputMovement = Vector3.zero;
             _currentSpeed = 0f;
     
             anim.SetFloat("Speed", 0f);
             anim.SetFloat("velocityX", 0f);
             anim.SetFloat("velocityZ", 0f);
-    
-            // 註：拿掉原本的 anim.Play("idle")，讓 Animator 透過參數自然過渡回 Idle 會更順暢
-
+            
             if (stepVFX != null) stepVFX.Stop();
             AudioManager.Instance.StopSFXLoop();
             return;
@@ -370,11 +367,12 @@ public class PlayerMovement : MonoBehaviour
         TrackSafeGround();
     }
 
-    private void FixedUpdate()
+   private void FixedUpdate()
     {
         _touchingWall = false;
         _wallNormal = Vector3.zero;
 
+        // 1. 永遠優先更新地面狀態 (確保空中進入過場時仍可正常落地)
         wasOnGround = isOnGround;
         isOnGround = IsGrounded(out _groundHit, out _groundAngle);
 
@@ -405,6 +403,21 @@ public class PlayerMovement : MonoBehaviour
             _airPeakDownVel = 0f;
         }
 
+        // =========================================================
+        // ★ 極簡版 InputLock 鎖定邏輯：只清水平速度，不干涉物理材質
+        // =========================================================
+        if (input.InputLock)
+        {
+            if (isOnGround)
+            {
+                // 僅清除水平速度，保留 Y 軸重力，並給予貼地力防止滑動
+                _rb.linearVelocity = new Vector3(0f, _rb.linearVelocity.y, 0f);
+                _rb.AddForce(-_groundHit.normal * stickToGroundForce, ForceMode.Acceleration);
+            }
+            return; // 提早結束，阻斷後續所有移動與 Dash
+        }
+
+        // 2. 正常狀態下的行為 (只有未鎖定時才會執行到這裡)
         StepClimbCheck();
 
         if (_dashActive)
@@ -431,7 +444,7 @@ public class PlayerMovement : MonoBehaviour
 
                 ApplySchemeAMovement(landMul);
 
-                if (_wasMoving && !_isAiming && _weaponHoldTimer <= 0) // 加入判斷
+                if (_wasMoving && !_isAiming && _weaponHoldTimer <= 0)
                 {
                     var targetRot = Quaternion.LookRotation(_rawInputMovement);
                     var newRot = Quaternion.Slerp(_rb.rotation, targetRot, turnSpeed * Time.fixedDeltaTime);
@@ -473,9 +486,11 @@ public class PlayerMovement : MonoBehaviour
             {
                 _rb.AddForce(-currentOnGround * groundBrake, ForceMode.Acceleration);
 
-                if (_rb.linearVelocity.magnitude < 0.5f)
+                // ★ 修正抖動：只針對水平速度進行歸零，保留 Y 軸（重力與碰撞推力）
+                Vector3 horizVel = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+                if (horizVel.magnitude < 0.5f)
                 {
-                    _rb.linearVelocity = Vector3.zero;
+                    _rb.linearVelocity = new Vector3(0f, _rb.linearVelocity.y, 0f);
                 }
             }
 

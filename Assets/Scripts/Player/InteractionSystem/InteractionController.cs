@@ -49,9 +49,6 @@ public class InteractionController : MonoBehaviour
     private bool _isAbsorbHeld;
     private bool _canCurrentItemBeThrown;
 
-    private float _weaponHoldTimer = 0f;
-    private const float WeaponHoldDuration = 3f;
-
     public InteractState State { get; private set; } = InteractState.Idle;
 
     private void Awake()
@@ -72,11 +69,33 @@ public class InteractionController : MonoBehaviour
 
     private void Update()
     {
+        if (PlayerInputHandler.Instance.InputLock)
+        {
+            if (_isAbsorbHeld)
+            {
+                particleVFX?.ForEach(p => p.Stop());
+                _isAbsorbHeld = false;
+                if (_absorbRoutine != null)
+                {
+                    StopCoroutine(_absorbRoutine);
+                    _absorbRoutine = null;
+                }
+            }
+        
+            // 停止掃描
+            if (aimAssist) aimAssist.SetScanning(false);
+            return; 
+        }
         UpdateAimScanning();
     }
     
     private void LateUpdate()
     {
+        if (PlayerInputHandler.Instance.InputLock)
+        {
+            if (crosshairRect != null) crosshairRect.gameObject.SetActive(false);
+            return;
+        }
         UpdateAimVisuals();
     }
 
@@ -137,6 +156,7 @@ public class InteractionController : MonoBehaviour
     // 在 Input_Throw 中
 public void Input_Throw()
 {
+    if (PlayerInputHandler.Instance != null && PlayerInputHandler.Instance.InputLock) return;
     if (Time.time - _lastSpellTime < spellCooldown) return;
 
     if (handSlot && handSlot.HasItem)
@@ -213,6 +233,7 @@ public void Input_Throw()
     // ====== 吸收邏輯 (Absorb) ======
     public void Input_StartAbsorbHold()
     {
+        if (PlayerInputHandler.Instance != null && PlayerInputHandler.Instance.InputLock) return;
         particleVFX?.ForEach(p => p.Play());
         if (_isAbsorbHeld) return;
 
