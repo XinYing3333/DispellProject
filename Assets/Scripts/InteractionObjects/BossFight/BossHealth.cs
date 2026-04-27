@@ -14,6 +14,10 @@ public class BossHealth : MonoBehaviour
     // 可供 BossController 監聽的事件
     public System.Action OnDamaged;
     public System.Action OnDead;
+    
+    // 在 BossHealth.cs 中加入以下屬性
+    public int MaxHealth => maxHealth;
+    public int CurrentHealth => _currentHealth;
 
     private void Awake()
     {
