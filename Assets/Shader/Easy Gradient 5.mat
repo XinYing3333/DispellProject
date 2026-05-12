@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4541150849955989398
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 9
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Easy Gradient 5
+  m_Shader: {fileID: -6465566751694194690, guid: 4023d386ca8ea43469f223cb128c7ece, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _ALPHATEST_ON
+  m_InvalidKeywords: []
+  m_LightmapFlags: 1
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2464
+  stringTagMap:
+    RenderType: TransparentCutout
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  - SHADOWCASTER
+  m_LockedProperties: _Color3
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _GroundTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_1203a55f28924de39a8849318569deeb_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_8ba50bbe38314b0d9e5355db1d70639f_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 2109053f61266394c94b6d7001ee1b9d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_dd62107e50954d3d9b4c175611b861fb_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 9abd093d52bcac044bf70bce08bdeae4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_f6bcbda4519145d79aa4c6898b061f1a_Texture_1_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 5caaacd8a50df264ea59fb74a0244c62, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture:
+        m_Texture: {fileID: 2800000, guid: 95d8cbb9db4b0fc4ab56a2924c9f8ef1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureG:
+        m_Texture: {fileID: 2800000, guid: aa84626b1f5f15148a41cac513c4c416, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AlphaClip: 1
+    - _AlphaToMask: 1
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
+    - _CastShadows: 0
+    - _Cull: 0
+    - _Details: -1.09
+    - _DstBlend: 0
+    - _Emission: 1
+    - _Float: 0.5
+    - _GroundDetails: 4.39
+    - _Height: -0.33
+    - _HeightGradient: 0
+    - _MossOffset: 5
+    - _OffsetDetails: 4.62
+    - _QueueControl: 0
+    - _QueueOffset: 14
+    - _ReceiveShadows: 1
+    - _SrcBlend: 1
+    - _Surface: 0
+    - _TexOffset: 6
+    - _TexScale: 5.48
+    - _Texpower: 13.3
+    - _WorkflowMode: 1
+    - _ZTest: 4
+    - _ZWrite: 1
+    - _ZWriteControl: 0
+    m_Colors:
+    - _AmbientPower: {r: 1, g: 1, b: 0, a: 0}
+    - _Color: {r: 0.3563546, g: 0.8301887, b: 0.59891236, a: 0}
+    - _Color2: {r: 0.53362584, g: 0.5566038, b: 0.30193132, a: 0}
+    - _Color3: {r: 0.9245283, g: 0.8940014, b: 0.8940014, a: 1}
+    - _Color4: {r: 0, g: 0, b: 0, a: 0}
+    - _EmissionColor: {r: 0.24528301, g: 0.21265574, b: 0.19090423, a: 0}
+    - _GrassColor: {r: 0.735849, g: 0.46650046, b: 0.33182627, a: 0}
+    - _GroundColor: {r: 0.67207843, g: 0.8490566, b: 0.36445355, a: 0}
+    - _HeightColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 0}
+    - _OffsetMinMax: {r: -0.88, g: 1, b: 0, a: 0}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _RockColor: {r: 0, g: 0, b: 0, a: 0}
+    - _SollColor: {r: 0.9099653, g: 0.95283014, b: 0.39101997, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
