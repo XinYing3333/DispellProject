@@ -50,8 +50,12 @@ public class Step
     [Header("BGM")]
     public BGMType bgm; // 要播放的 AudioSource
 
-    [Header("Tutorial")]
+    [Header("Tutorial")] 
     public TutorialData data;
+     
+    [Header("Video")]
+    [Tooltip("PlayVideo 專用：要播放的 VideoPlayer")]
+    public VideoPlayer videoPlayer;
 }
 
 public enum StepKind
@@ -65,5 +69,6 @@ public enum StepKind
     SetFlag,
     PlaySfx,
     PlayBgm,
-    PlayTutorial
+    PlayTutorial,
+    PlayVideo
 }

@@ -13,13 +13,12 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - DR_GRADIENT_ON
-  - _ALPHATEST_ON
-  - _CELPRIMARYMODE_SINGLE
   - _DETAILMAPBLENDINGMODE_MULTIPLY
   - _GRADIENTSPACE_LOCAL
   - _OUTLINESPACE_SCREEN
   - _TEXTUREBLENDINGMODE_MULTIPLY
   m_InvalidKeywords:
+  - _CELPRIMARYMODE_NONE
   - _UNITYSHADOWMODE_NONE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -88,14 +87,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaClip: 1
+    - _AlphaClip: 0
     - _BaseMapPremultiply: 0
     - _Blend: 0
     - _BumpScale: 1
     - _CameraDistanceImpact: 0
     - _CelExtraEnabled: 0
     - _CelNumSteps: 3
-    - _CelPrimaryMode: 1
+    - _CelPrimaryMode: 0
     - _Cull: 0
     - _Cutoff: 0.043
     - _DetailMapBlendingMode: 0
@@ -171,7 +170,7 @@ Material:
     - _VertexExtrusionSmoothNormals: 0
     - _ZWrite: 0
     m_Colors:
-    - _BaseColor: {r: 0.43921572, g: 0.47450984, b: 0.29411766, a: 1}
+    - _BaseColor: {r: 0.5294118, g: 0.77647066, b: 0.5647059, a: 1}
     - _Color: {r: 0.72156864, g: 0.77647066, b: 0.78823537, a: 1}
     - _ColorCelShadow: {r: 0.38581347, g: 0.38787434, b: 0.9622642, a: 1}
     - _ColorDim: {r: 0.9339623, g: 0.53306335, b: 0.813107, a: 1}

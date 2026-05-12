@@ -101,6 +101,7 @@ Material:
     - _ReceiveShadows: 1
     - _SrcBlend: 1
     - _Surface: 0
+    - _TexOffset: 6
     - _TexScale: 5.8
     - _Texpower: 1
     - _WorkflowMode: 1
@@ -109,12 +110,16 @@ Material:
     - _ZWriteControl: 0
     m_Colors:
     - _Color: {r: 0.8207547, g: 0.73201627, b: 0.6929957, a: 0}
-    - _Color2: {r: 0.81960785, g: 0.6410795, b: 0.6313726, a: 0}
+    - _Color2: {r: 0.735849, g: 0.61942637, b: 0.6143645, a: 0}
     - _Color3: {r: 1, g: 0.9263542, b: 0.8443396, a: 0}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionColor: {r: 0.1792453, g: 0.115833044, b: 0.115833044, a: 0}
+    - _GrassColor: {r: 0.735849, g: 0.46650046, b: 0.33182627, a: 0}
+    - _GroundColor: {r: 0.67207843, g: 0.8490566, b: 0.36445355, a: 0}
     - _HeightColor: {r: 0.735849, g: 0.5935386, b: 0.5935386, a: 0}
     - _OffsetMinMax: {r: -1.48, g: 2.06, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _RockColor: {r: 0, g: 0, b: 0, a: 0}
+    - _SollColor: {r: 0.9099653, g: 0.95283014, b: 0.39101997, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

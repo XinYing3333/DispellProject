@@ -213,6 +213,45 @@ public class LevelSequenceTrigger : MonoBehaviour
                 TutorialManager.Instance.TriggerTutorial(s.data);
                 yield break;
             }
+            case StepKind.PlayVideo:
+            {
+                if (s.videoPlayer == null) yield break;
+
+                // 1. 確保物件被打開並開始播放
+                s.videoPlayer.gameObject.SetActive(true);
+                s.videoPlayer.Play();
+                PlayerInputHandler.Instance.SetLockMovement(true);
+
+                bool isVideoDone = false;
+
+                // 2. 設定事件：當影片播到結尾時，把 isVideoDone 設為 true
+                UnityEngine.Video.VideoPlayer.EventHandler onComplete = (vp) => isVideoDone = true;
+                // 設定事件：如果影片讀取失敗或出錯，也把它當作播完，避免整個流程永遠卡死
+                UnityEngine.Video.VideoPlayer.ErrorEventHandler onError = (vp, msg) => 
+                {
+                    Debug.LogWarning($"[LevelSequence] 影片播放失敗: {msg}");
+                    isVideoDone = true;
+                };
+
+                s.videoPlayer.loopPointReached += onComplete;
+                s.videoPlayer.errorReceived += onError;
+
+                // 3. 核心：在這裡暫停 Coroutine，直到影片播完才會跳出迴圈
+                while (!isVideoDone)
+                {
+                    yield return null;
+                }
+
+                // 4. 善後：拔除事件監聽
+                s.videoPlayer.loopPointReached -= onComplete;
+                s.videoPlayer.errorReceived -= onError;
+
+                PlayerInputHandler.Instance.SetLockMovement(false);
+                // (可選) 影片播完後自動關閉該物件，不需要就註解掉這行
+                s.videoPlayer.gameObject.SetActive(false);
+
+                yield break;
+            }
         }
     }
     

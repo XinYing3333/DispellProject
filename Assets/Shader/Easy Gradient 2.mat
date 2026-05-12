@@ -27,7 +27,7 @@ Material:
   m_ValidKeywords:
   - _ALPHATEST_ON
   m_InvalidKeywords: []
-  m_LightmapFlags: 2
+  m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2464
@@ -65,7 +65,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureG:
-        m_Texture: {fileID: 2800000, guid: 95d8cbb9db4b0fc4ab56a2924c9f8ef1, type: 3}
+        m_Texture: {fileID: 2800000, guid: f51005e0ca62afa49a7d7452b7e16f77, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -93,7 +93,7 @@ Material:
     - _Emission: 1
     - _Float: 0.5
     - _GroundDetails: 4.39
-    - _Height: -0.33
+    - _Height: -0.46
     - _HeightGradient: 0
     - _MossOffset: 5
     - _OffsetDetails: 4.62
@@ -102,7 +102,9 @@ Material:
     - _ReceiveShadows: 1
     - _SrcBlend: 1
     - _Surface: 0
-    - _TexScale: 15.61
+    - _TexOffset: -2.9
+    - _TexScale: -1.39
+    - _Texpower: 38.8
     - _WorkflowMode: 1
     - _ZTest: 4
     - _ZWrite: 1
@@ -111,11 +113,15 @@ Material:
     - _AmbientPower: {r: 1, g: 1, b: 0, a: 0}
     - _Color: {r: 0.3563546, g: 0.8301887, b: 0.59891236, a: 0}
     - _Color2: {r: 0.53362584, g: 0.5566038, b: 0.30193132, a: 0}
-    - _Color3: {r: 0.5471698, g: 0.5423543, b: 0.5136169, a: 1}
+    - _Color3: {r: 0.8113208, g: 0.77475184, b: 0.6467604, a: 1}
     - _Color4: {r: 0, g: 0, b: 0, a: 0}
-    - _EmissionColor: {r: 0.254717, g: 0.21808474, b: 0.19584373, a: 0}
+    - _EmissionColor: {r: 0.23572303, g: 0.25490198, b: 0.19607843, a: 0}
+    - _GrassColor: {r: 0.735849, g: 0.46650046, b: 0.33182627, a: 0}
+    - _GroundColor: {r: 0.67207843, g: 0.8490566, b: 0.36445355, a: 0}
     - _HeightColor: {r: 0.6886792, g: 0.6886792, b: 0.6886792, a: 0}
     - _OffsetMinMax: {r: -0.88, g: 1, b: 0, a: 0}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 0}
+    - _RockColor: {r: 0, g: 0, b: 0, a: 0}
+    - _SollColor: {r: 0.9099653, g: 0.95283014, b: 0.39101997, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

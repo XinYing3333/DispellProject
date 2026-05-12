@@ -7,12 +7,12 @@ INCLUDE globals.ink
 - else:
 #speaker:Wushi
 }
-#audio:default
+#portrait:wushi-shock #audio:default
 //------------------------------
 { lang == "zh":
-    ——！？
+    那是...山神?
 - else:
-    —!? 
+    Is that... the Spirit of the Mountain?
 }
 
 { lang == "zh":
@@ -33,6 +33,19 @@ INCLUDE globals.ink
     Talk about perfect timing.
 }
 
+#layout:layout1
+{ lang == "zh":
+#speaker:鄔詩
+- else:
+#speaker:Wushi
+}
+#portrait:wushi-default #audio:default
+//------------------------------
+{ lang == "zh":
+    你們怎麽會在這裏？
+- else:
+    What are you guys doing here?
+}
 
 { lang == "zh":
     #speaker:黑
@@ -42,27 +55,8 @@ INCLUDE globals.ink
 #portrait:god-1 
 //-------------------------------
 { lang == "zh":
-    這裏的<color=\#FF2424>混亂念頭</color>太過强勢...
+    説來話長...
 - else:
-    The <color=\#FF2424>Chaotic Thoughts</color> here are way too powerful...
-}
-{ lang == "zh":
-    正好可以借他的能力一用！
-- else:
-    We might just have to borrow his power! 
-}
-
-#layout:layout1
-{ lang == "zh":
-#speaker:鄔詩
-- else:
-#speaker:Wushi
-}
-#portrait:wushi-shock #audio:wushi
-//------------------------------
-{ lang == "zh":
-    什麽？？？
-- else:
-    Wait, what???
+    Well...It's complicated.
 }
 -> END

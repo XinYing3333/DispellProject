@@ -95,6 +95,9 @@ public class StepDrawer : PropertyDrawer
             case StepKind.PlayTutorial:
                 Draw("data", "TutorialData", false);
                 break;
+            case StepKind.PlayVideo:
+                Draw("videoPlayer", "VideoPlayer", false);
+                break;
         }
 
         EditorGUI.EndProperty();
@@ -160,6 +163,9 @@ public class StepDrawer : PropertyDrawer
                 break;
             case StepKind.PlayTutorial:
                 total += H("data", false);
+                break;
+            case StepKind.PlayVideo:
+                total += H("videoPlayer", false);
                 break;
         }
 
