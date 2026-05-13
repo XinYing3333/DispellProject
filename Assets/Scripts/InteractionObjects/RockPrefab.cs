@@ -1,61 +1,63 @@
 ﻿using DefaultNamespace.Thought;
 using UnityEngine;
 using Player.InteractionSystem;
-using SpellSystem;
 using DG.Tweening;
 using UnityEngine.Serialization;
 
 namespace DefaultNamespace
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class RockPrefab : MonoBehaviour, IMagnetAttachable, ISpellAffectable, IThrowable
+    public class RockPrefab : MonoBehaviour, IMagnetAttachable, IThrowable
     {
         [Header("Status")]
-        [SerializeField] private bool isStopped = false;
         [SerializeField] private ThrowProjectile _currentProjectile;
         [SerializeField] private ThoughtPayloadSO _requiredPayloadSo;
 
         [Header("Visual Settings")]
         [SerializeField] private MeshRenderer targetRenderer;
         [SerializeField] private Material[] normalMaterials;
-        [SerializeField] private Material[] spellHitMaterials;
         
         [Header("VFX")]
         [SerializeField] private ParticleSystem hitVFX;
 
         private Rigidbody _rb;
-        private int _originalLayer;
         private int _interactionLayer;
         private int _hitTargetLayer;
+        private bool _isThrown = false;
         
-        public bool CanAttach => isStopped;
+        // 只要未被投擲即可吸附
+        public bool CanAttach => !_isThrown;
 
         private void Awake()
         {
             _rb = GetComponent<Rigidbody>();
             _interactionLayer = LayerMask.NameToLayer("InteractionMask");
             _hitTargetLayer = LayerMask.NameToLayer("Target");
-            _originalLayer = _hitTargetLayer;
+
+            // 預設配置於可互動層
+            gameObject.layer = _interactionLayer;
 
             if (targetRenderer != null && normalMaterials.Length == 0)
             {
-                // 這裡使用 materials 而非 sharedMaterials 避免污染 Editor 資源
                 normalMaterials = targetRenderer.materials;
+            }
+            
+            // 直接寫入 Payload，無須等待法術觸發
+            if (_currentProjectile != null) 
+            {
+                _currentProjectile.payload = _requiredPayloadSo;
             }
         }
 
         private void OnDisable()
         {
-            // 當物件被收回池中時，重設所有狀態
             ResetRockState();
         }
 
         private void ResetRockState()
         {
-            isStopped = false;
-            if (_currentProjectile != null) _currentProjectile.payload = null;
-            
-            gameObject.layer = _originalLayer;
+            _isThrown = false;
+            gameObject.layer = _interactionLayer;
             SwapMaterials(normalMaterials);
 
             if (_rb != null)
@@ -69,29 +71,6 @@ namespace DefaultNamespace
             
             transform.SetParent(null);
         }
-
-        #region ISpellAffectable (靜止念頭邏輯)
-        public void OnSpellHit(SpellType spellType, Vector3 hitPoint)
-        {
-            if (spellType == SpellType.StopSpell)
-            {
-                isStopped = true;
-                if (_currentProjectile != null) _currentProjectile.payload = _requiredPayloadSo;
-                gameObject.layer = _interactionLayer;
-                
-                if (hitVFX) hitVFX.Play();
-                SwapMaterials(spellHitMaterials);
-            }
-        }
-
-        public void OnSpellRecall()
-        {
-            isStopped = false;
-            if (_currentProjectile != null) _currentProjectile.payload = null;
-            gameObject.layer = _hitTargetLayer;
-            SwapMaterials(normalMaterials);
-        }
-        #endregion
 
         #region IMagnetAttachable (吸附邏輯)
         public void OnMagnetAttached(Transform parent)
@@ -108,12 +87,9 @@ namespace DefaultNamespace
             if (!_rb) return;
             transform.SetParent(null, true);
             
-            if (!isStopped)
-            {
-                _rb.isKinematic = false;
-                _rb.useGravity = true;
-                _rb.detectCollisions = true;
-            }
+            _rb.isKinematic = false;
+            _rb.useGravity = true;
+            _rb.detectCollisions = true;
         }
         #endregion
 
@@ -127,8 +103,8 @@ namespace DefaultNamespace
             _rb.useGravity = true;
             _rb.detectCollisions = true;
             
-            isStopped = false;
-            gameObject.layer = _originalLayer;
+            _isThrown = true;
+            gameObject.layer = _hitTargetLayer; // 投擲後轉換為 Target 層以正確觸發碰撞判定
             SwapMaterials(normalMaterials);
         }
         #endregion
@@ -141,21 +117,36 @@ namespace DefaultNamespace
 
         private void OnCollisionEnter(Collision collision)
         {
-            var hitReceiver = collision.gameObject.GetComponentInParent<IHitReceiver>();
+            if (collision.gameObject.CompareTag("Player")) return;
 
-            if (hitReceiver != null)
+            bool isBoss = collision.gameObject.CompareTag("boss");
+    
+            if (_isThrown)
             {
-                // 2. 觸發 Boss 的受傷邏輯並傳遞 Payload (這裡傳遞石頭自帶的 Payload)
-                hitReceiver.OnHit(_requiredPayloadSo);
+                if (isBoss)
+                {
+                    var hitReceiver = collision.gameObject.GetComponentInParent<IHitReceiver>();
+                    if (hitReceiver != null)
+                    {
+                        hitReceiver.OnHit(_requiredPayloadSo);
+                    }
+                }
+        
+                Shatter();
+            }
+            else
+            {
+                if (isBoss)
+                {
+                    Shatter();
+                }
+            }
+        }
 
-                // 3. 回收石頭
-                LandingAttack.ReturnRockToPool(this.gameObject);
-            }
-            // 碰撞 Boss 後回收至物件池，而非 Destroy
-            if (collision.gameObject.CompareTag("boss"))
-            {
-                LandingAttack.ReturnRockToPool(this.gameObject);
-            }
+        private void Shatter()
+        {
+            if (hitVFX) hitVFX.Play();
+            LandingAttack.ReturnRockToPool(gameObject);
         }
     }
 }

@@ -2,12 +2,13 @@ using System.Collections;
 using DefaultNamespace.Thought;
 using Player;
 using Player.InteractionSystem;
+using SpellSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace BossFight
 {
-    public class BossBirdController : MonoBehaviour ,IHitReceiver
+    public class BossBirdController : MonoBehaviour ,IHitReceiver,ISpellAffectable
     {
         public enum BossState { Idle, Attacking, Stunned }
 
@@ -102,14 +103,23 @@ namespace BossFight
             }
         }
         
-        private void OnBossDamaged()
+        private void OnBossDamaged(bool isStun)
         {
-            Debug.Log("Boss 受到攻擊！");
-            if(isStunned)return;
-            anim.Play("birld-ani-damage");
-            StopAllCoroutines(); // 可選：停止攻擊行為
-            StartCoroutine(ResumeLoop());
+            Debug.Log($"Boss 受到攻擊！(觸發硬直: {isStun})");
+
+            // 狀態：輕擊（如法術）。僅扣除血量，不影響當前攻擊協程與動畫運作。
+            if (!isStun) return;
+
+            // 狀態：重擊（如石頭）。避免連續硬直覆寫。
+            if (isStunned) return;
+
+            // 執行硬直中斷邏輯
             isStunned = true;
+            anim.Play("birld-ani-damage");
+    
+            // 強制中止 Phase1Loop 與所有關聯攻擊行為
+            StopAllCoroutines(); 
+            StartCoroutine(ResumeLoop());
         }
 
         private IEnumerator ResumeLoop()
@@ -142,16 +152,24 @@ namespace BossFight
         public void OnHit(ThoughtPayloadSO payload)
         {
             if (payload == null) return;
-            //bossHealth.TakeDamage(1);
             if (payload == requiredWeakness)
             {
-                bossHealth.TakeDamage(1);
-                // 觸發受傷特效或音效
+                bossHealth.TakeDamage(10);
             }
             else
             {
                 Debug.Log("念頭屬性不符，無效攻擊");
             }
+        }
+
+        public void OnSpellHit(SpellType spellType, Vector3 hitPoint)
+        {
+            bossHealth.TakeDamage(1,false);
+        }
+
+        public void OnSpellRecall()
+        {
+            
         }
     }
 }

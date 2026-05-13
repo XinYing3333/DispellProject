@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using BossFight;
+using DG.Tweening;
 using Object = UnityEngine.Object;
 
 public class LandingAttack : IBossAttack
@@ -101,15 +102,31 @@ public class LandingAttack : IBossAttack
         {
             float angle = i * angleStep + UnityEngine.Random.Range(0f, 30f);
             Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * cfg.rockSpawnRadius;
-            Vector3 spawnPos = center + offset;
+            Vector3 targetPos = center + offset;
             
-            if (Physics.Raycast(spawnPos + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f, LayerMask.GetMask("Ground")))
+            // 射線檢測確定實際地面高度
+            if (Physics.Raycast(targetPos + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f, LayerMask.GetMask("Ground")))
             {
-                spawnPos = hit.point;
+                targetPos = hit.point;
             }
 
-            GameObject rock = GetRockFromPool(spawnPos);
+            // 起點設為 Boss 落下點的稍高處 (模擬從身體噴出)
+            Vector3 startPos = center + Vector3.up * 2f;
+            GameObject rock = GetRockFromPool(startPos);
             activeRocks.Add(rock);
+
+            // 動畫參數隨機化，打亂整齊感
+            float jumpDuration = 0.5f + UnityEngine.Random.Range(0f, 0.2f);
+            float jumpPower = 3f + UnityEngine.Random.Range(0f, 1.5f);
+            
+            // 中止物件上可能殘留的 Tween，防止池化重複利用時發生衝突
+            rock.transform.DOComplete();
+
+            // 拋物線位移與隨機空翻
+            rock.transform.DOJump(targetPos, jumpPower, 1, jumpDuration).SetEase(Ease.Linear);
+            rock.transform.DORotate(new Vector3(Random.Range(180, 360), Random.Range(180, 360), 0), jumpDuration, RotateMode.FastBeyond360)
+                .SetRelative()
+                .SetEase(Ease.OutQuad);
         }
     }
 
