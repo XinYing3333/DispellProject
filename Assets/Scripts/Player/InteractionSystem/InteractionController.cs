@@ -57,7 +57,8 @@ public class InteractionController : MonoBehaviour
         {
             ArcMode = arcMode,
             OrientToVelocity = true,
-            UseGravity = true
+            UseGravity = true,
+            LaunchAngleDegrees = 45f // 新增此參數調校：控制無目標時的拋物線高度（數值越大越仰天高拋）
         };
 
         if (collector)
@@ -207,9 +208,11 @@ public void Input_Throw()
         rb.isKinematic = false;
         rb.GetComponentInParent<IThrowable>()?.OnBeforeThrow();
 
-        _thrower.ThrowToPoint(rb, targetPoint);
+        // 傳入 false，啟用無目標高拋
+        _thrower.ThrowToPoint(rb, targetPoint, false); 
+    
         if (throwVFX) throwVFX.Play();
-        
+    
         RumbleManager.Instance.StopPersistentRumble();
         RumbleManager.Instance.Rumble(0.6f, 0.6f, 0.1f);
     }
@@ -226,7 +229,9 @@ public void Input_Throw()
                 spellCmp.SetTarget(aimAssist.CurrentTarget.transform);
         }
 
-        _thrower.ThrowToPoint(rb, targetPoint);
+        // 傳入 true，強制使法術在無目標時保留原本的射擊樣子
+        _thrower.ThrowToPoint(rb, targetPoint, true); 
+    
         if (throwVFX) throwVFX.Play();
     }
 

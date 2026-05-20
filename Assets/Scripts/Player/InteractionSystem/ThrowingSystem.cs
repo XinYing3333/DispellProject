@@ -120,12 +120,25 @@ public class ThrowingSystem
 
     private Vector3 FallbackFixedAngle(Transform player)
     {
-        // 取得相機或玩家的原始方向（包含垂直分量）
-        Vector3 lookDir = aimAssist ? aimAssist.GetAimDirection() : (player ? player.forward : Vector3.forward);
+        // 1. 取得發射基準方向（優先用 aimAssist 的射擊方向，其次用玩家前方）
+        Vector3 baseLookDir = aimAssist ? aimAssist.GetAimDirection() : (player ? player.forward : Vector3.forward);
 
-        // 修正：不再強行轉為水平，而是以當前方向為基礎，至少維持最低仰角
-        float speed = throwSpeed;
-        return EnforceMinPitch(lookDir * speed, MinPitchDeg);
+        // 2. 抽離出水平面上的二維方向，消除相機垂直仰俯角的干擾
+        Vector3 flatForward = new Vector3(baseLookDir.x, 0f, baseLookDir.z).normalized;
+        if (flatForward.sqrMagnitude < 1e-5f)
+        {
+            flatForward = player ? player.forward : Vector3.forward;
+        }
+
+        // 3. 使用 LaunchAngleDegrees 作為無目標時的強制拋射仰角
+        // 建議將 LaunchAngleDegrees 設在 40 到 50 度之間，會產生極為明顯的高拋弧線
+        float angleRad = LaunchAngleDegrees * Mathf.Deg2Rad;
+
+        // 4. 合成新的發射向量（水平前向分量 + 垂直向上分量）
+        Vector3 launchDirection = flatForward * Mathf.Cos(angleRad) + Vector3.up * Mathf.Sin(angleRad);
+
+        // 5. 乘上投擲速度輸出
+        return launchDirection * throwSpeed;
     }
 
     private static bool TrySolveBallisticWithPitchLimits(
@@ -278,7 +291,7 @@ public class ThrowingSystem
         return new Vector3(xz.x, newY, xz.y);
     }
 
-    public void ThrowToPoint(Rigidbody rb, Vector3 targetPoint)
+    public void ThrowToPoint(Rigidbody rb, Vector3 targetPoint, bool isSpell = false)
     {
         if (!rb) return;
         rb.isKinematic = false;
@@ -286,17 +299,26 @@ public class ThrowingSystem
 
         Vector3 origin = throwOrigin ? throwOrigin.position : rb.position;
 
-        // 1. 嘗試彈道解算
+        // 1. 嘗試進行精確彈道解算
         bool ok = TrySolveBallisticWithPitchLimits(
             origin, targetPoint, throwSpeed,
             PreferHighArc, MinPitchDeg, MaxPitchDeg, true,
             out Vector3 v0, out _, out _);
 
-        // 2. 修正：若解算失敗（disc < 0），直接直線射向目標點
+        // 2. 解算失敗（無目標或超出射程）時的分流邏輯
         if (!ok)
         {
-            Vector3 direction = (targetPoint - origin).normalized;
-            v0 = direction * throwSpeed;
+            if (isSpell)
+            {
+                // 法術模式：保留原本設計，直接沿著朝向直線射向目標點（變平、拉直）
+                Vector3 direction = (targetPoint - origin).normalized;
+                v0 = direction * throwSpeed;
+            }
+            else
+            {
+                // 實體物品模式：退回到高拋弧線，優化追尾視角可視性
+                v0 = FallbackFixedAngle(null);
+            }
         }
 
 #if UNITY_6000_0_OR_NEWER

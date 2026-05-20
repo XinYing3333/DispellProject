@@ -112,29 +112,26 @@ public class LandingAttack : IBossAttack
         for (int i = 0; i < countToSpawn; i++)
         {
             float angle = i * angleStep + UnityEngine.Random.Range(0f, 30f);
-            Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * cfg.rockSpawnRadius;
+            Vector3 dir = Quaternion.Euler(0, angle, 0) * Vector3.forward;
+            Vector3 offset = dir * cfg.rockSpawnRadius;
             Vector3 targetPos = center + offset;
 
-            // 射線檢測確定實際地面高度
-            if (Physics.Raycast(targetPos + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f,
-                    LayerMask.GetMask("Ground")))
+            if (Physics.Raycast(targetPos + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f, LayerMask.GetMask("Ground")))
             {
                 targetPos = hit.point;
             }
 
-            // 起點設為 Boss 落下點的稍高處 (模擬從身體噴出)
-            Vector3 startPos = center + Vector3.up * 2f;
+            // 【修改點】起點不再是 center，而是沿著噴發方向(dir)往外推 2.5 單位（請根據 Boss 體型調整），避開 hitbox
+            float safeOffsetRadius = 2.5f; 
+            Vector3 startPos = center + (dir * safeOffsetRadius) + Vector3.up * 1.5f;
+    
             GameObject rock = GetRockFromPool(startPos);
             activeRocks.Add(rock);
 
-            // 動畫參數隨機化，打亂整齊感
             float jumpDuration = 0.5f + UnityEngine.Random.Range(0f, 0.2f);
             float jumpPower = 3f + UnityEngine.Random.Range(0f, 1.5f);
 
-            // 中止物件上可能殘留的 Tween，防止池化重複利用時發生衝突
             rock.transform.DOComplete();
-
-            // 拋物線位移與隨機空翻
             rock.transform.DOJump(targetPos, jumpPower, 1, jumpDuration).SetEase(Ease.Linear);
             rock.transform.DORotate(new Vector3(Random.Range(180, 360), Random.Range(180, 360), 0), jumpDuration,
                     RotateMode.FastBeyond360)
