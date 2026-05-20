@@ -17,6 +17,8 @@ public class LandingAttack : IBossAttack
     private static List<GameObject> activeRocks = new List<GameObject>();
     private const int MAX_ROCKS_ON_FIELD = 6;
 
+    private LandingTelegraph _activeTelegraph;
+
     public LandingAttack(LandingConfig cfg, LandingTelegraph telegraphPrefab, Health playerHP)
     {
         this.cfg = cfg;
@@ -29,60 +31,69 @@ public class LandingAttack : IBossAttack
         Vector3 playerPos = C.Player.position;
         Vector3 landPoint = C.Services.GetGroundBelow(playerPos) + Vector3.up * C.Owner.groundOffset;
 
-        // 預警處理
         bool telegraphDone = false;
-        var tele = LandingTelegraph.Spawn(landPoint - Vector3.up * C.Owner.groundOffset, telegraphPrefab,
+
+        _activeTelegraph = LandingTelegraph.Spawn(landPoint - Vector3.up * C.Owner.groundOffset, telegraphPrefab,
             cfg.telegraphTime, cfg.telegraphStartRadius, cfg.telegraphEndRadius);
 
-        if (tele != null)
+        if (_activeTelegraph != null)
         {
-            tele.OnTelegraphFinished += () => telegraphDone = true;
+            _activeTelegraph.OnTelegraphFinished += () => telegraphDone = true;
         }
         else
         {
-            telegraphDone = true; // 防錯：若 Spawn 失敗直接繼續
+            telegraphDone = true;
         }
 
-        // 預熱移動
         float preAlignTime = cfg.telegraphTime * 0.8f;
         yield return new WaitForSeconds(preAlignTime);
         yield return C.Services.MoveHorizontalTo(C.ModelRoot, landPoint + Vector3.up * cfg.hoverHeight, 35f);
 
-        // 等待預警結束
-        float timeout = 2f; // 安全計時器避免卡死
+        float timeout = 2f; 
         while (!telegraphDone && timeout > 0)
         {
             timeout -= Time.deltaTime;
             yield return null;
         }
 
-        // 瞬間砸下
+        // 刪除此處的 _activeTelegraph = null; 確保下墜期間遭中斷時仍保有參照
+
         C.Anim.Play("bird-glide-ani");
         yield return C.Services.MoveTo(C.ModelRoot, landPoint, cfg.descendSpeed * 1.5f);
 
-        // --- 加入特效位置 ---
         if (cfg.landVFXPrefab) cfg.landVFXPrefab.Play();
         if (CameraShakeManager.Instance != null)
         {
             CameraShakeManager.Instance.Shake(cfg.shakeForce, 0);
             RumbleManager.Instance.Rumble(0.4f, 0.8f, 1f);
-
         }
-        // ------------------
-        
-        // 傷害與生成石頭
+
         C.Services.DoLandingAoE(landPoint, cfg.landAoERadius, cfg.landAoEDamage, playerHP);
-        
-        // 執行生成邏輯 (只有在數量未達上限時才生成)
-        CleanActiveRocksList(); // 先清理已被外部銷毀的無效引用
+
+        CleanActiveRocksList();
         SpawnRocks(landPoint);
 
-        // 硬直
+        // 攻擊落地判定完成後，手動銷毀預警並釋放參照
+        if (_activeTelegraph != null)
+        {
+            Object.Destroy(_activeTelegraph.gameObject);
+            _activeTelegraph = null;
+        }
+
         yield return new WaitForSeconds(cfg.stunDuration);
-        
-        // 飛回高度
+
         C.Anim.Play("bird-fly-ani");
         yield return C.Services.MoveVerticalTo(C.ModelRoot, landPoint.y + cfg.hoverHeight, cfg.riseSpeed);
+    }
+
+    // 供外部強制中斷並清理殘留物件的方法
+    public void Interrupt()
+    {
+        if (_activeTelegraph != null)
+        {
+            Object.Destroy(_activeTelegraph.gameObject);
+            _activeTelegraph = null;
+        }
     }
 
     private void SpawnRocks(Vector3 center)
@@ -91,7 +102,7 @@ public class LandingAttack : IBossAttack
 
         // 計算剩餘額度，隨機生成數量不得超過上限
         int remainingQuota = MAX_ROCKS_ON_FIELD - activeRocks.Count;
-        int randCount = UnityEngine.Random.Range(0, 4); 
+        int randCount = UnityEngine.Random.Range(0, 4);
         int countToSpawn = Mathf.Min(randCount, remainingQuota);
 
         if (countToSpawn <= 0) return;
@@ -103,9 +114,10 @@ public class LandingAttack : IBossAttack
             float angle = i * angleStep + UnityEngine.Random.Range(0f, 30f);
             Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * cfg.rockSpawnRadius;
             Vector3 targetPos = center + offset;
-            
+
             // 射線檢測確定實際地面高度
-            if (Physics.Raycast(targetPos + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f, LayerMask.GetMask("Ground")))
+            if (Physics.Raycast(targetPos + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 10f,
+                    LayerMask.GetMask("Ground")))
             {
                 targetPos = hit.point;
             }
@@ -118,13 +130,14 @@ public class LandingAttack : IBossAttack
             // 動畫參數隨機化，打亂整齊感
             float jumpDuration = 0.5f + UnityEngine.Random.Range(0f, 0.2f);
             float jumpPower = 3f + UnityEngine.Random.Range(0f, 1.5f);
-            
+
             // 中止物件上可能殘留的 Tween，防止池化重複利用時發生衝突
             rock.transform.DOComplete();
 
             // 拋物線位移與隨機空翻
             rock.transform.DOJump(targetPos, jumpPower, 1, jumpDuration).SetEase(Ease.Linear);
-            rock.transform.DORotate(new Vector3(Random.Range(180, 360), Random.Range(180, 360), 0), jumpDuration, RotateMode.FastBeyond360)
+            rock.transform.DORotate(new Vector3(Random.Range(180, 360), Random.Range(180, 360), 0), jumpDuration,
+                    RotateMode.FastBeyond360)
                 .SetRelative()
                 .SetEase(Ease.OutQuad);
         }
@@ -144,7 +157,7 @@ public class LandingAttack : IBossAttack
                 return rock;
             }
         }
-        
+
         rock = Object.Instantiate(cfg.rockPrefab, position, Quaternion.Euler(0, UnityEngine.Random.Range(0, 360f), 0));
         return rock;
     }

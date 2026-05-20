@@ -122,14 +122,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89134aa60b7a4b23abd918ef30e224a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isStopped: 0
   _currentProjectile: {fileID: 988195882083998484}
   _requiredPayloadSo: {fileID: 11400000, guid: 5644b305aada2004388416e35b771401, type: 2}
   targetRenderer: {fileID: 7220617675251710849}
   normalMaterials: []
-  spellHitMaterials:
-  - {fileID: 2100000, guid: 43198036ec7b48c40ba682eaff054478, type: 2}
   hitVFX: {fileID: 5880797563141009103, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
+  fracturedPrefab: {fileID: 5743121442316693129, guid: 36c8d987866175c45891565053119abc, type: 3}
+  fadeDelay: 1.5
+  shrinkDuration: 0.5
 --- !u!114 &988195882083998484
 MonoBehaviour:
   m_ObjectHideFlags: 0

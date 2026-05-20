@@ -17,15 +17,19 @@ namespace DefaultNamespace
         [SerializeField] private MeshRenderer targetRenderer;
         [SerializeField] private Material[] normalMaterials;
         
-        [Header("VFX")]
+        [Header("VFX & Break Effects")]
         [SerializeField] private ParticleSystem hitVFX;
+        [Tooltip("包含獨立碎片剛體的破碎預製物件")]
+        [SerializeField] private GameObject fracturedPrefab; 
+        [SerializeField] private float fadeDelay = 1.5f;
+        [SerializeField] private float shrinkDuration = 0.5f;
 
         private Rigidbody _rb;
         private int _interactionLayer;
         private int _hitTargetLayer;
         private bool _isThrown = false;
+        private Vector3 _originalScale;
         
-        // 只要未被投擲即可吸附
         public bool CanAttach => !_isThrown;
 
         private void Awake()
@@ -34,15 +38,14 @@ namespace DefaultNamespace
             _interactionLayer = LayerMask.NameToLayer("InteractionMask");
             _hitTargetLayer = LayerMask.NameToLayer("Target");
 
-            // 預設配置於可互動層
             gameObject.layer = _interactionLayer;
+            _originalScale = transform.localScale;
 
             if (targetRenderer != null && normalMaterials.Length == 0)
             {
                 normalMaterials = targetRenderer.materials;
             }
             
-            // 直接寫入 Payload，無須等待法術觸發
             if (_currentProjectile != null) 
             {
                 _currentProjectile.payload = _requiredPayloadSo;
@@ -59,6 +62,9 @@ namespace DefaultNamespace
             _isThrown = false;
             gameObject.layer = _interactionLayer;
             SwapMaterials(normalMaterials);
+            transform.localScale = _originalScale;
+
+            if (targetRenderer != null) targetRenderer.enabled = true;
 
             if (_rb != null)
             {
@@ -72,7 +78,7 @@ namespace DefaultNamespace
             transform.SetParent(null);
         }
 
-        #region IMagnetAttachable (吸附邏輯)
+        #region IMagnetAttachable
         public void OnMagnetAttached(Transform parent)
         {
             if (!_rb) return;
@@ -93,7 +99,7 @@ namespace DefaultNamespace
         }
         #endregion
 
-        #region IThrowable (投擲前置處理)
+        #region IThrowable
         public void OnBeforeThrow()
         {
             if (!_rb) return;
@@ -104,7 +110,7 @@ namespace DefaultNamespace
             _rb.detectCollisions = true;
             
             _isThrown = true;
-            gameObject.layer = _hitTargetLayer; // 投擲後轉換為 Target 層以正確觸發碰撞判定
+            gameObject.layer = _hitTargetLayer; 
             SwapMaterials(normalMaterials);
         }
         #endregion
@@ -120,6 +126,7 @@ namespace DefaultNamespace
             if (collision.gameObject.CompareTag("Player")) return;
 
             bool isBoss = collision.gameObject.CompareTag("boss");
+            Vector3 contactPoint = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
     
             if (_isThrown)
             {
@@ -132,20 +139,63 @@ namespace DefaultNamespace
                     }
                 }
         
-                Shatter();
+                Shatter(contactPoint);
             }
             else
             {
                 if (isBoss)
                 {
-                    Shatter();
+                    Shatter(contactPoint);
                 }
             }
         }
 
-        private void Shatter()
+        private void Shatter(Vector3 spawnPosition)
         {
-            if (hitVFX) hitVFX.Play();
+            if (hitVFX)
+            {
+                hitVFX.transform.position = spawnPosition;
+                hitVFX.Play();
+            }
+
+            if (fracturedPrefab != null)
+            {
+                // 1. 以原本石頭的世界座標與旋轉生成破碎根物件
+                GameObject fxObj = Instantiate(fracturedPrefab, transform.position, transform.rotation);
+        
+                // 2. 確保根物件的本地縮放與當前主石頭完全一致
+                fxObj.transform.localScale = transform.localScale;
+
+                Rigidbody[] pieces = fxObj.GetComponentsInChildren<Rigidbody>();
+        
+                // 建立專用動畫序列
+                Sequence seq = DOTween.Sequence();
+                seq.AppendInterval(fadeDelay);
+
+                foreach (var piece in pieces)
+                {
+                    // 驅動物理散射
+                    piece.AddExplosionForce(150f, spawnPosition, 2f);
+                    if (_rb != null)
+                    {
+                        piece.linearVelocity += _rb.linearVelocity * 0.5f;
+                    }
+
+                    // 3. 核心修正：明確記錄當前碎片正確的本地縮放，以此為動畫基準起點
+                    Vector3 targetInitialScale = piece.transform.localScale;
+
+                    // 4. 強制將縮放從正確的初始值漸變至零，阻斷任何起點偵測錯誤
+                    seq.Join(piece.transform.DOScale(Vector3.zero, shrinkDuration)
+                        .From(targetInitialScale) 
+                        .SetEase(Ease.InQuad));
+                }
+        
+                seq.OnComplete(() => Destroy(fxObj));
+            }
+
+            if (targetRenderer != null) targetRenderer.enabled = false;
+            if (_rb != null) _rb.detectCollisions = false;
+    
             LandingAttack.ReturnRockToPool(gameObject);
         }
     }

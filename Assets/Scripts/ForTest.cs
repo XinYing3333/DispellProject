@@ -68,6 +68,11 @@ namespace Player
             {
                 //respawn.RespawnAtLastSafe();
             }
+
+            if (Input.GetKey(KeyCode.K))
+            {
+                CollectionSystem.CollectItem(CollectionSystem.CollectedType.Though, 100);
+            }
         }
     }
 }

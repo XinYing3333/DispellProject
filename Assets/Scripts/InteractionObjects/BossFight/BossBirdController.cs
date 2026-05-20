@@ -1,5 +1,6 @@
 using System.Collections;
 using DefaultNamespace.Thought;
+using DG.Tweening;
 using Player;
 using Player.InteractionSystem;
 using SpellSystem;
@@ -105,39 +106,56 @@ namespace BossFight
         
         private void OnBossDamaged(bool isStun)
         {
-            Debug.Log($"Boss 受到攻擊！(觸發硬直: {isStun})");
-
-            // 狀態：輕擊（如法術）。僅扣除血量，不影響當前攻擊協程與動畫運作。
             if (!isStun) return;
-
-            // 狀態：重擊（如石頭）。避免連續硬直覆寫。
             if (isStunned) return;
 
-            // 執行硬直中斷邏輯
             isStunned = true;
             anim.Play("birld-ani-damage");
     
-            // 強制中止 Phase1Loop 與所有關聯攻擊行為
+            // 清理可能殘留的預警物件 (含 Landing 與 Charge)
+            if (_landing is LandingAttack landingAtt) landingAtt.Interrupt();
+            if (_charge is ChargeAttack chargeAtt) chargeAtt.Interrupt();
+
+            modelRoot.DOKill();
+            transform.DOKill();
+
             StopAllCoroutines(); 
             StartCoroutine(ResumeLoop());
         }
 
         private IEnumerator ResumeLoop()
         {
+            // 1. 等待硬直時間結束
             yield return new WaitForSeconds(2f);
             anim.Play("bird-fly-ani");
-            StartCoroutine(Phase1Loop());
+
+            // 2. 獲取當前座標下方的地面高度，並加上預設的盤旋高度
+            Vector3 currentPos = modelRoot.position;
+            Vector3 groundPos = services.GetGroundBelow(currentPos);
+            float targetY = groundPos.y + hoverHeight;
+
+            // 3. 優先執行垂直升空，回到空中預備位置
+            yield return services.MoveVerticalTo(modelRoot, targetY, riseSpeed);
+
+            // 4. 釋放硬直鎖定，進入常規攻擊循環
             isStunned = false;
+            StartCoroutine(Phase1Loop());
         }
 
         private void OnBossDead()
         {
             Debug.Log("Boss 死亡！");
             anim.Play("birld-ani-dead");
-            StopAllCoroutines();
+            
+            // 死亡時也必須清理所有預警物件
+            if (_landing is LandingAttack landingAtt) landingAtt.Interrupt();
+            if (_charge is ChargeAttack chargeAtt) chargeAtt.Interrupt();
 
+            modelRoot.DOKill();
+            transform.DOKill();
+            
+            StopAllCoroutines();
             StartCoroutine(ShowDemoCanvas());
-            // 可觸發勝利 UI、掉落、過場動畫
         }
         
         // --------- Demo -----------
